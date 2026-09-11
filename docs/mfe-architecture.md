@@ -12,13 +12,13 @@ Recommended MFEs
 - `mfe-dashboard`: Aggregations and KPIs, subscribes to events for live updates.
 
 Monorepo layout (recommended)
-- `packages/mfe-institution/`
-- `packages/mfe-student/`
-- `packages/mfe-admin/`
-- `packages/mfe-activity/`
-- `packages/mfe-dashboard/`
-- `packages/shared-ui/` (shared components)
-- `packages/shared-client/` (shared APIs, types, event schemas)
+- `modules/frontend/packages/mfe-institution/`
+- `modules/frontend/packages/mfe-student/`
+- `modules/frontend/packages/mfe-admin/`
+- `modules/frontend/packages/mfe-activity/`
+- `modules/frontend/packages/mfe-dashboard/`
+- `modules/frontend/packages/shared-ui/` (shared components)
+- `modules/frontend/packages/shared-client/` (shared APIs, types, event schemas)
 
 Communication
 - Backend services own authoritative APIs and publish domain events (event bus / message broker).
@@ -32,4 +32,4 @@ APIs & Contracts
 - Define stable REST/gRPC endpoints for core operations (create/edit/inactivate), and an event schema for emitted events.
 
 Next steps
-- Scaffold `packages/*` folders and add minimal README in each MFE. Connect CI/CD and deployment per MFE.
+- Scaffold `modules/frontend/packages/*` folders and add minimal README in each MFE. Connect CI/CD and deployment per MFE.

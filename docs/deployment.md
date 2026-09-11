@@ -36,8 +36,8 @@ independentes fica para uma etapa posterior.
 
 A arquitetura e viavel, mas ainda exige uma etapa de preparacao:
 
-- `packages/host/package.json` possui scripts e dependencias de Vite, mas
-  `packages/host/src/index.ts` ainda e um servidor Express HTML, nao uma
+- `modules/frontend/packages/host/package.json` possui scripts e dependencias de Vite, mas
+  `modules/frontend/packages/host/src/index.ts` ainda e um servidor Express HTML, nao uma
   aplicacao React/Vite do Host.
 - Nao foram encontrados arquivos `vite.config.*` nos pacotes.
 - `mfe-student` possui `App.tsx` e `main.tsx`, mas ainda e uma tela de exemplo.
@@ -171,12 +171,12 @@ para a plataforma:
 
 ```text
 Host:
-  Root directory: packages/host
+  Root directory: modules/frontend/packages/host
   Build command: npm run build
   Output directory: dist
 
 MFE Student:
-  Root directory: packages/mfe-student
+  Root directory: modules/frontend/packages/mfe-student
   Build command: npm run build
   Output directory: dist
 
