@@ -13,7 +13,7 @@ Monorepo
 ├── MFE Activity            -> remote estatico
 ├── MFE Dashboard           -> remote estatico
 ├── MFE Admin               -> remote estatico
-└── Server Go               -> web service com API, WebSocket e SQLite
+└── Server Go               -> web service com API, WebSocket e MariaDB/MySQL
 ```
 
 Nao sera criado um backend separado por MFE no MVP. O backend sera um servico
@@ -83,17 +83,16 @@ Vercel para reduzir a quantidade de plataformas durante o prototipo.
 
 ### Backend: Render Web Service
 
-Usar um Web Service para Go. O arquivo SQLite deve ficar em volume persistente.
-Um plano gratuito com filesystem efemero serve apenas para demonstracao
-descartavel e nao e armazenamento confiavel:
+Usar um Web Service para Go conectado a um MariaDB/MySQL hospedado. O banco
+nao deve depender do filesystem local do Web Service:
 
 ```text
 https://secretaria-api.onrender.com
 ```
 
-O servico deve suportar Go, HTTPS, WebSocket e volume persistente. O servidor
-deve escutar `PORT` em `0.0.0.0` e receber `SQLITE_PATH` por variavel de
-ambiente.
+O servico deve suportar Go e WebSocket. O servidor deve escutar `PORT` em
+`0.0.0.0` e receber `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` e
+`DB_TLS` por variaveis de ambiente.
 
 Limites relevantes do plano gratuito, conforme a documentacao do Render:
 
@@ -107,16 +106,23 @@ Limites relevantes do plano gratuito, conforme a documentacao do Render:
 - O servico gratuito e adequado para prototipo, teste e estudo, nao para
   producao.
 
-### Banco de dados SQLite
+### Banco de dados MariaDB/MySQL
 
-SQLite sera o banco oficial do prototipo:
+MariaDB/MySQL sera o banco oficial do prototipo. O desenvolvimento local usa
+MariaDB 10.4.32 instalado via XAMPP; o deploy usa um servidor MariaDB/MySQL
+compativel:
 
 ```text
-SQLITE_PATH=/data/secretaria.db
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=secretaria
+DB_USER=secretaria_app
+DB_PASSWORD=secret
+DB_TLS=false
 ```
 
-O diretorio `/data` precisa estar montado em volume persistente no deploy.
-Sem esse volume, restart, redeploy ou sleep pode apagar o banco.
+Em producao, usar credenciais separadas, `DB_TLS=true`, usuario sem privilegios
+administrativos, migrations versionadas e backup do banco.
 
 ## 4. Module Federation em producao de prototipo
 
@@ -222,14 +228,13 @@ Para o prototipo completo de tres dias:
 ```text
 Monorepo GitHub
   -> Vercel para Host e remotes React/Vite
-  -> Web Service Go + WebSocket + volume persistente
-  -> SQLite em `/data/secretaria.db`
+  -> Web Service Go + WebSocket
+  -> MariaDB/MySQL hospedado
 ```
 
-Esta decisao atende o conceito de MFE e eventos realtime com custo zero de
-infraestrutura para demonstracao, mas aceita cold start, indisponibilidade
-transitoria, limites de uso e ausencia de persistencia duravel no plano
-gratuito.
+Esta decisao atende o conceito de MFE, eventos realtime e persistencia em banco
+relacional. O custo zero depende da disponibilidade de uma camada gratuita de
+MariaDB/MySQL; a API e o banco devem ser tratados como servicos separados.
 
 ## Referencias oficiais
 
@@ -242,9 +247,9 @@ gratuito.
 ## 10. Decisao final vigente
 
 - Backend oficial: Go com API HTTP e WebSocket.
-- Banco oficial: SQLite.
-- Caminho do banco: `SQLITE_PATH=/data/secretaria.db`.
-- `/data` deve ser um volume persistente; filesystem efemero nao e aceitavel.
+- Banco oficial: MariaDB/MySQL.
+- Desenvolvimento local: MariaDB 10.4.32.
+- Producao: MariaDB/MySQL hospedado com persistencia e backup.
 - Todos os dados de negocio devem sobreviver a reinicio e redeploy.
 - O plano gratuito pode ser usado somente se oferecer persistencia real; caso
   contrario, o ambiente e apenas uma demonstracao descartavel.

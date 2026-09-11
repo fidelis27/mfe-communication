@@ -42,7 +42,7 @@ No prototipo, a identidade e selecionada pela cabecalho `x-demo-user`.
 ### Limites operacionais
 
 Todos os modulos e fluxos funcionais documentados fazem parte do prototipo.
-SQLite sera usado desde o primeiro incremento. Alta disponibilidade, garantia
+MariaDB/MySQL sera usado desde o primeiro incremento. Alta disponibilidade, garantia
 exactly-once, identidade de producao, importacao em massa e integracoes
 externas exigem endurecimento posterior antes de uso real.
 
@@ -184,7 +184,7 @@ Este bloco prevalece sobre qualquer referencia anterior conflitante:
 
 - O prototipo cobre todos os MFEs previstos: Host, Institution, Student, Admin,
 	Activity e Dashboard.
-- O backend Go persiste todos os dados funcionais em SQLite.
+- O backend Go persiste todos os dados funcionais em MariaDB/MySQL.
 - Nenhum repositorio de negocio em memoria e permitido.
 - Transferencia, trancamento e reabertura preservam historico.
 - WebSocket distribui eventos do backend; `window.bus`/`EventTarget` cuida

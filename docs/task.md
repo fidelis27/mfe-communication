@@ -11,10 +11,11 @@
 Nenhum codigo de aplicacao deve ser implementado antes de todos os itens do
 Gate serem aprovados.
 
-## Dia 1 - backend Go e SQLite
+## Dia 1 - backend Go e MariaDB/MySQL
 
 - [ ] Criar modulo Go e estrutura `cmd/server` e `internal`.
-- [ ] Criar migrations SQLite e conexao com `SQLITE_PATH`.
+- [ ] Criar migrations MariaDB e conexao com `DB_HOST`, `DB_PORT`, `DB_NAME`,
+  `DB_USER`, `DB_PASSWORD` e `DB_TLS`.
 - [ ] Persistir instituicoes, unidades, cursos e usuarios.
 - [ ] Persistir estudantes e vinculos academicos.
 - [ ] Implementar transacao de transferencia.
@@ -26,7 +27,7 @@ Gate serem aprovados.
 ## Dia 2 - eventos, WebSocket e MFEs
 
 - [ ] Consolidar contratos de eventos no pacote compartilhado.
-- [ ] Persistir eventos no SQLite antes da distribuicao.
+- [ ] Persistir eventos no MariaDB/MySQL antes da distribuicao.
 - [ ] Implementar WebSocket `/events` com `eventId` e `correlationId`.
 - [ ] Implementar reconexao, deduplicacao e estado de conexao.
 - [ ] Implementar barramento local `window.bus`/`EventTarget`.
@@ -49,14 +50,14 @@ Gate serem aprovados.
 - [ ] Adicionar logs estruturados e metricas sem dados pessoais.
 - [ ] Validar acessibilidade, CORS, HTTPS/WSS e LGPD.
 - [ ] Configurar build independente de Host e todos os remotes.
-- [ ] Publicar backend Go com volume persistente para SQLite.
+- [ ] Publicar backend Go conectado a MariaDB/MySQL persistente.
 - [ ] Executar testes unitarios, integracao e ponta a ponta.
 - [ ] Validar reinicio/redeploy sem perda de dados.
 - [ ] Registrar URLs, variaveis, limites e rollback.
 
 ## Criterios de pronto
 
-- [ ] Todos os dados de negocio estao no SQLite.
+- [ ] Todos os dados de negocio estao no MariaDB/MySQL.
 - [ ] Nenhum repositorio de negocio usa memoria como fonte de verdade.
 - [ ] Host carrega todos os remotes por Module Federation.
 - [ ] API Go e WebSocket funcionam em ambiente publicado.

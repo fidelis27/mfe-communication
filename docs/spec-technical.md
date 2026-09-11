@@ -13,13 +13,13 @@ Interface MFE
 	-> cliente HTTP / adaptador de eventos
 	-> caso de uso e autorizacao
 	-> repositorio e barramento de eventos
-	-> persistencia SQLite
+	-> persistencia MariaDB/MySQL
 ```
 
 - **Host:** navegacao, composicao e ciclo de vida dos MFEs.
 - **MFE:** tela, estado visual e interacao do seu bounded context.
 - **Backend Go:** autenticacao demonstrativa, autorizacao, casos de uso,
-	persistencia autoritativa em SQLite e publicacao de eventos.
+	persistencia autoritativa em MariaDB/MySQL e publicacao de eventos.
 - **Shared:** tipos e esquemas de contratos; nao deve conter regra de negocio
 	de outro dominio.
 - **Activity/Dashboard:** consumidores e projecoes; nao alteram a fonte
@@ -27,12 +27,13 @@ Interface MFE
 
 ## 3. Stack e ambiente
 
-- Go para API HTTP, WebSocket e acesso SQLite.
+- Go para API HTTP, WebSocket e acesso MariaDB/MySQL.
 - React para os MFEs.
 - Vitest para testes.
 - Monorepo npm com workspaces em `packages/*`.
-- SQLite para persistencia do prototipo.
-- Nenhum repositorio de negocio em memoria; testes de integracao usam SQLite.
+- MariaDB/MySQL para persistencia do prototipo.
+- Nenhum repositorio de negocio em memoria; testes de integracao usam banco de
+	teste MariaDB/MySQL.
 - `@originjs/vite-plugin-federation` para Module Federation no host e nos
 	remotes, aproveitando a dependência já declarada no workspace frontend.
 - WebSocket como transporte realtime do protótipo.
@@ -103,14 +104,14 @@ uma necessidade concreta de teste, substituicao ou separacao de dominio.
 ### Clean Architecture
 
 Usar Clean Architecture somente onde reduzir acoplamento e facilitar a
-evolucao do backend Go e a substituicao futura do SQLite:
+evolucao do backend Go e a substituicao futura do MariaDB/MySQL:
 
 ```text
 Interface React/HTTP/WebSocket
 	-> casos de uso
 	-> entidades e regras de dominio
 	-> portas (repositorios, eventos, identidade)
-	-> adaptadores (Go HTTP, SQLite, WebSocket)
+	-> adaptadores (Go HTTP, MariaDB/MySQL, WebSocket)
 ```
 
 As dependencias apontam para dentro. Entidades e casos de uso nao importam
@@ -285,7 +286,7 @@ interface Enrollment {
 ```
 
 Os repositorios devem ser interfaces. O caso de uso nao pode depender de SQL,
-SQLite ou detalhes do driver.
+MariaDB/MySQL ou detalhes do driver.
 
 ## 10. Eventos e transporte
 
@@ -337,7 +338,7 @@ Este mecanismo nao e adequado para producao; ele existe para validar o fluxo.
 Ordem de validacao de cada fatia:
 
 1. Teste unitario do caso de uso ou politica.
-2. Teste de integracao da rota com banco SQLite de teste.
+2. Teste de integracao da rota com banco MariaDB/MySQL de teste.
 3. Teste do evento publicado e do consumidor correspondente.
 4. Verificacao manual dos estados `loading`, `empty`, `success` e `error`.
 5. Revisao do diff contra `context.md` e `spec-functional.md`.
@@ -375,9 +376,9 @@ dados pessoais completos nos logs.
 
 ## 15. Plano de tres dias
 
-### Dia 1 - backend Go e SQLite
+### Dia 1 - backend Go e MariaDB/MySQL
 
-1. Consolidar contratos, migrations SQLite, repositorios, casos de uso e
+1. Consolidar contratos, migrations MariaDB, repositorios, casos de uso e
 	testes de dominio.
 2. Expor leitura, criacao, edicao e inativacao de instituicao.
 3. Expor cadastro e listagem de estudante com autorizacao.
@@ -392,8 +393,9 @@ dados pessoais completos nos logs.
 4. Adicionar estados de interface e tratamento de erros.
 ### Dia 3 - qualidade, seguranca e deploy
 
-1. Adicionar logs estruturados, `correlationId` e métricas básicas.
-2. Adicionar `pino`, `pino-http` e `prom-client` no frontend/backend aplicável.
+1. Adicionar logs estruturados, `correlationId` e métricas básicas no backend Go.
+2. Usar uma biblioteca de logging e métricas compatível com Go, mantendo os
+	adaptadores separados dos casos de uso.
 3. Validar acessibilidade, fluxo ponta a ponta e regressao.
 4. Configurar builds e deploy da API Go e de todos os remotes.
 5. Revisar diff, riscos, evidencias e limites para producao.
@@ -407,7 +409,8 @@ requisito novo deve ser registrado nas specs antes de ampliar a implementacao.
 
 Esta definicao descreve o alvo futuro do prototipo e nao autoriza seu inicio.
 Nenhuma implementacao, instalacao de dependencia ou alteracao de configuracao
-deve ocorrer antes da aprovacao explicita das tres especificacoes.
+deve ocorrer antes da aprovacao explicita de `context.md`,
+`spec-functional.md`, `spec-technical.md` e `deployment.md`.
 
 O prototipo sera considerado completo quando:
 
@@ -426,13 +429,14 @@ MVP. Nao significa pronto para operar em producao.
 Este bloco prevalece sobre qualquer referencia anterior conflitante:
 
 - Backend: Go.
-- Persistencia: SQLite para todos os dados de negocio, com migrations e
+- Persistencia: MariaDB/MySQL para todos os dados de negocio, com migrations e
 	transacoes.
 - Repositorios em memoria: proibidos para dados de negocio; permitidos apenas
 	em testes de componentes sem persistencia.
-- O arquivo SQLite deve estar em volume persistente nos ambientes publicados.
+- O banco MariaDB/MySQL deve estar em instancia persistente nos ambientes
+	publicados.
 - Transferencia deve alterar vinculo de origem e destino na mesma transacao.
 - WebSocket e Module Federation real sao obrigatorios no prototipo.
 - O plano de entrega tem tres dias.
-- Antes da implementacao, criar o schema SQLite, os contratos compartilhados,
+- Antes da implementacao, criar o schema MariaDB, os contratos compartilhados,
 	o contrato WebSocket e os testes de persistencia.

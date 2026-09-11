@@ -96,7 +96,7 @@ domínio e middleware, e não um sistema funcional completo.
 Validar uma arquitetura de microfrontends integrados por contratos estáveis:
 
 - React e TypeScript no frontend.
-- Node.js e Express no backend do protótipo.
+- Go no backend do protótipo, com API HTTP e WebSocket.
 - Evolução futura do backend para Java sem alterar os contratos funcionais.
 - APIs HTTP como caminho de escrita e leitura autoritativo.
 - Eventos de domínio para atualização de Activity, Dashboard e outros
@@ -139,8 +139,8 @@ evolução.
 
 - Shell navegável com entradas para Instituições, Estudantes, Administração,
 	Atividades e Dashboard.
-- CRUD completo de instituições e unidades com persistência SQLite.
-- Cadastro, consulta, edição e listagem de estudantes persistidos no SQLite.
+- CRUD completo de instituições e unidades com persistência MariaDB/MySQL.
+- Cadastro, consulta, edição e listagem de estudantes persistidos no banco.
 - Trancamento, reabertura e transferência com histórico persistido.
 - Module Federation real em todos os MFEs previstos.
 - Autenticação demonstrativa e autorização para leitura/edição.
@@ -292,8 +292,8 @@ dados de estudantes fictícios ou anonimizados.
 - Tentar entregar cinco MFEs completos no prazo pode deixar o fluxo principal
 	sem acabamento.
 - Eventos sem versionamento e idempotência dificultam a evolução futura.
-- SQLite exige transações, migrations e volume persistente para evitar perda de
-	dados.
+- MariaDB/MySQL exige transações, migrations, charset `utf8mb4` e credenciais
+	seguras para evitar perda ou corrupção de dados.
 - O uso de dados reais pode gerar risco de privacidade e conformidade.
 - Module Federation real aumenta a complexidade inicial e pode ameaçar o
 	prazo de três dias.
@@ -308,8 +308,8 @@ dados de estudantes fictícios ou anonimizados.
 - **Composição:** host com Module Federation real, com remotes independentes e
 	React compartilhado como singleton. Composição por rotas deixa de ser a
 	opção do MVP, podendo existir apenas como fallback de desenvolvimento.
-- **Persistência:** SQLite para todos os dados do produto; memória apenas para
-	conexões e buffers técnicos temporários.
+- **Persistência:** MariaDB/MySQL para todos os dados do produto; memória apenas
+	para conexões e buffers técnicos temporários.
 - **Eventos realtime:** WebSocket ou canal equivalente para notificar MFEs;
 	barramento em memória pode permanecer no backend apenas como implementação
 	inicial do produtor.
@@ -331,12 +331,13 @@ funcionalidades fora do fluxo demonstrável do MVP.
 
 > **Gate de aprovação:** este plano não autoriza implementação. Nenhum código,
 > dependência ou configuração nova deve ser criado até que `context.md`,
-> `spec-functional.md` e `spec-technical.md` sejam revisados e aprovados.
+> `spec-functional.md`, `spec-technical.md` e `deployment.md` sejam revisados
+> e aprovados.
 
 ### Dia 1 - fundacao e dominio
 
 - Fechar decisões de negócio e contratos.
-- Consolidar contratos, schema/migrations SQLite, repositórios e casos de uso.
+- Consolidar contratos, schema/migrations MariaDB, repositórios e casos de uso.
 - Implementar instituições e estudantes no backend.
 - Implementar autenticação demonstrativa e autorização nas rotas.
 - Implementar o barramento em memória.
@@ -372,7 +373,7 @@ real faz parte do MVP e deve ser demonstrado, mesmo que a operação em escala e
 a publicação independente de todos os remotes fiquem para uma etapa posterior.
 
 **Status do PO:** as ambiguidades de produto desta rodada estão resolvidas.
-As três especificações estão prontas para revisão e aprovação; a
+As quatro especificações estão prontas para revisão e aprovação; a
 implementação continua bloqueada até essa aprovação explícita.
 
 ## 14. Decisão final vigente
@@ -382,13 +383,13 @@ documento:
 
 - Prazo do protótipo: três dias de trabalho.
 - Backend oficial: Go, com API HTTP e WebSocket.
-- Banco oficial: SQLite.
-- Todos os dados do produto devem ser persistidos em SQLite: instituições,
+- Banco oficial: MariaDB/MySQL.
+- Todos os dados do produto devem ser persistidos no banco: instituições,
 	unidades, cursos, estudantes, vínculos, usuários, grupos, permissões,
 	eventos, atividades e projeções do dashboard.
 - Memória só pode ser usada para conexões, sessões técnicas, cache transitório
 	e buffers do WebSocket; nunca como fonte de verdade ou repositório de negócio.
 - Transferências devem preservar histórico e executar origem/destino em uma
-	transação SQLite.
+	transação MariaDB/MySQL.
 - Module Federation real e WebSocket fazem parte do protótipo.
 - A implementação continua bloqueada até a aprovação explícita das specs.
