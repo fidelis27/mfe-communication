@@ -39,13 +39,12 @@ No prototipo, a identidade e selecionada pela cabecalho `x-demo-user`.
 9. Contador de instituicoes ou estudantes atualizado pelo consumo de eventos.
 10. Atualizacao realtime entre MFE, host e modal consumidor.
 
-### Fora do escopo
+### Limites operacionais
 
-- Banco persistente, importacao em massa e integracoes externas.
-- Login real, OAuth, recuperacao de senha e gestao completa de identidade.
-- Notas, frequencia, financeiro e documentos escolares.
-- Entrega duravel, retentativas distribuidas e garantia exactly-once.
-- Integracoes externas com sistemas academicos de USP, UNESP ou Fatec.
+Todos os modulos e fluxos funcionais documentados fazem parte do prototipo.
+SQLite sera usado desde o primeiro incremento. Alta disponibilidade, garantia
+exactly-once, identidade de producao, importacao em massa e integracoes
+externas exigem endurecimento posterior antes de uso real.
 
 ## 4. Regras de negocio
 
