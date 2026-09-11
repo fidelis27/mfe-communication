@@ -34,6 +34,9 @@ Gate serem aprovados.
 - [ ] Publicar e carregar o MFE Institution.
 - [ ] Publicar e carregar o MFE Student.
 - [ ] Separar containers e componentes de apresentacao.
+- [ ] Criar fundacao visual institucional com SCSS, tokens e namespaces BEM.
+- [ ] Configurar React Aria Components para controles acessiveis.
+- [ ] Implementar Shell, navegacao lateral, barra superior e area principal.
 
 ## Dia 3 - MFEs restantes, qualidade e deploy
 
@@ -41,6 +44,8 @@ Gate serem aprovados.
 - [ ] Implementar MFE Activity consumindo eventos persistidos.
 - [ ] Implementar MFE Dashboard com projecoes persistidas.
 - [ ] Implementar estados `idle`, `loading`, `empty`, `success` e `error`.
+- [ ] Garantir layout responsivo, foco visivel, labels e feedback acessivel.
+- [ ] Validar isolamento de estilos entre remotes.
 - [ ] Adicionar logs estruturados e metricas sem dados pessoais.
 - [ ] Validar acessibilidade, CORS, HTTPS/WSS e LGPD.
 - [ ] Configurar build independente de Host e todos os remotes.

@@ -118,6 +118,67 @@ React, Express, Vite, WebSocket ou detalhes de banco.
 
 ## 6. Componentizacao React
 
+## 6.1 Direcao visual e biblioteca de UI
+
+O produto terá uma interface institucional, administrativa e orientada a
+tarefas repetitivas. A prioridade visual é clareza, densidade controlada,
+hierarquia e acessibilidade, não uma aparência de landing page.
+
+### Layout aprovado
+
+- Shell com navegação lateral persistente no desktop e navegação recolhível
+	em telas menores.
+- Barra superior com instituição/unidade selecionada, estado de conexão,
+	usuário e ações globais.
+- Área principal com título, contexto da página, filtros, ação primária e
+	conteúdo.
+- Listas e tabelas para comparação; formulários em seções curtas e claras.
+- Modais somente para ações rápidas ou confirmação; fluxos longos usam página
+	própria.
+- Estados explícitos para carregamento, vazio, sucesso, erro e sem permissão.
+- Design responsivo, com suporte a teclado e foco visível.
+
+### Direção visual
+
+- Paleta sóbria institucional, com fundo neutro, superfícies claras, texto de
+	alto contraste e uma cor de ação consistente.
+- Uso moderado de cor para estado: sucesso, alerta, erro e informação.
+- Tipografia legível e hierarquia clara; evitar excesso de sombras, gradientes,
+	cards decorativos e elementos promocionais.
+- Tabelas, filtros, paginação, breadcrumbs e feedback devem priorizar leitura
+	rápida e operação de secretaria.
+
+### Biblioteca recomendada
+
+Usar **React Aria Components** para controles que exigem comportamento e
+acessibilidade, como campos, combobox, select, dialog, checkbox, radio, tabs e
+menu. A aparência será implementada pelo projeto com SCSS, não pelo tema
+visual padrão da biblioteca.
+
+Motivos:
+
+- oferece primitives acessíveis e comportamento robusto;
+- permite manter identidade visual própria;
+- reduz risco de conflito de CSS entre MFEs;
+- funciona bem com componentes stateless e containers;
+- evita acoplamento visual forte a uma biblioteca de design.
+
+Para tabelas complexas, usar TanStack Table como lógica headless quando
+necessário. Não adotar MUI ou PrimeReact como base visual do MVP: são viáveis,
+mas seus temas e estilos aumentariam o acoplamento visual entre remotes.
+
+### SCSS e BEM
+
+- Usar SCSS para tokens, componentes e estados.
+- Nomear classes com BEM, por exemplo:
+	`institution-form`, `institution-form__field`,
+	`institution-form__field--invalid`.
+- Manter estilos de cada MFE escopados por namespace ou CSS Modules para evitar
+	vazamento entre remotes.
+- Compartilhar apenas tokens, mixins e componentes realmente estáveis no
+	pacote de UI compartilhado.
+- Não misturar Tailwind, CSS-in-JS e SCSS como padrões concorrentes.
+
 ### Componentes de apresentacao (stateless)
 
 Responsaveis por renderizar dados e emitir intencoes por callbacks.
