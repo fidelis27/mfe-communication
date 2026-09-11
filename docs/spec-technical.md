@@ -30,7 +30,7 @@ Interface MFE
 - Go para API HTTP, WebSocket e acesso MariaDB/MySQL.
 - React para os MFEs.
 - Vitest para testes.
-- Monorepo npm com workspaces em `packages/*`.
+- Monorepo npm com workspaces em `modules/frontend/packages/*`.
 - MariaDB/MySQL para persistencia do prototipo.
 - Nenhum repositorio de negocio em memoria; testes de integracao usam banco de
 	teste MariaDB/MySQL.
@@ -348,8 +348,8 @@ Comandos planejados:
 ```bash
 npm test
 npm run build
-go test ./...
-go run ./cmd/server
+go -C modules/backend test ./...
+go -C modules/backend run ./cmd/server
 ```
 
 Antes da entrega, o TypeScript deve ser compilado sem erros e o fluxo
