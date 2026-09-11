@@ -78,6 +78,10 @@ O repositório indica os seguintes bounded contexts:
 - **Atividades:** feed somente leitura formado a partir de eventos de domínio.
 - **Dashboard:** indicadores e agregações atualizados por eventos.
 
+O ambiente é multi-institucional: um agente da secretaria pode cadastrar e
+administrar várias instituições, inclusive diferentes unidades da Fatec,
+organizadas por município, estado e região administrativa.
+
 O fluxo mínimo é:
 
 1. Usuário autenticado acessa o shell da secretaria.
@@ -123,7 +127,8 @@ Validar uma arquitetura de microfrontends integrados por contratos estáveis:
 
 ## 6. Contratos de eventos iniciais
 
-Os eventos devem possuir, no mínimo, `type`, `payload` e `occurredAt`.
+Os eventos do MVP devem possuir `eventId`, `type`, `version`, `source`,
+`correlationId`, `payload` e `occurredAt`.
 Contratos atualmente identificados:
 
 - `INSTITUTION_CREATED`
@@ -137,10 +142,17 @@ Payload mínimo:
 - Instituição: `id` e, quando aplicável, `name`.
 - Estudante: `id` e `institutionId`.
 
-Antes de produção, o contrato deve ganhar `eventId`, `version`, `source` e
-algum mecanismo de correlação/idempotência. O transporte é uma decisão aberta:
-para o MVP pode ser um barramento em memória ou `EventTarget`; para evolução,
-WebSocket, pub/sub ou broker de mensagens.
+Além dos eventos de domínio persistidos, os MFEs devem emitir eventos de
+interação para o host e para o MFE consumidor. Exemplo: um MFE aberto em modal
+emite `STUDENT_CREATED_SUCCESS`; o consumidor fecha o modal, atualiza sua
+consulta e exibe a mensagem de sucesso somente depois de receber o evento.
+Eventos de interação devem carregar `correlationId` para relacionar início,
+sucesso e erro da operação.
+
+O backend publica eventos de domínio após a persistência e um canal realtime
+distribui os eventos aos MFEs. O MVP deve demonstrar deduplicação por
+`eventId`; broker durável, retentativa e idempotência persistente ficam para a
+evolução.
 
 ## 7. MVP para dois dias
 
@@ -150,6 +162,8 @@ WebSocket, pub/sub ou broker de mensagens.
 	Atividades e Dashboard.
 - CRUD mínimo de instituições usando persistência em memória.
 - Cadastro e listagem de estudantes vinculados a uma instituição.
+- Trancamento, reabertura e transferência com histórico de vínculos.
+- Module Federation real com pelo menos os MFEs do fluxo principal.
 - Autenticação demonstrativa e autorização para leitura/edição.
 - Barramento simples de eventos no backend.
 - Feed de atividades consumindo eventos de instituição e estudante.
@@ -165,7 +179,7 @@ WebSocket, pub/sub ou broker de mensagens.
 - Broker distribuído, garantia de entrega exatamente uma vez e processamento
 	assíncrono em produção.
 - Integração real com sistemas acadêmicos externos.
-- Relatórios avançados, documentos, matrícula, notas ou financeiro.
+- Relatórios avançados, documentos, notas ou financeiro.
 - Deploy independente completo e pipeline de CI/CD para cada MFE.
 - Migração imediata do backend para Java.
 
@@ -174,8 +188,17 @@ WebSocket, pub/sub ou broker de mensagens.
 ### Instituição
 
 - `active` / ativa: pode ser consultada e receber estudantes.
-- `inactive` / inativa: permanece no histórico, mas não deve receber novas
-	operações sem uma regra explícita de reativação.
+- `inactive` / inativa: permanece no histórico e pode ser reativada por usuário
+	autorizado conforme regra administrativa.
+
+### Vínculo acadêmico do estudante
+
+- `active`: estudante regularmente vinculado à instituição.
+- `enrolled_locked` / matrícula trancada: vínculo preservado, mas atividades
+	acadêmicas e operações restritas ficam bloqueadas.
+- `transferred` / transferido: vínculo encerrado na instituição de origem e
+	histórico preservado; pode existir novo vínculo em outra instituição.
+- `inactive`: vínculo encerrado sem transferência ativa.
 
 ### Usuário
 
@@ -206,21 +229,83 @@ WebSocket, pub/sub ou broker de mensagens.
 - Um MFE pode ser substituído sem quebrar o contrato compartilhado.
 - O sistema demonstra estados de carregamento, sucesso, lista vazia e erro.
 
-## 10. Perguntas que precisam ser decididas
+## 10. Decisões de negócio registradas pelo PO
 
-1. O produto deve atender uma única instituição por instalação ou várias
-	 instituições em um mesmo ambiente?
-2. O estudante pode pertencer a mais de uma instituição ao longo do tempo?
-3. A criação de estudante deve ser permitida somente para administradores ou
-	 também para membros autorizados?
-4. Instituições inativadas podem ser reativadas? Estudantes vinculados ficam
-	 ativos, inativos ou apenas bloqueados para novos vínculos?
-5. O MVP deve usar Module Federation real ou apenas simular a composição para
-	 validar primeiro os contratos de eventos?
-6. O evento precisa atualizar telas em tempo real ou basta atualizar após uma
-	 nova consulta?
-7. Quais campos obrigatórios existem para instituição e estudante?
-8. Quais dados reais podem ser usados sem risco de exposição de dados pessoais?
+1. O ambiente atende várias instituições. Um agente da secretaria pode
+	cadastrar instituições de diferentes cidades, incluindo várias Fatecs.
+2. Um estudante pode ter histórico em mais de uma instituição somente por
+	transferência. O sistema deve preservar origem, destino, datas e situação do
+	vínculo, sem duplicar o cadastro civil do estudante.
+3. Administradores e membros autorizados podem cadastrar estudantes. A
+	diferença deve ser explícita: administrador gerencia dados e permissões do
+	domínio; membro executa operações delegadas, sem administrar usuários,
+	grupos ou políticas.
+4. Instituições podem ser reativadas. O trancamento é uma mudança do vínculo
+	do estudante: preserva histórico e permite reabertura posterior.
+5. Module Federation real é obrigatório no MVP para provar o conceito de MFE.
+6. Eventos devem ser escutados em tempo real. O contrato deve suportar eventos
+	de sucesso e erro de interação, inclusive fechamento de modais pelo MFE
+	consumidor.
+7. O cadastro institucional será rico, mas terá campos obrigatórios reduzidos
+	no primeiro formulário. Campos recomendados estão abaixo.
+8. Dados pessoais devem seguir minimização, mascaramento em telas e logs,
+	controle de acesso e criptografia em repouso e em trânsito quando houver
+	banco real. Dados de demonstração devem ser fictícios ou anonimizados.
+
+9. O escopo do MVP será multi-institucional, mas não multi-tenant isolado: uma
+	instalação compartilha o catálogo e o agente autorizado enxerga apenas o
+	escopo permitido pela sua associação.
+10. O estudante terá um cadastro civil único e vários vínculos históricos; o
+	MVP permite somente um vínculo `active` por vez. Transferência exige vínculo
+	de destino ativo e encerra o vínculo de origem na mesma operação lógica.
+11. Administrador pode criar, editar, inativar e reativar instituições,
+	gerenciar vínculos, usuários e grupos do seu escopo. Membro autorizado pode
+	criar estudante e executar operações de vínculo delegadas, mas não pode
+	alterar permissões, usuários, grupos ou o catálogo institucional.
+12. O cadastro institucional terá duas camadas: dados da organização e dados
+	da unidade/campus. O formulário inicial exige nome oficial, tipo, município,
+	UF e status; os demais campos entram em edição avançada.
+13. O cadastro de estudante exige nome, identificador interno, instituição,
+	curso e situação do vínculo. CPF, contatos, endereço e data de nascimento
+	serão opcionais, mascarados e nunca serão usados em logs.
+14. O MFE de Instituição, o MFE de Estudante e o Host são prioridade P0. MFE
+	Activity e MFE Dashboard são P1 e devem consumir pelo menos os eventos do
+	fluxo principal. MFE Admin fica com tela mínima de demonstração de papéis.
+15. O transporte realtime escolhido para o MVP é WebSocket. O barramento em
+	memória publica no backend e o adaptador WebSocket distribui os eventos aos
+	MFEs. Não haverá broker externo nesta etapa.
+16. O evento de sucesso só será emitido depois de a API concluir persistência e
+	publicação do evento de domínio. O consumidor fecha modal apenas quando o
+	`correlationId` corresponder à operação iniciada; erro mantém o modal aberto.
+17. A fonte dos dados institucionais será cadastro manual com exemplos
+	públicos de USP, UNESP e Fatec. Não haverá scraping nem integração externa.
+18. A criptografia de dados em repouso é requisito para banco persistente; como
+	o MVP usa memória, o protótipo demonstrará mascaramento e não persistirá
+	dados pessoais reais.
+
+### Campos recomendados
+
+**Instituição/unidade:** nome oficial, nome curto, sigla, tipo de mantenedora,
+CNPJ da entidade quando aplicável, código institucional, status, endereço,
+município, UF, região administrativa, campus/unidade, telefone institucional,
+e-mail institucional, site oficial, modalidade, cursos ofertados e datas de
+vigência. No MVP, nome oficial, tipo, município, UF e status são obrigatórios.
+
+**Estudante:** nome completo, nome social, identificador interno, CPF
+mascarado, data de nascimento, contatos, endereço, nacionalidade, necessidades
+de acessibilidade quando estritamente necessárias, instituição, campus, curso,
+turno, período/semestre, situação da matrícula, data de ingresso, histórico
+de transferências e data de trancamento/reabertura. No MVP, nome, identificador
+interno, instituição, curso e situação do vínculo são obrigatórios.
+
+CPF, data de nascimento, endereço, contatos e necessidades de acessibilidade
+são dados pessoais e não devem aparecer em logs ou listas sem necessidade.
+
+As páginas públicas de USP, UNESP e Centro Paula Souza/Fatec podem orientar
+nomes, siglas, campi, municípios, regiões administrativas, cursos e serviços
+institucionais. Elas não serão integradas no MVP e não devem ser usadas para
+copiar dados pessoais. Para demonstração, usar dados institucionais públicos e
+dados de estudantes fictícios ou anonimizados.
 
 ## 11. Riscos e decisões alternativas
 
@@ -231,25 +316,35 @@ WebSocket, pub/sub ou broker de mensagens.
 - Eventos sem versionamento e idempotência dificultam a evolução futura.
 - Persistência em memória pode esconder problemas de concorrência e consistência.
 - O uso de dados reais pode gerar risco de privacidade e conformidade.
-- Module Federation aumenta a complexidade inicial antes de existir um fluxo
-	de negócio validado.
+- Module Federation real aumenta a complexidade inicial e pode ameaçar o
+	prazo de dois dias.
+- Eventos realtime exigem reconexão, ordenação e tratamento de mensagens
+	duplicadas.
+- Transferências e trancamentos introduzem histórico e regras de consistência.
 
 ### Decisões alternativas
 
 - **Eventos:** barramento em memória no MVP; WebSocket ou broker quando houver
 	necessidade de múltiplas instâncias e entrega durável.
-- **Composição:** host com Module Federation real; alternativa temporária é
-	uma composição por rotas para validar domínio e contratos primeiro.
+- **Composição:** host com Module Federation real, com remotes independentes e
+	React compartilhado como singleton. Composição por rotas deixa de ser a
+	opção do MVP, podendo existir apenas como fallback de desenvolvimento.
 - **Persistência:** repositórios em memória no protótipo; API de repositório
 	estável para trocar por banco relacional depois.
+- **Eventos realtime:** WebSocket ou canal equivalente para notificar MFEs;
+	barramento em memória pode permanecer no backend apenas como implementação
+	inicial do produtor.
+- **Dados pessoais:** mascaramento na interface e nos logs; criptografia em
+	repouso deve ser obrigatória quando a persistência deixar de ser em memória.
 - **Backend:** Node.js para velocidade de prototipação; contratos HTTP/eventos
 	independentes da implementação para permitir evolução para Java.
 
 ## 12. Diretriz de execução
 
-Antes de implementar, responder as perguntas da seção 10 e registrar as
-decisões em `spec-functional.md` e `spec-technical.md`. Em seguida, construir
-primeiro o fluxo instituição -> estudante -> evento -> atividade/dashboard.
+As decisões do PO acima encerram as ambiguidades de produto desta rodada e
+devem ser refletidas em `spec-functional.md` e `spec-technical.md`. Em
+seguida, construir primeiro o fluxo instituição -> estudante -> evento ->
+atividade/dashboard.
 Os demais MFEs devem ter contratos e estados mínimos, mas não precisam receber
 funcionalidades fora do fluxo demonstrável do MVP.
 
@@ -266,6 +361,7 @@ funcionalidades fora do fluxo demonstrável do MVP.
 - Implementar instituições e estudantes no backend.
 - Implementar autenticação demonstrativa e autorização nas rotas.
 - Implementar o barramento em memória.
+- Configurar o contrato WebSocket e provar a conexão realtime.
 - Criar o fluxo de escrita com testes unitários e de integração.
 
 **Entrega do dia:** é possível criar uma instituição e um estudante por API,
@@ -273,7 +369,8 @@ com permissão validada e evento publicado.
 
 ### Dia 2 - experiência, consumidores e operação
 
-- Integrar o host e os MFEs prioritários.
+- Configurar Module Federation real, integrar o host e carregar os MFEs
+	prioritários como remotes independentes.
 - Implementar Activity e Dashboard como consumidores.
 - Tratar estados de carregamento, vazio, sucesso e erro.
 - Adicionar logs estruturados, `correlationId` e métricas básicas.
@@ -285,5 +382,10 @@ evidência automatizada das regras principais.
 
 Este plano entrega um protótipo completo para demonstração. Não entrega um
 produto pronto para produção: banco definitivo, identidade real, broker
-durável, deploy independente e Module Federation real permanecem etapas
-posteriores, salvo se forem priorizados em detrimento de alguma funcionalidade.
+durável e deploy independente permanecem etapas posteriores. Module Federation
+real faz parte do MVP e deve ser demonstrado, mesmo que a operação em escala e
+a publicação independente de todos os remotes fiquem para uma etapa posterior.
+
+**Status do PO:** as ambiguidades de produto desta rodada estão resolvidas.
+As três especificações estão prontas para revisão e aprovação; a
+implementação continua bloqueada até essa aprovação explícita.

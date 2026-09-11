@@ -33,10 +33,14 @@ Interface MFE
 - Vitest para testes.
 - Monorepo npm com workspaces em `packages/*`.
 - Repositorios em memoria para reduzir tempo de setup.
+- `@originjs/vite-plugin-federation` para Module Federation no host e nos
+	remotes, aproveitando a dependência já declarada no workspace frontend.
+- WebSocket como transporte realtime do protótipo.
 
-Composicao por rotas e o caminho padrao do MVP. Module Federation sera adotado
-quando houver configuracao de build, manifestos remotos, compartilhamento de
-React como singleton e um teste de carregamento independente.
+Module Federation real e obrigatorio no MVP. O host deve carregar remotes por
+manifesto ou URL configuravel, compartilhar React como singleton e validar o
+carregamento independente de cada MFE. Rotas simples podem existir como
+fallback local, mas nao substituem a demonstracao principal.
 
 ## 4. APIs do MVP
 
@@ -51,6 +55,10 @@ Rotas planejadas:
 - `POST /institutions/:institutionId/students`
 - `GET /activities`
 - `GET /dashboard/summary`
+- `POST /students/:studentId/enrollments/:enrollmentId/suspend`
+- `POST /students/:studentId/enrollments/:enrollmentId/reopen`
+- `POST /students/:studentId/transfer`
+- `GET /events/stream` ou endpoint WebSocket equivalente para eventos realtime
 
 Rotas protegidas usam a identidade demonstrativa e carregam o usuario antes
 da politica de autorizacao. Respostas de erro devem usar pelo menos `401`,
@@ -60,6 +68,7 @@ da politica de autorizacao. Respostas de erro devem usar pelo menos `401`,
 
 ```ts
 type InstitutionStatus = "active" | "inactive";
+type EnrollmentStatus = "active" | "suspended" | "transferred" | "inactive";
 
 interface Institution {
 	id: string;
@@ -69,9 +78,19 @@ interface Institution {
 
 interface Student {
 	id: string;
-	institutionId: string;
 	name: string;
 	status: "active" | "inactive";
+}
+
+interface Enrollment {
+	id: string;
+	studentId: string;
+	institutionId: string;
+	campusId?: string;
+	courseId?: string;
+	status: EnrollmentStatus;
+	startedAt: string;
+	endedAt?: string;
 }
 ```
 
@@ -80,11 +99,15 @@ Os repositorios devem ser interfaces. O caso de uso nao pode depender do
 
 ## 6. Eventos e transporte
 
-Contrato minimo:
+Contrato minimo para dominio e interacao realtime:
 
 ```ts
 interface DomainEvent<TType extends string, TPayload> {
+	eventId: string;
 	type: TType;
+	version: number;
+	source: string;
+	correlationId: string;
 	payload: TPayload;
 	occurredAt: string;
 }
@@ -92,13 +115,15 @@ interface DomainEvent<TType extends string, TPayload> {
 
 O barramento em memoria deve permitir publicar e assinar por tipo de evento.
 O produtor publica somente depois da persistencia bem-sucedida. Consumidores
-devem ser tolerantes a eventos repetidos e ignorar tipos desconhecidos. Nao ha
-garantia de durabilidade no MVP.
+devem ser tolerantes a eventos repetidos e ignorar tipos desconhecidos. Um
+adaptador WebSocket distribui eventos ao host e aos MFEs. Acoes de modal usam
+eventos de sucesso/erro correlacionados; o
+consumidor nao deve fechar o modal por mera tentativa de envio.
 
 Evolucao planejada:
 
-- adicionar `eventId`, `version`, `source` e `correlationId`;
-- substituir o barramento por WebSocket/pub-sub ou broker;
+- autenticar e controlar a assinatura dos canais WebSocket;
+- substituir o barramento local por broker;
 - adicionar retentativa, dead-letter e idempotencia persistente.
 
 ## 7. Autenticacao e autorizacao
@@ -143,8 +168,11 @@ dados pessoais completos nos logs.
 - Memoria local nao representa concorrencia, reinicio ou escalabilidade.
 - Eventos em memoria nao sobrevivem a falhas.
 - A ausencia de um banco pode ocultar constraints de unicidade e transacao.
-- Module Federation e broker ficam fora do primeiro incremento para proteger o
-	tempo do MVP.
+- Module Federation real, remotes indisponiveis e reconexao realtime sao riscos
+	centrais do primeiro incremento.
+- Transferencias exigem consistencia entre o vinculo de origem e o de destino.
+- Dados pessoais exigem minimizacao, mascaramento, criptografia e auditoria de
+	acesso conforme a politica de privacidade do produto.
 - Dados reais devem ser anonimizados ou substituidos por dados ficticios no
 	ambiente local.
 
@@ -160,13 +188,14 @@ dados pessoais completos nos logs.
 
 ### Dia 2 - frontend, consumidores e observabilidade
 
-1. Integrar o host e os MFEs prioritarios por rotas.
-2. Implementar Activity e Dashboard como consumidores.
-3. Adicionar estados de interface e tratamento de erros.
-4. Adicionar `pino`, `pino-http`, `correlationId` e `prom-client`, se o custo
+1. Configurar Module Federation real e integrar o host aos MFEs prioritarios.
+2. Configurar WebSocket e validar eventos realtime correlacionados.
+3. Implementar Activity e Dashboard como consumidores.
+4. Adicionar estados de interface e tratamento de erros.
+5. Adicionar `pino`, `pino-http`, `correlationId` e `prom-client`, se o custo
 	de instalacao permanecer compatível com o tempo restante.
-5. Validar acessibilidade, fluxo ponta a ponta e regressao.
-6. Revisar diff, riscos, evidencias e limites para producao.
+6. Validar acessibilidade, fluxo ponta a ponta e regressao.
+7. Revisar diff, riscos, evidencias e limites para producao.
 
 Cada fatia deve terminar com teste executado e diff revisado. Qualquer
 requisito novo deve ser registrado nas specs antes de ampliar a implementacao.
