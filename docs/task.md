@@ -2,10 +2,10 @@
 
 ## Gate
 
-- [ ] Aprovar `context.md`.
-- [ ] Aprovar `spec-functional.md`.
-- [ ] Aprovar `spec-technical.md`.
-- [ ] Aprovar `deployment.md`.
+- [x] Aprovar `context.md`.
+- [x] Aprovar `spec-functional.md`.
+- [x] Aprovar `spec-technical.md`.
+- [x] Aprovar `deployment.md`.
 - [ ] Confirmar inicio da implementacao.
 
 Nenhum codigo de aplicacao deve ser implementado antes de todos os itens do
