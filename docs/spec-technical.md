@@ -42,7 +42,134 @@ manifesto ou URL configuravel, compartilhar React como singleton e validar o
 carregamento independente de cada MFE. Rotas simples podem existir como
 fallback local, mas nao substituem a demonstracao principal.
 
-## 4. APIs do MVP
+## 4. Padroes de desenvolvimento
+
+### JavaScript e TypeScript
+
+- Preferir TypeScript estrito e tipos explicitos nos contratos publicos.
+- Evitar `any`; quando inevitavel, isolar e justificar no adaptador.
+- Usar funcoes pequenas, nomes expressivos e responsabilidade unica.
+- Evitar mutacao de estado compartilhado e efeitos colaterais escondidos.
+- Validar entradas na fronteira da aplicacao antes de executar regras de
+	negocio.
+- Tratar erros de forma explicita, sem engolir excecoes.
+- Manter funcoes puras sempre que nao houver necessidade de I/O.
+- Evitar duplicacao; abstrair somente quando houver comportamento realmente
+	compartilhado.
+- Nao acoplar regras de negocio a Express, React ou ao adaptador de memoria.
+
+### HTML e acessibilidade
+
+- Usar HTML semantico: `header`, `nav`, `main`, `section`, `form`, `label` e
+	`button` conforme a finalidade.
+- Todo campo de formulario deve possuir label associado e mensagem de erro
+	compreensivel.
+- Usar botoes reais para acoes e links reais para navegacao.
+- Garantir navegacao por teclado e foco visivel.
+- Nao depender somente de cor para comunicar estado.
+- Fornecer nome acessivel para controles e feedback de sucesso/erro.
+- Manter hierarquia de titulos e ordem de leitura coerente.
+
+### CSS
+
+- Preferir classes e tokens de design a estilos inline repetidos.
+- Organizar estilos por componente ou dominio visual.
+- Usar layout responsivo com Flexbox/Grid e dimensoes estaveis.
+- Evitar seletores globais que vazem entre MFEs.
+- Evitar `!important`, valores magicos e especificidade desnecessaria.
+- Garantir contraste, estados `hover`, `focus`, `disabled` e `error`.
+- Manter o CSS de cada MFE isolado para evitar conflitos no Host.
+
+## 5. Principios de arquitetura
+
+### SOLID
+
+- **S - Responsabilidade unica:** componente, caso de uso e adaptador devem
+	possuir uma razao principal para mudar.
+- **O - Aberto/fechado:** adicionar um consumidor ou transportador nao deve
+	exigir alterar a regra central de dominio.
+- **L - Substituicao:** implementacoes em memoria devem respeitar as mesmas
+	interfaces dos repositorios definitivos.
+- **I - Segregacao de interfaces:** contratos pequenos e orientados ao uso,
+	sem obrigar dependencias desnecessarias.
+- **D - Inversao de dependencia:** casos de uso dependem de interfaces; HTTP,
+	WebSocket e persistencia ficam nos adaptadores.
+
+SOLID sera aplicado de forma pragmatica. Nao criar camadas ou interfaces sem
+uma necessidade concreta de teste, substituicao ou separacao de dominio.
+
+### Clean Architecture
+
+Usar Clean Architecture somente onde reduzir acoplamento e facilitar a
+evolucao para Java ou banco persistente:
+
+```text
+Interface React/HTTP/WebSocket
+	-> casos de uso
+	-> entidades e regras de dominio
+	-> portas (repositorios, eventos, identidade)
+	-> adaptadores (Express, memoria, PostgreSQL, WebSocket)
+```
+
+As dependencias apontam para dentro. Entidades e casos de uso nao importam
+React, Express, Vite, WebSocket ou detalhes de banco.
+
+## 6. Componentizacao React
+
+### Componentes de apresentacao (stateless)
+
+Responsaveis por renderizar dados e emitir intencoes por callbacks.
+
+- Nao fazem chamadas HTTP diretamente.
+- Nao conhecem repositorios, WebSocket ou regras de autorizacao.
+- Recebem dados, estados e callbacks por props.
+- Devem ser previsiveis e faceis de testar.
+
+Exemplos: `InstitutionForm`, `StudentTable`, `EnrollmentStatus` e
+`FeedbackMessage`.
+
+### Componentes logicos/container
+
+Responsaveis por coordenar estado, casos de uso, dados e eventos.
+
+- Fazem chamadas a clientes/adaptadores definidos para o MFE.
+- Traduzem respostas em estados `idle`, `loading`, `empty`, `success` e
+	`error`.
+- Assinam eventos realtime e filtram por `eventId`/`correlationId`.
+- Passam dados e callbacks para componentes de apresentacao.
+- Nao devem concentrar regras de negocio complexas; essas regras pertencem a
+	casos de uso ou ao backend.
+
+Exemplos: `InstitutionPage`, `StudentFlowContainer` e
+`EnrollmentModalContainer`.
+
+### Regras de composicao
+
+- Preferir composicao de componentes a heranca.
+- Um componente deve ter uma API de props pequena e sem detalhes internos.
+- Evitar componentes gigantes que renderizam tela, fazem I/O e decidem regras
+	ao mesmo tempo.
+- Hooks customizados podem encapsular estado de UI e assinaturas de eventos,
+	mas nao substituem casos de uso do dominio.
+- Cada MFE deve expor uma entrada pequena e documentada para o Host.
+
+## 7. Organizacao recomendada de pastas
+
+```text
+src/
+	components/       # apresentacao reutilizavel
+	containers/       # coordenacao de tela e estado
+	hooks/            # comportamento de UI e eventos
+	application/      # casos de uso do frontend
+	domain/           # tipos e regras locais do dominio
+	infrastructure/   # HTTP, WebSocket e Module Federation
+	styles/            # tokens e estilos do MFE
+```
+
+Nem toda pasta precisa existir em todo MFE. A estrutura deve acompanhar a
+complexidade real e nao gerar pastas vazias.
+
+## 8. APIs do MVP
 
 Rotas planejadas:
 
@@ -64,7 +191,7 @@ Rotas protegidas usam a identidade demonstrativa e carregam o usuario antes
 da politica de autorizacao. Respostas de erro devem usar pelo menos `401`,
 `403`, `404` e `422` conforme a causa.
 
-## 5. Modelo de dados minimo
+## 9. Modelo de dados minimo
 
 ```ts
 type InstitutionStatus = "active" | "inactive";
@@ -97,7 +224,7 @@ interface Enrollment {
 Os repositorios devem ser interfaces. O caso de uso nao pode depender do
 `Map` usado pelo adaptador em memoria.
 
-## 6. Eventos e transporte
+## 10. Eventos e transporte
 
 Contrato minimo para dominio e interacao realtime:
 
@@ -126,7 +253,7 @@ Evolucao planejada:
 - substituir o barramento local por broker;
 - adicionar retentativa, dead-letter e idempotencia persistente.
 
-## 7. Autenticacao e autorizacao
+## 11. Autenticacao e autorizacao
 
 - A autenticacao demo resolve o usuario por `x-demo-user`.
 - O middleware de identidade responde `401` quando nao ha sessao valida.
@@ -137,7 +264,7 @@ Evolucao planejada:
 
 Este mecanismo nao e adequado para producao; ele existe para validar o fluxo.
 
-## 8. Testes e verificacao
+## 12. Testes e verificacao
 
 Ordem de validacao de cada fatia:
 
@@ -157,13 +284,13 @@ npm run start:dev
 Antes da entrega, o TypeScript deve ser compilado sem erros e o fluxo
 instituicao -> estudante -> evento deve possuir um teste automatizado.
 
-## 9. Observabilidade minima
+## 13. Observabilidade minima
 
 Registrar em desenvolvimento: identificador do caso de uso, tipo do evento,
 data de ocorrencia, resultado do consumidor e erro de validacao. Nao registrar
 dados pessoais completos nos logs.
 
-## 10. Riscos tecnicos e limites
+## 14. Riscos tecnicos e limites
 
 - Memoria local nao representa concorrencia, reinicio ou escalabilidade.
 - Eventos em memoria nao sobrevivem a falhas.
@@ -176,7 +303,7 @@ dados pessoais completos nos logs.
 - Dados reais devem ser anonimizados ou substituidos por dados ficticios no
 	ambiente local.
 
-## 11. Plano de dois dias
+## 15. Plano de dois dias
 
 ### Dia 1 - backend e fatia vertical
 
@@ -200,7 +327,7 @@ dados pessoais completos nos logs.
 Cada fatia deve terminar com teste executado e diff revisado. Qualquer
 requisito novo deve ser registrado nas specs antes de ampliar a implementacao.
 
-## 12. Definicao de pronto do prototipo
+## 16. Definicao de pronto do prototipo
 
 Esta definicao descreve o alvo futuro do prototipo e nao autoriza seu inicio.
 Nenhuma implementacao, instalacao de dependencia ou alteracao de configuracao
