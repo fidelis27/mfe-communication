@@ -36,6 +36,8 @@ Interface MFE
 - `@originjs/vite-plugin-federation` para Module Federation no host e nos
 	remotes, aproveitando a dependência já declarada no workspace frontend.
 - WebSocket como transporte realtime do protótipo.
+- `window.bus`/`EventTarget` somente para comunicação local entre MFEs na mesma
+	página; não substitui o canal backend.
 
 Module Federation real e obrigatorio no MVP. O host deve carregar remotes por
 manifesto ou URL configuravel, compartilhar React como singleton e validar o
@@ -246,6 +248,11 @@ devem ser tolerantes a eventos repetidos e ignorar tipos desconhecidos. Um
 adaptador WebSocket distribui eventos ao host e aos MFEs. Acoes de modal usam
 eventos de sucesso/erro correlacionados; o
 consumidor nao deve fechar o modal por mera tentativa de envio.
+
+WebSocket permanece obrigatório no MVP porque Activity, Dashboard e clientes
+simultâneos precisam receber eventos originados no backend. O barramento do
+browser complementa esse canal para coordenar apenas os MFEs carregados na
+mesma página.
 
 Evolucao planejada:
 

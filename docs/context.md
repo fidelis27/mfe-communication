@@ -271,15 +271,19 @@ evolução.
 14. O MFE de Instituição, o MFE de Estudante e o Host são prioridade P0. MFE
 	Activity e MFE Dashboard são P1 e devem consumir pelo menos os eventos do
 	fluxo principal. MFE Admin fica com tela mínima de demonstração de papéis.
-15. O transporte realtime escolhido para o MVP é WebSocket. O barramento em
-	memória publica no backend e o adaptador WebSocket distribui os eventos aos
-	MFEs. Não haverá broker externo nesta etapa.
-16. O evento de sucesso só será emitido depois de a API concluir persistência e
+15. O transporte realtime escolhido para o MVP é WebSocket e será mantido. O
+	barramento em memória publica no backend e o adaptador WebSocket distribui os
+	eventos aos MFEs. Não haverá broker externo nesta etapa.
+16. O `window.bus`/`EventTarget` será usado somente para comunicação local entre
+	MFEs na mesma página, como fechamento de modal e feedback de sucesso. O
+	WebSocket será usado para eventos emitidos pelo backend e sincronização entre
+	clientes.
+17. O evento de sucesso só será emitido depois de a API concluir persistência e
 	publicação do evento de domínio. O consumidor fecha modal apenas quando o
 	`correlationId` corresponder à operação iniciada; erro mantém o modal aberto.
-17. A fonte dos dados institucionais será cadastro manual com exemplos
+18. A fonte dos dados institucionais será cadastro manual com exemplos
 	públicos de USP, UNESP e Fatec. Não haverá scraping nem integração externa.
-18. A criptografia de dados em repouso é requisito para banco persistente; como
+19. A criptografia de dados em repouso é requisito para banco persistente; como
 	o MVP usa memória, o protótipo demonstrará mascaramento e não persistirá
 	dados pessoais reais.
 

@@ -153,7 +153,10 @@ tempo real e permitir que o consumidor reaja sem importar codigo do MFE.
 - Instituicao, Estudante e Host sao P0; Activity e Dashboard sao P1; Admin
 	tem apenas o necessario para demonstrar papeis.
 - Module Federation real e obrigatorio para validar a arquitetura MFE.
-- WebSocket e o transporte realtime escolhido para o MVP.
+- WebSocket e o transporte realtime obrigatório do MVP para eventos do backend
+	e sincronizacao entre clientes.
+- `window.bus`/`EventTarget` fica restrito a eventos locais entre MFEs na mesma
+	pagina, como fechamento de modal e feedback de sucesso.
 - Eventos de dominio serao produzidos pelo backend e eventos de interacao
 	serao transmitidos em tempo real ao host e aos MFEs interessados.
 - Os dados de demonstracao serao institucionais publicos e estudantes
