@@ -2,9 +2,9 @@
 
 ## 1. Objetivo tecnico
 
-Entregar um prototipo verificavel em Node.js, React e TypeScript, mantendo
-contratos independentes da implementacao para permitir uma futura migracao do
-backend para Java.
+Entregar um prototipo verificavel em Go, React e TypeScript, mantendo
+contratos independentes da implementacao para permitir evolucao futura do
+backend sem alterar os MFEs.
 
 ## 2. Fronteiras de responsabilidade
 
@@ -13,13 +13,13 @@ Interface MFE
 	-> cliente HTTP / adaptador de eventos
 	-> caso de uso e autorizacao
 	-> repositorio e barramento de eventos
-	-> persistencia em memoria no MVP
+	-> persistencia SQLite
 ```
 
 - **Host:** navegacao, composicao e ciclo de vida dos MFEs.
 - **MFE:** tela, estado visual e interacao do seu bounded context.
-- **Backend:** autenticacao demonstrativa, autorizacao, casos de uso,
-	persistencia autoritativa e publicacao de eventos.
+- **Backend Go:** autenticacao demonstrativa, autorizacao, casos de uso,
+	persistencia autoritativa em SQLite e publicacao de eventos.
 - **Shared:** tipos e esquemas de contratos; nao deve conter regra de negocio
 	de outro dominio.
 - **Activity/Dashboard:** consumidores e projecoes; nao alteram a fonte
@@ -27,12 +27,12 @@ Interface MFE
 
 ## 3. Stack e ambiente
 
-- TypeScript 5 e Node.js.
-- Express 4 para API HTTP.
+- Go para API HTTP, WebSocket e acesso SQLite.
 - React para os MFEs.
 - Vitest para testes.
 - Monorepo npm com workspaces em `packages/*`.
-- Repositorios em memoria para reduzir tempo de setup.
+- SQLite para persistencia do prototipo.
+- Nenhum repositorio de negocio em memoria; testes de integracao usam SQLite.
 - `@originjs/vite-plugin-federation` para Module Federation no host e nos
 	remotes, aproveitando a dependência já declarada no workspace frontend.
 - WebSocket como transporte realtime do protótipo.
@@ -103,14 +103,14 @@ uma necessidade concreta de teste, substituicao ou separacao de dominio.
 ### Clean Architecture
 
 Usar Clean Architecture somente onde reduzir acoplamento e facilitar a
-evolucao para Java ou banco persistente:
+evolucao do backend Go e a substituicao futura do SQLite:
 
 ```text
 Interface React/HTTP/WebSocket
 	-> casos de uso
 	-> entidades e regras de dominio
 	-> portas (repositorios, eventos, identidade)
-	-> adaptadores (Express, memoria, PostgreSQL, WebSocket)
+	-> adaptadores (Go HTTP, SQLite, WebSocket)
 ```
 
 As dependencias apontam para dentro. Entidades e casos de uso nao importam
@@ -223,8 +223,8 @@ interface Enrollment {
 }
 ```
 
-Os repositorios devem ser interfaces. O caso de uso nao pode depender do
-`Map` usado pelo adaptador em memoria.
+Os repositorios devem ser interfaces. O caso de uso nao pode depender de SQL,
+SQLite ou detalhes do driver.
 
 ## 10. Eventos e transporte
 
@@ -276,16 +276,18 @@ Este mecanismo nao e adequado para producao; ele existe para validar o fluxo.
 Ordem de validacao de cada fatia:
 
 1. Teste unitario do caso de uso ou politica.
-2. Teste de integracao da rota com repositorio em memoria.
+2. Teste de integracao da rota com banco SQLite de teste.
 3. Teste do evento publicado e do consumidor correspondente.
 4. Verificacao manual dos estados `loading`, `empty`, `success` e `error`.
 5. Revisao do diff contra `context.md` e `spec-functional.md`.
 
-Comandos atuais:
+Comandos planejados:
 
 ```bash
 npm test
-npm run start:dev
+npm run build
+go test ./...
+go run ./cmd/server
 ```
 
 Antes da entrega, o TypeScript deve ser compilado sem erros e o fluxo
@@ -310,26 +312,32 @@ dados pessoais completos nos logs.
 - Dados reais devem ser anonimizados ou substituidos por dados ficticios no
 	ambiente local.
 
-## 15. Plano de dois dias
+## 15. Plano de tres dias
 
-### Dia 1 - backend e fatia vertical
+### Dia 1 - backend Go e SQLite
 
-1. Consolidar tipos, repositorios, casos de uso e testes de dominio.
+1. Consolidar contratos, migrations SQLite, repositorios, casos de uso e
+	testes de dominio.
 2. Expor leitura, criacao, edicao e inativacao de instituicao.
 3. Expor cadastro e listagem de estudante com autorizacao.
 4. Publicar eventos apos escrita bem-sucedida.
 5. Cobrir o fluxo com testes unitarios e de integracao.
 
-### Dia 2 - frontend, consumidores e observabilidade
+### Dia 2 - frontend e integracao
 
-1. Configurar Module Federation real e integrar o host aos MFEs prioritarios.
+1. Configurar Module Federation real e integrar o host a todos os MFEs.
 2. Configurar WebSocket e validar eventos realtime correlacionados.
-3. Implementar Activity e Dashboard como consumidores.
+3. Implementar Institution, Student, Admin, Activity e Dashboard.
 4. Adicionar estados de interface e tratamento de erros.
-5. Adicionar `pino`, `pino-http`, `correlationId` e `prom-client`, se o custo
-	de instalacao permanecer compatível com o tempo restante.
-6. Validar acessibilidade, fluxo ponta a ponta e regressao.
-7. Revisar diff, riscos, evidencias e limites para producao.
+### Dia 3 - qualidade, seguranca e deploy
+
+1. Adicionar logs estruturados, `correlationId` e métricas básicas.
+2. Adicionar `pino`, `pino-http` e `prom-client` no frontend/backend aplicável.
+3. Validar acessibilidade, fluxo ponta a ponta e regressao.
+4. Configurar builds e deploy da API Go e de todos os remotes.
+5. Revisar diff, riscos, evidencias e limites para producao.
+
+<!-- O bloco acima substitui a sequencia anterior de observabilidade. -->
 
 Cada fatia deve terminar com teste executado e diff revisado. Qualquer
 requisito novo deve ser registrado nas specs antes de ampliar a implementacao.
@@ -351,3 +359,19 @@ O prototipo sera considerado completo quando:
 
 Completo, neste contexto, significa completo para demonstracao e validacao do
 MVP. Nao significa pronto para operar em producao.
+
+## 17. Decisao final vigente
+
+Este bloco prevalece sobre qualquer referencia anterior conflitante:
+
+- Backend: Go.
+- Persistencia: SQLite para todos os dados de negocio, com migrations e
+	transacoes.
+- Repositorios em memoria: proibidos para dados de negocio; permitidos apenas
+	em testes de componentes sem persistencia.
+- O arquivo SQLite deve estar em volume persistente nos ambientes publicados.
+- Transferencia deve alterar vinculo de origem e destino na mesma transacao.
+- WebSocket e Module Federation real sao obrigatorios no prototipo.
+- O plano de entrega tem tres dias.
+- Antes da implementacao, criar o schema SQLite, os contratos compartilhados,
+	o contrato WebSocket e os testes de persistencia.

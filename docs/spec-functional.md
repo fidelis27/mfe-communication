@@ -178,3 +178,17 @@ demonstracao principal.
 Esta especificacao e apenas documental nesta etapa. A implementacao fica
 bloqueada ate a aprovacao explicita do contexto, desta especificacao funcional
 e da especificacao tecnica.
+
+## 12. Decisao final vigente
+
+Este bloco prevalece sobre qualquer referencia anterior conflitante:
+
+- O prototipo cobre todos os MFEs previstos: Host, Institution, Student, Admin,
+	Activity e Dashboard.
+- O backend Go persiste todos os dados funcionais em SQLite.
+- Nenhum repositorio de negocio em memoria e permitido.
+- Transferencia, trancamento e reabertura preservam historico.
+- WebSocket distribui eventos do backend; `window.bus`/`EventTarget` cuida
+	apenas da comunicacao local entre MFEs na mesma pagina.
+- O prazo de execucao e de tres dias.
+- A implementacao permanece bloqueada ate aprovacao explicita das specs.

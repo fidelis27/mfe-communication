@@ -9,18 +9,11 @@ negocio, simplicidade, verificabilidade e evolucao segura.
 
 ### Comportamento esperado
 
-- Leia o contexto, as specs e o codigo existente antes de propor mudancas.
 - Diferencie fatos observados, decisoes aprovadas, hipoteses e perguntas em
-	aberto.
-- Faca perguntas objetivas quando houver ambiguidade que altere o escopo,
 	contrato, seguranca ou criterio de aceite.
 - Nao implemente codigo, instale dependencias ou altere configuracoes antes da
-	aprovacao explicita das tres especificacoes.
 - Depois da aprovacao, implemente uma fatia vertical por vez, mantendo as
-	mudancas pequenas e rastreaveis.
-- Prefira as convencoes e abstracoes ja existentes no repositorio; evite
 	refatoracoes nao relacionadas ao objetivo.
-- Explique trade-offs entre velocidade do prototipo, qualidade, seguranca e
 	evolucao para producao.
 - Para cada mudanca aprovada, indique o requisito atendido e a validacao
 	executada.
@@ -31,14 +24,7 @@ negocio, simplicidade, verificabilidade e evolucao segura.
 
 ### Ordem de trabalho
 
-1. Entender o problema e identificar ambiguidades.
-2. Registrar contexto, requisitos, estados, criterios de aceite e riscos.
-3. Revisar e aprovar as specs.
-4. Planejar arquivos, contratos, testes e fatias de implementacao.
-5. Implementar somente apos a aprovacao.
-6. Testar, revisar o diff e atualizar a documentacao quando uma decisao mudar.
 
-## 1. Resumo executivo
 
 Construir um protótipo de um sistema de secretaria escolar para gestão de
 instituições de ensino e estudantes. O produto será organizado como um
@@ -47,16 +33,9 @@ de eventos.
 
 O objetivo do protótipo é validar a separação de responsabilidades, o fluxo
 principal de secretaria e os contratos de integração entre MFEs. A solução
-deve ser simples o suficiente para ser demonstrada em dois dias de trabalho
-(aproximadamente 16 horas), mas manter limites de domínio que possam evoluir
-para um produto real.
-
-## 2. Público e problema
 
 ### Público primário
 
-- Secretários e operadores de uma instituição de ensino.
-- Administradores responsáveis por usuários, grupos e permissões.
 
 ### Problema
 
@@ -154,16 +133,16 @@ distribui os eventos aos MFEs. O MVP deve demonstrar deduplicação por
 `eventId`; broker durável, retentativa e idempotência persistente ficam para a
 evolução.
 
-## 7. MVP para dois dias
+## 7. Escopo completo do protótipo em três dias
 
 ### Incluído
 
 - Shell navegável com entradas para Instituições, Estudantes, Administração,
 	Atividades e Dashboard.
-- CRUD mínimo de instituições usando persistência em memória.
-- Cadastro e listagem de estudantes vinculados a uma instituição.
-- Trancamento, reabertura e transferência com histórico de vínculos.
-- Module Federation real com pelo menos os MFEs do fluxo principal.
+- CRUD completo de instituições e unidades com persistência SQLite.
+- Cadastro, consulta, edição e listagem de estudantes persistidos no SQLite.
+- Trancamento, reabertura e transferência com histórico persistido.
+- Module Federation real em todos os MFEs previstos.
 - Autenticação demonstrativa e autorização para leitura/edição.
 - Barramento simples de eventos no backend.
 - Feed de atividades consumindo eventos de instituição e estudante.
@@ -172,16 +151,11 @@ evolução.
 - Logs estruturados, `correlationId` e métricas básicas de requisições e
 	eventos.
 
-### Fora do escopo
+### Limites operacionais
 
-- Banco de dados definitivo, migrações e alta disponibilidade.
-- Login real, OAuth, gestão completa de identidade e recuperação de senha.
-- Broker distribuído, garantia de entrega exatamente uma vez e processamento
-	assíncrono em produção.
-- Integração real com sistemas acadêmicos externos.
-- Relatórios avançados, documentos, notas ou financeiro.
-- Deploy independente completo e pipeline de CI/CD para cada MFE.
-- Migração imediata do backend para Java.
+Todos os módulos e fluxos funcionais documentados fazem parte do protótipo.
+Alta disponibilidade, garantia exactly-once, identidade de produção e
+integrações externas exigem endurecimento posterior antes de uso real.
 
 ## 8. Estados relevantes
 
@@ -318,10 +292,11 @@ dados de estudantes fictícios ou anonimizados.
 - Tentar entregar cinco MFEs completos no prazo pode deixar o fluxo principal
 	sem acabamento.
 - Eventos sem versionamento e idempotência dificultam a evolução futura.
-- Persistência em memória pode esconder problemas de concorrência e consistência.
+- SQLite exige transações, migrations e volume persistente para evitar perda de
+	dados.
 - O uso de dados reais pode gerar risco de privacidade e conformidade.
 - Module Federation real aumenta a complexidade inicial e pode ameaçar o
-	prazo de dois dias.
+	prazo de três dias.
 - Eventos realtime exigem reconexão, ordenação e tratamento de mensagens
 	duplicadas.
 - Transferências e trancamentos introduzem histórico e regras de consistência.
@@ -333,15 +308,15 @@ dados de estudantes fictícios ou anonimizados.
 - **Composição:** host com Module Federation real, com remotes independentes e
 	React compartilhado como singleton. Composição por rotas deixa de ser a
 	opção do MVP, podendo existir apenas como fallback de desenvolvimento.
-- **Persistência:** repositórios em memória no protótipo; API de repositório
-	estável para trocar por banco relacional depois.
+- **Persistência:** SQLite para todos os dados do produto; memória apenas para
+	conexões e buffers técnicos temporários.
 - **Eventos realtime:** WebSocket ou canal equivalente para notificar MFEs;
 	barramento em memória pode permanecer no backend apenas como implementação
 	inicial do produtor.
 - **Dados pessoais:** mascaramento na interface e nos logs; criptografia em
 	repouso deve ser obrigatória quando a persistência deixar de ser em memória.
-- **Backend:** Node.js para velocidade de prototipação; contratos HTTP/eventos
-	independentes da implementação para permitir evolução para Java.
+- **Backend:** Go para API HTTP e WebSocket; contratos independentes da
+	implementação.
 
 ## 12. Diretriz de execução
 
@@ -352,16 +327,16 @@ atividade/dashboard.
 Os demais MFEs devem ter contratos e estados mínimos, mas não precisam receber
 funcionalidades fora do fluxo demonstrável do MVP.
 
-## 13. Plano de dois dias
+## 13. Plano de três dias
 
 > **Gate de aprovação:** este plano não autoriza implementação. Nenhum código,
 > dependência ou configuração nova deve ser criado até que `context.md`,
 > `spec-functional.md` e `spec-technical.md` sejam revisados e aprovados.
 
-### Dia 1 - fundacao e fatia vertical
+### Dia 1 - fundacao e dominio
 
 - Fechar decisões de negócio e contratos.
-- Consolidar tipos, repositórios e casos de uso.
+- Consolidar contratos, schema/migrations SQLite, repositórios e casos de uso.
 - Implementar instituições e estudantes no backend.
 - Implementar autenticação demonstrativa e autorização nas rotas.
 - Implementar o barramento em memória.
@@ -371,15 +346,21 @@ funcionalidades fora do fluxo demonstrável do MVP.
 **Entrega do dia:** é possível criar uma instituição e um estudante por API,
 com permissão validada e evento publicado.
 
-### Dia 2 - experiência, consumidores e operação
+### Dia 2 - MFEs e integracao
 
 - Configurar Module Federation real, integrar o host e carregar os MFEs
-	prioritários como remotes independentes.
-- Implementar Activity e Dashboard como consumidores.
+	-	previstos como remotes independentes.
+	- Implementar Institution, Student, Admin, Activity e Dashboard.
+	- Integrar WebSocket e o barramento local do browser.
+	- Implementar transferência, trancamento e reabertura.
+
+	### Dia 3 - qualidade, seguranca e entrega
+
 - Tratar estados de carregamento, vazio, sucesso e erro.
 - Adicionar logs estruturados, `correlationId` e métricas básicas.
-- Executar testes, revisar acessibilidade e validar o fluxo ponta a ponta.
-- Registrar limitações, evidências e próximos passos.
+	- Executar testes, revisar acessibilidade e validar o fluxo ponta a ponta.
+	- Configurar builds, deploy, reconexão WebSocket e rollback.
+	- Registrar limitações, evidências e próximos passos.
 
 **Entrega final:** protótipo navegável e demonstrável, com fluxo completo e
 evidência automatizada das regras principais.
@@ -393,3 +374,21 @@ a publicação independente de todos os remotes fiquem para uma etapa posterior.
 **Status do PO:** as ambiguidades de produto desta rodada estão resolvidas.
 As três especificações estão prontas para revisão e aprovação; a
 implementação continua bloqueada até essa aprovação explícita.
+
+## 14. Decisão final vigente
+
+Este bloco prevalece sobre qualquer referência anterior conflitante neste
+documento:
+
+- Prazo do protótipo: três dias de trabalho.
+- Backend oficial: Go, com API HTTP e WebSocket.
+- Banco oficial: SQLite.
+- Todos os dados do produto devem ser persistidos em SQLite: instituições,
+	unidades, cursos, estudantes, vínculos, usuários, grupos, permissões,
+	eventos, atividades e projeções do dashboard.
+- Memória só pode ser usada para conexões, sessões técnicas, cache transitório
+	e buffers do WebSocket; nunca como fonte de verdade ou repositório de negócio.
+- Transferências devem preservar histórico e executar origem/destino em uma
+	transação SQLite.
+- Module Federation real e WebSocket fazem parte do protótipo.
+- A implementação continua bloqueada até a aprovação explícita das specs.

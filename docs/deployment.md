@@ -13,11 +13,11 @@ Monorepo
 ├── MFE Activity            -> remote estatico
 ├── MFE Dashboard           -> remote estatico
 ├── MFE Admin               -> remote estatico
-└── Server Node.js          -> web service com API e WebSocket
+└── Server Go               -> web service com API, WebSocket e SQLite
 ```
 
 Nao sera criado um backend separado por MFE no MVP. O backend sera um servico
-Node.js modular, com fronteiras internas para instituicoes, estudantes,
+Go modular, com fronteiras internas para instituicoes, estudantes,
 vinculos, autorizacao, atividades e dashboard. A separacao em servicos
 independentes fica para uma etapa posterior.
 
@@ -27,7 +27,7 @@ independentes fica para uma etapa posterior.
 
 - Hospedar Host e remotes React/Vite como sites estaticos.
 - Carregar remotes por Module Federation usando URLs publicas.
-- Hospedar o backend Express/Node.js como web service.
+- Hospedar o backend Go como web service.
 - Manter WebSocket entre backend, Host e MFEs.
 - Usar um monorepo com varios projetos de deploy.
 - Fazer deploy automatico a partir do GitHub.
@@ -83,14 +83,17 @@ Vercel para reduzir a quantidade de plataformas durante o prototipo.
 
 ### Backend: Render Web Service
 
-Usar um Web Service gratuito para o Node.js/Express:
+Usar um Web Service para Go. O arquivo SQLite deve ficar em volume persistente.
+Um plano gratuito com filesystem efemero serve apenas para demonstracao
+descartavel e nao e armazenamento confiavel:
 
 ```text
 https://secretaria-api.onrender.com
 ```
 
-O Render suporta Node.js, HTTPS, WebSocket e deploy por branch do GitHub. O
-servidor deve escutar `process.env.PORT` em `0.0.0.0`.
+O servico deve suportar Go, HTTPS, WebSocket e volume persistente. O servidor
+deve escutar `PORT` em `0.0.0.0` e receber `SQLITE_PATH` por variavel de
+ambiente.
 
 Limites relevantes do plano gratuito, conforme a documentacao do Render:
 
@@ -104,18 +107,16 @@ Limites relevantes do plano gratuito, conforme a documentacao do Render:
 - O servico gratuito e adequado para prototipo, teste e estudo, nao para
   producao.
 
-### Banco de dados
+### Banco de dados SQLite
 
-No primeiro prototipo, usar repositorios em memoria. Nao usar dados pessoais
-reais e nao depender de arquivos locais.
+SQLite sera o banco oficial do prototipo:
 
-Quando houver persistencia, escolher um PostgreSQL gerenciado com camada
- gratuita, validando antes os limites atuais. O banco deve ter backup, controle
- de acesso, criptografia em repouso e politica de retencao antes de receber
- dados pessoais.
+```text
+SQLITE_PATH=/data/secretaria.db
+```
 
-O PostgreSQL gratuito do Render nao deve ser tratado como armazenamento
-permanente: a documentacao informa limite de 30 dias para a instancia gratuita.
+O diretorio `/data` precisa estar montado em volume persistente no deploy.
+Sem esse volume, restart, redeploy ou sleep pode apagar o banco.
 
 ## 4. Module Federation em producao de prototipo
 
@@ -154,7 +155,7 @@ Requisitos de deploy:
 - Evento de erro mantem o modal aberto e exibe mensagem segura.
 
 Nao usar Vercel Functions como servidor principal de WebSocket nesta etapa. O
-backend precisa de um processo Node.js com conexao persistente; Render Web
+backend precisa de um processo Go com conexao persistente; Render Web
 Service atende melhor ao requisito do prototipo, apesar do sleep do plano free.
 
 ## 6. Monorepo e configuracao dos servicos
@@ -206,7 +207,7 @@ informacoes pessoais reais de estudantes.
 1. Transformar o Host em aplicacao React/Vite.
 2. Configurar Module Federation no Host e no MFE Student.
 3. Provar o carregamento de um remote publicado.
-4. Criar build de producao para o backend Node.js.
+4. Criar build de producao para o backend Go.
 5. Implementar API e WebSocket realtime.
 6. Configurar CORS, variaveis de ambiente e reconexao.
 7. Publicar Host e remotes em ambientes de preview.
@@ -216,14 +217,13 @@ informacoes pessoais reais de estudantes.
 
 ## 9. Decisao final
 
-Para o MVP de dois dias:
+Para o prototipo completo de tres dias:
 
 ```text
 Monorepo GitHub
   -> Vercel para Host e remotes React/Vite
-  -> Render Web Service para Node.js + Express + WebSocket
-  -> Repositorios em memoria
-  -> PostgreSQL somente em etapa posterior
+  -> Web Service Go + WebSocket + volume persistente
+  -> SQLite em `/data/secretaria.db`
 ```
 
 Esta decisao atende o conceito de MFE e eventos realtime com custo zero de
@@ -238,3 +238,14 @@ gratuito.
 - Vercel Deployments: https://vercel.com/docs/deployments/overview
 - Vercel Functions Limits: https://vercel.com/docs/functions/limitations
 - Cloudflare Pages: https://pages.cloudflare.com/
+
+## 10. Decisao final vigente
+
+- Backend oficial: Go com API HTTP e WebSocket.
+- Banco oficial: SQLite.
+- Caminho do banco: `SQLITE_PATH=/data/secretaria.db`.
+- `/data` deve ser um volume persistente; filesystem efemero nao e aceitavel.
+- Todos os dados de negocio devem sobreviver a reinicio e redeploy.
+- O plano gratuito pode ser usado somente se oferecer persistencia real; caso
+  contrario, o ambiente e apenas uma demonstracao descartavel.
+- Frontends continuam como remotes independentes via Module Federation.
