@@ -1,0 +1,49 @@
+:root {
+  font-family: Georgia, "Times New Roman", serif;
+  color: #18332f;
+  background: #f4f0e8;
+  font-synthesis: none;
+}
+
+* { box-sizing: border-box; }
+
+body { margin: 0; min-width: 320px; }
+
+.student-shell {
+  min-height: 100vh;
+  padding: 64px clamp(24px, 7vw, 112px);
+  background: radial-gradient(circle at 88% 12%, #f7dca5 0, transparent 28%), #f4f0e8;
+}
+
+.student-hero { max-width: 760px; }
+.eyebrow { color: #bd633f; font: 700 12px/1.2 Arial, sans-serif; letter-spacing: 1.8px; text-transform: uppercase; }
+h1 { font-size: clamp(42px, 7vw, 84px); font-weight: 400; line-height: .98; margin: 18px 0; max-width: 760px; }
+.lede { color: #55706a; font: 18px/1.5 Arial, sans-serif; max-width: 520px; }
+.connection { color: #55706a; display: inline-flex; align-items: center; gap: 8px; font: 12px Arial, sans-serif; margin-top: 18px; }
+.connection i { width: 8px; height: 8px; border-radius: 50%; background: #4d9b75; }
+.student-grid { display: grid; grid-template-columns: minmax(260px, 340px) minmax(320px, 1fr); gap: 56px; margin-top: 72px; max-width: 1080px; }
+.student-form, .student-list { border-top: 1px solid #b5bcb0; padding-top: 20px; }
+.section-heading { align-items: center; display: flex; gap: 12px; margin-bottom: 28px; }
+.section-heading h2 { font-size: 22px; font-weight: 400; margin: 0; }
+.section-heading strong { color: #bd633f; font: 700 13px Arial, sans-serif; margin-left: auto; }
+.section-number { color: #bd633f; font: 700 11px Arial, sans-serif; }
+label { color: #55706a; display: grid; font: 12px Arial, sans-serif; gap: 8px; margin-top: 22px; }
+input { background: transparent; border: 0; border-bottom: 1px solid #9daea5; color: #18332f; font: 18px Georgia, serif; outline: 0; padding: 10px 0; width: 100%; }
+input:focus { border-color: #bd633f; }
+button { background: #18332f; border: 0; color: #f4f0e8; cursor: pointer; font: 700 13px Arial, sans-serif; margin-top: 32px; padding: 15px 18px; width: 100%; }
+button span { float: right; font-size: 20px; line-height: 11px; }
+.form-message { font: 12px Arial, sans-serif; margin-top: 14px; }
+.form-message.error, .error-state { color: #a74635; }
+.empty-state { color: #71817a; font: 15px Arial, sans-serif; padding: 28px 0; }
+.student-row { align-items: center; border-bottom: 1px solid #d2d4c9; display: flex; gap: 14px; padding: 15px 0; }
+.avatar { align-items: center; background: #d98762; border-radius: 50%; color: #fff8ed; display: flex; flex: 0 0 38px; font: 18px Georgia, serif; height: 38px; justify-content: center; }
+.student-row h3 { font-size: 17px; font-weight: 400; margin: 0 0 4px; }
+.student-row p { color: #71817a; font: 11px Arial, sans-serif; margin: 0; }
+.status { color: #4d9b75; font: 10px Arial, sans-serif; margin-left: auto; text-transform: uppercase; }
+
+@media (max-width: 720px) {
+  .student-shell { padding: 40px 22px; }
+  h1 { font-size: 48px; }
+  .student-grid { display: block; margin-top: 48px; }
+  .student-list { margin-top: 56px; }
+}
