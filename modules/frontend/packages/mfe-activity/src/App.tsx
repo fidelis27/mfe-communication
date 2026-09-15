@@ -29,23 +29,47 @@ export default function App() {
   );
 
   useEffect(() => {
-    const socket = new WebSocket(socketUrl);
-    socket.onopen = () => setConnection("connected");
-    socket.onclose = () => setConnection("offline");
-    socket.onerror = () => setConnection("offline");
-    socket.onmessage = (message) => {
-      try {
-        const event = JSON.parse(message.data) as DomainEvent;
-        setEvents((current) =>
-          current.some((item) => item.eventId === event.eventId)
-            ? current
-            : [event, ...current].slice(0, 30),
-        );
-      } catch {
+    let stopped = false;
+    let socket: WebSocket | undefined;
+    let retryTimer: number | undefined;
+    let retryAttempt = 0;
+
+    const connect = () => {
+      if (stopped) return;
+      setConnection(retryAttempt === 0 ? "connecting" : "offline");
+      socket = new WebSocket(socketUrl);
+      socket.onopen = () => {
+        retryAttempt = 0;
+        setConnection("connected");
+      };
+      socket.onclose = () => {
+        if (stopped) return;
         setConnection("offline");
-      }
+        const delay = Math.min(1000 * 2 ** retryAttempt, 10000);
+        retryAttempt += 1;
+        retryTimer = window.setTimeout(connect, delay);
+      };
+      socket.onerror = () => socket?.close();
+      socket.onmessage = (message) => {
+        try {
+          const event = JSON.parse(message.data) as DomainEvent;
+          setEvents((current) =>
+            current.some((item) => item.eventId === event.eventId)
+              ? current
+              : [event, ...current].slice(0, 30),
+          );
+        } catch {
+          socket?.close();
+        }
+      };
     };
-    return () => socket.close();
+
+    connect();
+    return () => {
+      stopped = true;
+      if (retryTimer !== undefined) window.clearTimeout(retryTimer);
+      socket?.close();
+    };
   }, []);
 
   return (

@@ -23,6 +23,9 @@ export default function App() {
   const [institutionId, setInstitutionId] = useState("transfer-origin");
   const [state, setState] = useState<"loading" | "empty" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
+  const [connection, setConnection] = useState<"connecting" | "connected" | "offline">(
+    "connecting",
+  );
 
   useEffect(() => {
     let active = true;
@@ -42,21 +45,48 @@ export default function App() {
         setState("error");
       });
 
-    const socket = new WebSocket(websocketUrl);
-    socket.onmessage = (event) => {
-      const domainEvent = JSON.parse(event.data) as DomainEvent;
-      if (domainEvent.type !== "STUDENT_CREATED") return;
-      setStudents((current) =>
-        current.some((student) => student.id === domainEvent.payload.id)
-          ? current
-          : [domainEvent.payload, ...current],
-      );
-      setState("success");
+    let stopped = false;
+    let socket: WebSocket | undefined;
+    let retryTimer: number | undefined;
+    let retryAttempt = 0;
+    const connect = () => {
+      if (stopped) return;
+      setConnection(retryAttempt === 0 ? "connecting" : "offline");
+      socket = new WebSocket(websocketUrl);
+      socket.onopen = () => {
+        retryAttempt = 0;
+        setConnection("connected");
+      };
+      socket.onclose = () => {
+        if (stopped) return;
+        setConnection("offline");
+        const delay = Math.min(1000 * 2 ** retryAttempt, 10000);
+        retryAttempt += 1;
+        retryTimer = window.setTimeout(connect, delay);
+      };
+      socket.onerror = () => socket?.close();
+      socket.onmessage = (event) => {
+        try {
+          const domainEvent = JSON.parse(event.data) as DomainEvent;
+          if (domainEvent.type !== "STUDENT_CREATED") return;
+          setStudents((current) =>
+            current.some((student) => student.id === domainEvent.payload.id)
+              ? current
+              : [domainEvent.payload, ...current],
+          );
+          setState("success");
+        } catch {
+          socket?.close();
+        }
+      };
     };
+    connect();
 
     return () => {
       active = false;
-      socket.close();
+      stopped = true;
+      if (retryTimer !== undefined) window.clearTimeout(retryTimer);
+      socket?.close();
     };
   }, []);
 
@@ -91,7 +121,13 @@ export default function App() {
           Cadastre estudantes e acompanhe as alterações persistidas em tempo real.
         </p>
         <span className="connection">
-          <i /> API conectada em {apiUrl}
+          <i />{" "}
+          {connection === "connected"
+            ? "Eventos conectados"
+            : connection === "connecting"
+              ? "Conectando eventos"
+              : "Eventos offline"}{" "}
+          · {apiUrl}
         </span>
       </section>
 
