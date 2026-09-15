@@ -148,6 +148,24 @@ button span {
 .error-state {
   color: #a74635;
 }
+.empty-state.error-state {
+  align-items: flex-start;
+  display: grid;
+  gap: 14px;
+}
+.empty-state.error-state p {
+  margin: 0;
+}
+.empty-state.error-state button {
+  background: #315c5a;
+  margin-top: 0;
+  max-width: 190px;
+  padding: 12px 16px;
+}
+.empty-state.error-state button:focus-visible {
+  outline: 3px solid #bd633f;
+  outline-offset: 3px;
+}
 .empty-state {
   color: #71817a;
   font:
