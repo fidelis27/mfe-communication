@@ -102,10 +102,14 @@ $env:DB_NAME="test"
 $env:DB_USER="root"
 $env:DB_PASSWORD=""
 $env:DB_TLS="false"
+$env:CORS_ORIGINS="http://localhost:4173,http://localhost:4174,http://localhost:4175,http://localhost:4176,http://localhost:4178,http://localhost:4179"
 go -C modules/backend run ./cmd/server
 ```
 
 O backend fica em `http://localhost:3333`.
+
+`CORS_ORIGINS` controla quais Hosts/remotes podem chamar a API no navegador.
+Se omitida, a API aceita os ports locais documentados neste guia.
 
 Teste básico:
 
