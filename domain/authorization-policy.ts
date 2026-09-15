@@ -30,7 +30,10 @@ export class AuthorizationPolicy {
     return membership?.role === "admin";
   }
 
-  private async roleInInstitution(userId: string, institutionId: InstitutionId): Promise<"admin" | "member" | null> {
+  private async roleInInstitution(
+    userId: string,
+    institutionId: InstitutionId,
+  ): Promise<"admin" | "member" | null> {
     const memberships = await this.members.findByUserAndInstitution(userId, institutionId);
     if (memberships.some((m) => m.role === "admin")) return "admin";
     if (memberships.length > 0) return "member";

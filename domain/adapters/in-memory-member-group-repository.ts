@@ -8,7 +8,10 @@ export class InMemoryMemberGroupRepository implements MemberGroupRepository {
     this.items = [...initial];
   }
 
-  async findByUserAndInstitution(userId: UserId, institutionId: InstitutionId): Promise<MemberGroup[]> {
+  async findByUserAndInstitution(
+    userId: UserId,
+    institutionId: InstitutionId,
+  ): Promise<MemberGroup[]> {
     return this.items.filter((m) => m.userId === userId && m.groupId.includes(institutionId));
   }
 

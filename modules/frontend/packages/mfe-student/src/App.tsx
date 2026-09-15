@@ -46,9 +46,11 @@ export default function App() {
     socket.onmessage = (event) => {
       const domainEvent = JSON.parse(event.data) as DomainEvent;
       if (domainEvent.type !== "STUDENT_CREATED") return;
-      setStudents((current) => current.some((student) => student.id === domainEvent.payload.id)
-        ? current
-        : [domainEvent.payload, ...current]);
+      setStudents((current) =>
+        current.some((student) => student.id === domainEvent.payload.id)
+          ? current
+          : [domainEvent.payload, ...current],
+      );
       setState("success");
     };
 
@@ -68,7 +70,7 @@ export default function App() {
         body: JSON.stringify({ name, institutionId }),
       });
       if (!response.ok) {
-        const body = await response.json() as { error?: string };
+        const body = (await response.json()) as { error?: string };
         throw new Error(body.error ?? "Não foi possível cadastrar o estudante.");
       }
       setName("");
@@ -85,8 +87,12 @@ export default function App() {
       <section className="student-hero">
         <p className="eyebrow">Secretaria escolar · estudantes</p>
         <h1>Vínculos que acompanham cada trajetória.</h1>
-        <p className="lede">Cadastre estudantes e acompanhe as alterações persistidas em tempo real.</p>
-        <span className="connection"><i /> API conectada em {apiUrl}</span>
+        <p className="lede">
+          Cadastre estudantes e acompanhe as alterações persistidas em tempo real.
+        </p>
+        <span className="connection">
+          <i /> API conectada em {apiUrl}
+        </span>
       </section>
 
       <section className="student-grid">
@@ -97,13 +103,24 @@ export default function App() {
           </div>
           <label>
             Nome completo
-            <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Ex.: Ana Souza" required />
+            <input
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="Ex.: Ana Souza"
+              required
+            />
           </label>
           <label>
             Instituição
-            <input value={institutionId} onChange={(event) => setInstitutionId(event.target.value)} required />
+            <input
+              value={institutionId}
+              onChange={(event) => setInstitutionId(event.target.value)}
+              required
+            />
           </label>
-          <button type="submit">Cadastrar estudante <span>→</span></button>
+          <button type="submit">
+            Cadastrar estudante <span>→</span>
+          </button>
           {message && <p className={`form-message ${state}`}>{message}</p>}
         </form>
 

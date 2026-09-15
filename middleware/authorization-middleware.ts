@@ -18,7 +18,7 @@ export function requireInstitutionEditPermission(policy: AuthorizationPolicy) {
 
 export function requireStudentEditPermission(
   policy: AuthorizationPolicy,
-  loadStudent: (studentId: string) => Promise<{ institutionId: InstitutionId } | null>
+  loadStudent: (studentId: string) => Promise<{ institutionId: InstitutionId } | null>,
 ) {
   return async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user;

@@ -10,9 +10,7 @@ const mfes = [
 ];
 
 app.get("/", (_req, res) => {
-  const links = mfes
-    .map((m) => `<li><a href="/mfe/${m.path}">${m.name}</a></li>`)
-    .join("");
+  const links = mfes.map((m) => `<li><a href="/mfe/${m.path}">${m.name}</a></li>`).join("");
   res.send(`
     <html>
       <body>
