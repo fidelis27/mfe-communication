@@ -2,6 +2,13 @@ import { FormEvent, useEffect, useState } from "react";
 import "./App.css";
 
 type User = { id: string; name: string; email: string; status: string; superAdmin: boolean };
+type Group = { id: string; institutionId: string };
+type Membership = {
+  userId: string;
+  groupId: string;
+  institutionId: string;
+  role: "admin" | "member";
+};
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
 const demoUser = import.meta.env.VITE_DEMO_USER ?? "demo-active";
 
@@ -12,6 +19,16 @@ export default function App() {
   const [superAdmin, setSuperAdmin] = useState(false);
   const [state, setState] = useState<"loading" | "empty" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
+  const [groups, setGroups] = useState<Group[]>([]);
+  const [groupInstitutionId, setGroupInstitutionId] = useState("");
+  const [selectedGroupId, setSelectedGroupId] = useState("");
+  const [memberships, setMemberships] = useState<Membership[]>([]);
+  const [memberUserId, setMemberUserId] = useState("");
+  const [memberRole, setMemberRole] = useState<Membership["role"]>("member");
+  const [groupState, setGroupState] = useState<"loading" | "empty" | "success" | "error">(
+    "loading",
+  );
+  const [groupMessage, setGroupMessage] = useState("");
 
   async function loadUsers() {
     try {
@@ -26,9 +43,45 @@ export default function App() {
     }
   }
 
+  async function loadGroups() {
+    try {
+      const response = await fetch(`${apiUrl}/groups`, { headers: { "x-demo-user": demoUser } });
+      if (!response.ok) throw new Error("Não foi possível carregar os grupos.");
+      const result = (await response.json()) as Group[];
+      setGroups(result);
+      setSelectedGroupId((current) => current || result[0]?.id || "");
+      setGroupState(result.length ? "success" : "empty");
+    } catch (error) {
+      setGroupMessage(error instanceof Error ? error.message : "Erro inesperado.");
+      setGroupState("error");
+    }
+  }
+
+  async function loadMemberships(groupId: string) {
+    if (!groupId) {
+      setMemberships([]);
+      return;
+    }
+    try {
+      const response = await fetch(`${apiUrl}/groups/${groupId}/members`, {
+        headers: { "x-demo-user": demoUser },
+      });
+      if (!response.ok) throw new Error("Não foi possível carregar os membros.");
+      setMemberships((await response.json()) as Membership[]);
+    } catch (error) {
+      setGroupMessage(error instanceof Error ? error.message : "Erro inesperado.");
+      setGroupState("error");
+    }
+  }
+
   useEffect(() => {
     void loadUsers();
+    void loadGroups();
   }, []);
+
+  useEffect(() => {
+    void loadMemberships(selectedGroupId);
+  }, [selectedGroupId]);
 
   async function createUser(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -51,6 +104,53 @@ export default function App() {
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Erro inesperado.");
       setState("error");
+    }
+  }
+
+  async function createGroup(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setGroupMessage("");
+    try {
+      const response = await fetch(`${apiUrl}/groups`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-demo-user": demoUser },
+        body: JSON.stringify({ institutionId: groupInstitutionId }),
+      });
+      if (!response.ok) {
+        const body = (await response.json()) as { error?: string };
+        throw new Error(body.error ?? "Não foi possível criar o grupo.");
+      }
+      const created = (await response.json()) as Group;
+      setGroupInstitutionId("");
+      setSelectedGroupId(created.id);
+      setGroupMessage("Grupo criado.");
+      await loadGroups();
+    } catch (error) {
+      setGroupMessage(error instanceof Error ? error.message : "Erro inesperado.");
+      setGroupState("error");
+    }
+  }
+
+  async function addMember(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selectedGroupId) return;
+    setGroupMessage("");
+    try {
+      const response = await fetch(`${apiUrl}/groups/${selectedGroupId}/members`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-demo-user": demoUser },
+        body: JSON.stringify({ userId: memberUserId, role: memberRole }),
+      });
+      if (!response.ok) {
+        const body = (await response.json()) as { error?: string };
+        throw new Error(body.error ?? "Não foi possível adicionar o membro.");
+      }
+      setMemberUserId("");
+      setGroupMessage("Membro adicionado.");
+      await loadMemberships(selectedGroupId);
+    } catch (error) {
+      setGroupMessage(error instanceof Error ? error.message : "Erro inesperado.");
+      setGroupState("error");
     }
   }
 
@@ -134,6 +234,94 @@ export default function App() {
             </article>
           ))}
         </section>
+      </section>
+      <section className="groups-panel">
+        <div className="section-heading">
+          <span>03</span>
+          <h2>Grupos e memberships</h2>
+          <strong>{groups.length.toString().padStart(2, "0")}</strong>
+        </div>
+        <div className="groups-grid">
+          <form className="group-form" onSubmit={createGroup}>
+            <label htmlFor="group-institution">
+              Nova instituição
+              <input
+                id="group-institution"
+                value={groupInstitutionId}
+                onChange={(event) => setGroupInstitutionId(event.target.value)}
+                placeholder="institution-1"
+                required
+              />
+            </label>
+            <button type="submit">
+              Criar grupo <b>→</b>
+            </button>
+          </form>
+          <div className="group-browser">
+            <label htmlFor="group-select">
+              Grupo selecionado
+              <select
+                id="group-select"
+                value={selectedGroupId}
+                onChange={(event) => setSelectedGroupId(event.target.value)}
+                disabled={!groups.length}
+              >
+                {!groups.length && <option value="">Nenhum grupo</option>}
+                {groups.map((group) => (
+                  <option key={group.id} value={group.id}>
+                    {group.institutionId} · {group.id.slice(0, 8)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {groupState === "loading" && <p className="empty">Carregando grupos...</p>}
+            {groupState === "empty" && <p className="empty">Nenhum grupo cadastrado.</p>}
+            {groupState === "error" && <p className="empty error">{groupMessage}</p>}
+            {selectedGroupId && (
+              <>
+                <form className="member-form" onSubmit={addMember}>
+                  <input
+                    aria-label="ID da pessoa"
+                    value={memberUserId}
+                    onChange={(event) => setMemberUserId(event.target.value)}
+                    placeholder="ID da pessoa"
+                    required
+                  />
+                  <select
+                    aria-label="Papel"
+                    value={memberRole}
+                    onChange={(event) => setMemberRole(event.target.value as Membership["role"])}
+                  >
+                    <option value="member">Membro</option>
+                    <option value="admin">Administrador</option>
+                  </select>
+                  <button type="submit" aria-label="Adicionar membro">
+                    +
+                  </button>
+                </form>
+                {memberships.map((membership) => {
+                  const member = users.find((user) => user.id === membership.userId);
+                  return (
+                    <article
+                      className="member-row"
+                      key={`${membership.userId}-${membership.groupId}`}
+                    >
+                      <span>{member?.name ?? membership.userId}</span>
+                      <span className={membership.role === "admin" ? "role elevated" : "role"}>
+                        {membership.role}
+                      </span>
+                    </article>
+                  );
+                })}
+              </>
+            )}
+          </div>
+        </div>
+        {groupMessage && groupState !== "error" && (
+          <p className="message" role="status">
+            {groupMessage}
+          </p>
+        )}
       </section>
     </main>
   );
