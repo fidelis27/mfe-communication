@@ -22,6 +22,9 @@ export default function App() {
   });
   const [state, setState] = useState<"loading" | "success" | "error">("loading");
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+  const [connection, setConnection] = useState<"connecting" | "connected" | "offline">(
+    "connecting",
+  );
 
   const load = useCallback(async () => {
     try {
@@ -47,9 +50,33 @@ export default function App() {
 
   useEffect(() => {
     void load();
-    const socket = new WebSocket(socketUrl);
-    socket.onmessage = () => void load();
-    return () => socket.close();
+    let stopped = false;
+    let socket: WebSocket | undefined;
+    let retryTimer: number | undefined;
+    let retryAttempt = 0;
+    const connect = () => {
+      if (stopped) return;
+      socket = new WebSocket(socketUrl);
+      socket.onopen = () => {
+        retryAttempt = 0;
+        setConnection("connected");
+      };
+      socket.onclose = () => {
+        if (stopped) return;
+        setConnection("offline");
+        const delay = Math.min(1000 * 2 ** retryAttempt, 10000);
+        retryAttempt += 1;
+        retryTimer = window.setTimeout(connect, delay);
+      };
+      socket.onerror = () => socket?.close();
+      socket.onmessage = () => void load();
+    };
+    connect();
+    return () => {
+      stopped = true;
+      if (retryTimer !== undefined) window.clearTimeout(retryTimer);
+      socket?.close();
+    };
   }, [load]);
 
   const activeEnrollments = data.enrollments.filter(
@@ -72,7 +99,7 @@ export default function App() {
         <span className={`sync ${state}`}>
           <i />{" "}
           {state === "success"
-            ? `Atualizado ${updatedAt?.toLocaleTimeString("pt-BR")}`
+            ? `${connection === "connected" ? "Tempo real" : "Reconectando"} · atualizado ${updatedAt?.toLocaleTimeString("pt-BR")}`
             : state === "loading"
               ? "Carregando"
               : "Falha ao atualizar"}
