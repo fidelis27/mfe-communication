@@ -1,3 +1,11 @@
 # MFE Host Shell
 
-Minimal development host that composes MFEs at runtime. In production this would use Module Federation or a similar loader.
+O Host React/Vite compoe os remotes por Module Federation:
+
+- Student: `4173`;
+- Institution: `4175`;
+- Activity: `4176`;
+- Dashboard: `4178`.
+
+Para instalar, fazer build e subir todos os MFEs, consulte
+[`docs/local-development.md`](../../../../docs/local-development.md).
