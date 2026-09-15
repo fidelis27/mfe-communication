@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import "./App.css";
 
 type Student = {
@@ -27,23 +27,23 @@ export default function App() {
     "connecting",
   );
 
+  const loadStudents = useCallback(async () => {
+    setState("loading");
+    setMessage("");
+    try {
+      const response = await fetch(`${apiUrl}/students`, { headers: { "x-demo-user": demoUser } });
+      if (!response.ok) throw new Error("Não foi possível carregar os estudantes.");
+      const result = (await response.json()) as Student[];
+      setStudents(result);
+      setState(result.length === 0 ? "empty" : "success");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Erro inesperado.");
+      setState("error");
+    }
+  }, []);
+
   useEffect(() => {
-    let active = true;
-    fetch(`${apiUrl}/students`, { headers: { "x-demo-user": demoUser } })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("Não foi possível carregar os estudantes.");
-        return response.json() as Promise<Student[]>;
-      })
-      .then((result) => {
-        if (!active) return;
-        setStudents(result);
-        setState(result.length === 0 ? "empty" : "success");
-      })
-      .catch((error: Error) => {
-        if (!active) return;
-        setMessage(error.message);
-        setState("error");
-      });
+    void loadStudents();
 
     let stopped = false;
     let socket: WebSocket | undefined;
@@ -83,12 +83,11 @@ export default function App() {
     connect();
 
     return () => {
-      active = false;
       stopped = true;
       if (retryTimer !== undefined) window.clearTimeout(retryTimer);
       socket?.close();
     };
-  }, []);
+  }, [loadStudents]);
 
   async function createStudent(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -137,18 +136,20 @@ export default function App() {
             <span className="section-number">01</span>
             <h2>Novo estudante</h2>
           </div>
-          <label>
+          <label htmlFor="student-name">
             Nome completo
             <input
+              id="student-name"
               value={name}
               onChange={(event) => setName(event.target.value)}
               placeholder="Ex.: Ana Souza"
               required
             />
           </label>
-          <label>
+          <label htmlFor="student-institution">
             Instituição
             <input
+              id="student-institution"
               value={institutionId}
               onChange={(event) => setInstitutionId(event.target.value)}
               required
@@ -160,14 +161,21 @@ export default function App() {
           {message && <p className={`form-message ${state}`}>{message}</p>}
         </form>
 
-        <section className="student-list" aria-live="polite">
+        <section className="student-list" aria-live="polite" aria-busy={state === "loading"}>
           <div className="section-heading">
             <span className="section-number">02</span>
             <h2>Estudantes recentes</h2>
             <strong>{students.length.toString().padStart(2, "0")}</strong>
           </div>
           {state === "loading" && <p className="empty-state">Carregando estudantes...</p>}
-          {state === "error" && <p className="empty-state error-state">{message}</p>}
+          {state === "error" && (
+            <div className="empty-state error-state">
+              <p>{message}</p>
+              <button type="button" onClick={() => void loadStudents()}>
+                Tentar novamente
+              </button>
+            </div>
+          )}
           {state === "empty" && <p className="empty-state">Nenhum estudante cadastrado ainda.</p>}
           {students.map((student) => (
             <article className="student-row" key={student.id}>
