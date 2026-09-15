@@ -10,10 +10,12 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "start:dev": "ts-node server/index.en.ts",
+    "dev:local": "powershell -ExecutionPolicy Bypass -File ./scripts/start-local.ps1",
+    "stop:local": "powershell -ExecutionPolicy Bypass -File ./scripts/stop-local.ps1",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format": "prettier --write --ignore-unknown .",
+    "format:check": "prettier --check --ignore-unknown ."
   },
   "dependencies": {
     "body-parser": "^1.20.2",

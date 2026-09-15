@@ -164,6 +164,22 @@ npx vite build
 
 ## 7. Subir os remotes e o Host
 
+Para iniciar backend, Host e todos os remotes com um comando no Windows:
+
+```powershell
+npm run dev:local
+```
+
+O script abre um terminal PowerShell por serviço e não encerra processos que
+já estejam usando a porta esperada. Para parar os processos dessas portas:
+
+```powershell
+npm run stop:local
+```
+
+O script pressupõe que o MariaDB já esteja ativo no XAMPP. Se o banco ainda
+não estiver rodando, inicie-o antes do comando acima.
+
 Cada processo deve ficar em um terminal separado. Primeiro faça os builds e depois inicie os previews:
 
 ### Student
