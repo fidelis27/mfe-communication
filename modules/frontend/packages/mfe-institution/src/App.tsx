@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import "./App.css";
 
 type Institution = { id: string; name: string; cnpj?: string; status: string };
@@ -12,7 +12,9 @@ export default function App() {
   const [state, setState] = useState<"loading" | "empty" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
 
-  async function loadInstitutions() {
+  const loadInstitutions = useCallback(async () => {
+    setState("loading");
+    setMessage("");
     try {
       const response = await fetch(`${apiUrl}/institutions`, {
         headers: { "x-demo-user": demoUser },
@@ -25,11 +27,11 @@ export default function App() {
       setMessage(error instanceof Error ? error.message : "Erro inesperado.");
       setState("error");
     }
-  }
+  }, []);
 
   useEffect(() => {
     void loadInstitutions();
-  }, []);
+  }, [loadInstitutions]);
 
   async function createInstitution(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -67,18 +69,20 @@ export default function App() {
             <span>01</span>
             <h2>Nova instituição</h2>
           </div>
-          <label>
+          <label htmlFor="institution-name">
             Nome
             <input
+              id="institution-name"
               value={name}
               onChange={(event) => setName(event.target.value)}
               placeholder="Ex.: Instituto Central"
               required
             />
           </label>
-          <label>
+          <label htmlFor="institution-cnpj">
             CNPJ <small>opcional</small>
             <input
+              id="institution-cnpj"
               value={cnpj}
               onChange={(event) => setCnpj(event.target.value)}
               placeholder="00.000.000/0000-00"
@@ -89,14 +93,21 @@ export default function App() {
           </button>
           {message && <p className={state === "error" ? "message error" : "message"}>{message}</p>}
         </form>
-        <section className="institution-list" aria-live="polite">
+        <section className="institution-list" aria-live="polite" aria-busy={state === "loading"}>
           <div className="section-heading">
             <span>02</span>
             <h2>Instituições ativas</h2>
             <strong>{institutions.length.toString().padStart(2, "0")}</strong>
           </div>
           {state === "loading" && <p className="empty">Carregando instituições...</p>}
-          {state === "error" && <p className="empty error">{message}</p>}
+          {state === "error" && (
+            <div className="empty error-state">
+              <p>{message}</p>
+              <button type="button" onClick={() => void loadInstitutions()}>
+                Tentar novamente
+              </button>
+            </div>
+          )}
           {state === "empty" && <p className="empty">Nenhuma instituição cadastrada.</p>}
           {institutions.map((institution) => (
             <article className="institution-row" key={institution.id}>
