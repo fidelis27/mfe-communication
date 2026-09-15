@@ -103,6 +103,26 @@ body {
     15px Arial,
     sans-serif;
 }
+.error-state {
+  flex-wrap: wrap;
+}
+.error-state p {
+  flex: 1 1 240px;
+}
+.error-state button {
+  background: #315c5a;
+  border: 0;
+  color: #fff;
+  cursor: pointer;
+  font:
+    700 12px Arial,
+    sans-serif;
+  padding: 12px 16px;
+}
+.error-state button:focus-visible {
+  outline: 3px solid #d18761;
+  outline-offset: 3px;
+}
 .event-row {
   align-items: flex-start;
   border-bottom: 1px solid #c9d4d4;

@@ -24,18 +24,33 @@ const labels: Record<string, string> = {
 
 export default function App() {
   const [events, setEvents] = useState<DomainEvent[]>([]);
+  const [historyState, setHistoryState] = useState<"loading" | "success" | "empty" | "error">(
+    "loading",
+  );
+  const [historyError, setHistoryError] = useState("");
   const [connection, setConnection] = useState<"connecting" | "connected" | "offline">(
     "connecting",
   );
 
+  async function loadHistory() {
+    setHistoryState("loading");
+    setHistoryError("");
+    try {
+      const response = await fetch(`${apiUrl}/events/history?limit=30`, {
+        headers: { "x-demo-user": demoUser },
+      });
+      if (!response.ok) throw new Error("Não foi possível carregar o histórico.");
+      const history = (await response.json()) as DomainEvent[];
+      setEvents(history);
+      setHistoryState(history.length ? "success" : "empty");
+    } catch (error) {
+      setHistoryError(error instanceof Error ? error.message : "Erro inesperado.");
+      setHistoryState("error");
+    }
+  }
+
   useEffect(() => {
-    fetch(`${apiUrl}/events/history?limit=30`, { headers: { "x-demo-user": demoUser } })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("Não foi possível carregar o histórico.");
-        return (await response.json()) as DomainEvent[];
-      })
-      .then((history) => setEvents(history))
-      .catch(() => setConnection("offline"));
+    void loadHistory();
 
     let stopped = false;
     let socket: WebSocket | undefined;
@@ -66,6 +81,7 @@ export default function App() {
               ? current
               : [event, ...current].slice(0, 30),
           );
+          setHistoryState("success");
         } catch {
           socket?.close();
         }
@@ -97,19 +113,28 @@ export default function App() {
               : "Offline"}
         </div>
       </section>
-      <section className="activity-feed" aria-live="polite">
+      <section className="activity-feed" aria-live="polite" aria-busy={historyState === "loading"}>
         <header>
           <span>Eventos recentes</span>
           <strong>{events.length.toString().padStart(2, "0")}</strong>
         </header>
-        {events.length === 0 ? (
+        {historyState === "loading" ? (
+          <div className="empty">
+            <span>...</span>
+            <p>Carregando histórico de atividade...</p>
+          </div>
+        ) : historyState === "error" ? (
+          <div className="empty error-state">
+            <span>!</span>
+            <p>{historyError}</p>
+            <button type="button" onClick={() => void loadHistory()}>
+              Tentar novamente
+            </button>
+          </div>
+        ) : historyState === "empty" ? (
           <div className="empty">
             <span>--</span>
-            <p>
-              {connection === "connected"
-                ? "Aguardando uma alteração no sistema."
-                : "Não foi possível conectar ao canal de eventos."}
-            </p>
+            <p>Aguardando uma alteração no sistema.</p>
           </div>
         ) : (
           events.map((event) => (
