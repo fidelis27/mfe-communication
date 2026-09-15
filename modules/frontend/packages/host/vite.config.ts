@@ -12,6 +12,7 @@ export default defineConfig({
         mfe_activity: "http://localhost:4176/assets/remoteEntry.js",
         mfe_institution: "http://localhost:4175/assets/remoteEntry.js",
         mfe_dashboard: "http://localhost:4178/assets/remoteEntry.js",
+        mfe_admin: "http://localhost:4179/assets/remoteEntry.js",
       },
       shared: ["react", "react-dom"],
     }),
