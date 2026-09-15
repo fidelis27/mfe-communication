@@ -136,6 +136,26 @@ As rotas protegidas usam o usuário demo:
 curl.exe -i http://localhost:3333/institutions -H "x-demo-user: demo-active"
 ```
 
+O gerenciamento de grupos usa as rotas abaixo:
+
+```powershell
+curl.exe -i http://localhost:3333/groups -H "x-demo-user: demo-active"
+curl.exe -i -X POST http://localhost:3333/groups `
+  -H "Content-Type: application/json" `
+  -H "x-demo-user: demo-active" `
+  -d '{"institutionId":"institution-1"}'
+curl.exe -i http://localhost:3333/groups/{groupId}/members `
+  -H "x-demo-user: demo-active"
+curl.exe -i -X POST http://localhost:3333/groups/{groupId}/members `
+  -H "Content-Type: application/json" `
+  -H "x-demo-user: demo-active" `
+  -d '{"userId":"user-1","role":"member"}'
+```
+
+Somente superadministradores criam grupos. A listagem e a gestão de membros
+respeitam o escopo da instituição; um administrador de grupo pode gerenciar
+apenas o próprio grupo.
+
 Sem o header, a API retorna `401`. Usuário inexistente ou inativo retorna `403`.
 
 O WebSocket fica em:

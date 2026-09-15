@@ -194,6 +194,90 @@ input:focus {
 .role.elevated {
   color: #8a5d89;
 }
+.groups-panel {
+  border-top: 1px solid #b9abbf;
+  margin-top: 72px;
+  max-width: 1050px;
+  padding-top: 20px;
+}
+.groups-grid {
+  display: grid;
+  gap: 56px;
+  grid-template-columns: minmax(220px, 340px) minmax(320px, 1fr);
+}
+.group-form {
+  border-right: 1px solid #d3cbd7;
+  padding-right: 40px;
+}
+.group-form button {
+  background: #765177;
+  border: 0;
+  color: #fff;
+  cursor: pointer;
+  font:
+    700 13px Arial,
+    sans-serif;
+  margin-top: 28px;
+  padding: 15px 18px;
+  width: 100%;
+}
+.group-form button b {
+  float: right;
+  font-size: 20px;
+  line-height: 11px;
+}
+select {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #afa4b4;
+  color: #302f43;
+  font:
+    16px Georgia,
+    serif;
+  outline: 0;
+  padding: 10px 0;
+  width: 100%;
+}
+.member-form {
+  align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr 150px 42px;
+  margin: 28px 0 8px;
+}
+.member-form input {
+  border-bottom: 1px solid #afa4b4;
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  color: #302f43;
+  font:
+    15px Arial,
+    sans-serif;
+  min-width: 0;
+  outline: 0;
+  padding: 10px 0;
+  width: 100%;
+}
+.member-form button {
+  background: #302f43;
+  border: 0;
+  color: #fff;
+  cursor: pointer;
+  font:
+    20px Georgia,
+    serif;
+  height: 38px;
+}
+.member-row {
+  border-bottom: 1px solid #d3cbd7;
+  display: flex;
+  font:
+    13px Arial,
+    sans-serif;
+  justify-content: space-between;
+  padding: 12px 0;
+}
 @media (max-width: 760px) {
   .admin-shell {
     padding: 40px 22px;
@@ -212,5 +296,23 @@ input:focus {
   }
   .user-list {
     margin-top: 56px;
+  }
+  .groups-panel {
+    margin-top: 56px;
+  }
+  .groups-grid {
+    display: block;
+  }
+  .group-form {
+    border-bottom: 1px solid #d3cbd7;
+    border-right: 0;
+    padding-bottom: 28px;
+    padding-right: 0;
+  }
+  .group-browser {
+    margin-top: 32px;
+  }
+  .member-form {
+    grid-template-columns: 1fr 110px 42px;
   }
 }
