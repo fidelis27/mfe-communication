@@ -151,6 +151,21 @@ body {
     16px Arial,
     sans-serif;
 }
+.remote-error button {
+  background: #18332f;
+  border: 0;
+  color: #f4f0e8;
+  cursor: pointer;
+  font:
+    700 13px Arial,
+    sans-serif;
+  margin-top: 18px;
+  padding: 14px 18px;
+}
+.remote-error button:focus-visible {
+  outline: 3px solid #bd633f;
+  outline-offset: 3px;
+}
 .eyebrow {
   color: #bd633f;
   font:
