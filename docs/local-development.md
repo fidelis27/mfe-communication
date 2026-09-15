@@ -119,6 +119,17 @@ curl.exe -i http://localhost:3333/health
 
 A resposta esperada é `200` com `{"ok":true}`.
 
+As métricas básicas ficam disponíveis para um usuário autenticado:
+
+```powershell
+curl.exe -i http://localhost:3333/metrics -H "x-demo-user: demo-active"
+```
+
+O endpoint retorna contadores no formato Prometheus para requisições totais,
+respostas 5xx e requisições em andamento. O backend também emite logs JSON
+com método, rota, status, duração e `correlation_id`; nenhum corpo de
+requisição é registrado.
+
 As rotas protegidas usam o usuário demo:
 
 ```powershell
