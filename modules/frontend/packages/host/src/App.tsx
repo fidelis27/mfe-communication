@@ -2,6 +2,7 @@ import { lazy, Suspense, useState } from "react";
 import "./App.css";
 
 const StudentApp = lazy(() => import("mfe_student/App"));
+const InstitutionApp = lazy(() => import("mfe_institution/App"));
 
 const modules = [
   { id: "student", label: "Estudantes", detail: "Cadastros e vínculos" },
@@ -33,6 +34,10 @@ export default function App() {
         {activeModule === "student" ? (
           <Suspense fallback={<div className="remote-state">Carregando módulo de estudantes...</div>}>
             <StudentApp />
+          </Suspense>
+        ) : activeModule === "institution" ? (
+          <Suspense fallback={<div className="remote-state">Carregando módulo de instituições...</div>}>
+            <InstitutionApp />
           </Suspense>
         ) : (
           <section className="remote-state"><p className="eyebrow">Módulo em preparação</p><h1>{modules.find((module) => module.id === activeModule)?.label}</h1><p>A estrutura está pronta para receber o próximo remote.</p></section>
