@@ -29,6 +29,14 @@ export default function App() {
   );
 
   useEffect(() => {
+    fetch(`${apiUrl}/events/history?limit=30`, { headers: { "x-demo-user": demoUser } })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Não foi possível carregar o histórico.");
+        return (await response.json()) as DomainEvent[];
+      })
+      .then((history) => setEvents(history))
+      .catch(() => setConnection("offline"));
+
     let stopped = false;
     let socket: WebSocket | undefined;
     let retryTimer: number | undefined;
