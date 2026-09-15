@@ -19,11 +19,11 @@ Interface MFE
 - **Host:** navegacao, composicao e ciclo de vida dos MFEs.
 - **MFE:** tela, estado visual e interacao do seu bounded context.
 - **Backend Go:** autenticacao demonstrativa, autorizacao, casos de uso,
-	persistencia autoritativa em MariaDB/MySQL e publicacao de eventos.
+  persistencia autoritativa em MariaDB/MySQL e publicacao de eventos.
 - **Shared:** tipos e esquemas de contratos; nao deve conter regra de negocio
-	de outro dominio.
+  de outro dominio.
 - **Activity/Dashboard:** consumidores e projecoes; nao alteram a fonte
-	autoritativa de Instituicao ou Estudante.
+  autoritativa de Instituicao ou Estudante.
 
 ## 3. Stack e ambiente
 
@@ -33,12 +33,12 @@ Interface MFE
 - Monorepo npm com workspaces em `modules/frontend/packages/*`.
 - MariaDB/MySQL para persistencia do prototipo.
 - Nenhum repositorio de negocio em memoria; testes de integracao usam banco de
-	teste MariaDB/MySQL.
+  teste MariaDB/MySQL.
 - `@originjs/vite-plugin-federation` para Module Federation no host e nos
-	remotes, aproveitando a dependência já declarada no workspace frontend.
+  remotes, aproveitando a dependência já declarada no workspace frontend.
 - WebSocket como transporte realtime do protótipo.
 - `window.bus`/`EventTarget` somente para comunicação local entre MFEs na mesma
-	página; não substitui o canal backend.
+  página; não substitui o canal backend.
 
 Module Federation real e obrigatorio no MVP. O host deve carregar remotes por
 manifesto ou URL configuravel, compartilhar React como singleton e validar o
@@ -54,19 +54,19 @@ fallback local, mas nao substituem a demonstracao principal.
 - Usar funcoes pequenas, nomes expressivos e responsabilidade unica.
 - Evitar mutacao de estado compartilhado e efeitos colaterais escondidos.
 - Validar entradas na fronteira da aplicacao antes de executar regras de
-	negocio.
+  negocio.
 - Tratar erros de forma explicita, sem engolir excecoes.
 - Manter funcoes puras sempre que nao houver necessidade de I/O.
 - Evitar duplicacao; abstrair somente quando houver comportamento realmente
-	compartilhado.
+  compartilhado.
 - Nao acoplar regras de negocio a Express, React ou ao adaptador de memoria.
 
 ### HTML e acessibilidade
 
 - Usar HTML semantico: `header`, `nav`, `main`, `section`, `form`, `label` e
-	`button` conforme a finalidade.
+  `button` conforme a finalidade.
 - Todo campo de formulario deve possuir label associado e mensagem de erro
-	compreensivel.
+  compreensivel.
 - Usar botoes reais para acoes e links reais para navegacao.
 - Garantir navegacao por teclado e foco visivel.
 - Nao depender somente de cor para comunicar estado.
@@ -88,15 +88,15 @@ fallback local, mas nao substituem a demonstracao principal.
 ### SOLID
 
 - **S - Responsabilidade unica:** componente, caso de uso e adaptador devem
-	possuir uma razao principal para mudar.
+  possuir uma razao principal para mudar.
 - **O - Aberto/fechado:** adicionar um consumidor ou transportador nao deve
-	exigir alterar a regra central de dominio.
+  exigir alterar a regra central de dominio.
 - **L - Substituicao:** implementacoes em memoria devem respeitar as mesmas
-	interfaces dos repositorios definitivos.
+  interfaces dos repositorios definitivos.
 - **I - Segregacao de interfaces:** contratos pequenos e orientados ao uso,
-	sem obrigar dependencias desnecessarias.
+  sem obrigar dependencias desnecessarias.
 - **D - Inversao de dependencia:** casos de uso dependem de interfaces; HTTP,
-	WebSocket e persistencia ficam nos adaptadores.
+  WebSocket e persistencia ficam nos adaptadores.
 
 SOLID sera aplicado de forma pragmatica. Nao criar camadas ou interfaces sem
 uma necessidade concreta de teste, substituicao ou separacao de dominio.
@@ -128,26 +128,26 @@ hierarquia e acessibilidade, não uma aparência de landing page.
 ### Layout aprovado
 
 - Shell com navegação lateral persistente no desktop e navegação recolhível
-	em telas menores.
+  em telas menores.
 - Barra superior com instituição/unidade selecionada, estado de conexão,
-	usuário e ações globais.
+  usuário e ações globais.
 - Área principal com título, contexto da página, filtros, ação primária e
-	conteúdo.
+  conteúdo.
 - Listas e tabelas para comparação; formulários em seções curtas e claras.
 - Modais somente para ações rápidas ou confirmação; fluxos longos usam página
-	própria.
+  própria.
 - Estados explícitos para carregamento, vazio, sucesso, erro e sem permissão.
 - Design responsivo, com suporte a teclado e foco visível.
 
 ### Direção visual
 
 - Paleta sóbria institucional, com fundo neutro, superfícies claras, texto de
-	alto contraste e uma cor de ação consistente.
+  alto contraste e uma cor de ação consistente.
 - Uso moderado de cor para estado: sucesso, alerta, erro e informação.
 - Tipografia legível e hierarquia clara; evitar excesso de sombras, gradientes,
-	cards decorativos e elementos promocionais.
+  cards decorativos e elementos promocionais.
 - Tabelas, filtros, paginação, breadcrumbs e feedback devem priorizar leitura
-	rápida e operação de secretaria.
+  rápida e operação de secretaria.
 
 ### Biblioteca recomendada
 
@@ -172,12 +172,12 @@ mas seus temas e estilos aumentariam o acoplamento visual entre remotes.
 
 - Usar SCSS para tokens, componentes e estados.
 - Nomear classes com BEM, por exemplo:
-	`institution-form`, `institution-form__field`,
-	`institution-form__field--invalid`.
+  `institution-form`, `institution-form__field`,
+  `institution-form__field--invalid`.
 - Manter estilos de cada MFE escopados por namespace ou CSS Modules para evitar
-	vazamento entre remotes.
+  vazamento entre remotes.
 - Compartilhar apenas tokens, mixins e componentes realmente estáveis no
-	pacote de UI compartilhado.
+  pacote de UI compartilhado.
 - Não misturar Tailwind, CSS-in-JS e SCSS como padrões concorrentes.
 
 ### Componentes de apresentacao (stateless)
@@ -198,11 +198,11 @@ Responsaveis por coordenar estado, casos de uso, dados e eventos.
 
 - Fazem chamadas a clientes/adaptadores definidos para o MFE.
 - Traduzem respostas em estados `idle`, `loading`, `empty`, `success` e
-	`error`.
+  `error`.
 - Assinam eventos realtime e filtram por `eventId`/`correlationId`.
 - Passam dados e callbacks para componentes de apresentacao.
 - Nao devem concentrar regras de negocio complexas; essas regras pertencem a
-	casos de uso ou ao backend.
+  casos de uso ou ao backend.
 
 Exemplos: `InstitutionPage`, `StudentFlowContainer` e
 `EnrollmentModalContainer`.
@@ -212,9 +212,9 @@ Exemplos: `InstitutionPage`, `StudentFlowContainer` e
 - Preferir composicao de componentes a heranca.
 - Um componente deve ter uma API de props pequena e sem detalhes internos.
 - Evitar componentes gigantes que renderizam tela, fazem I/O e decidem regras
-	ao mesmo tempo.
+  ao mesmo tempo.
 - Hooks customizados podem encapsular estado de UI e assinaturas de eventos,
-	mas nao substituem casos de uso do dominio.
+  mas nao substituem casos de uso do dominio.
 - Cada MFE deve expor uma entrada pequena e documentada para o Host.
 
 ## 7. Organizacao recomendada de pastas
@@ -262,26 +262,26 @@ type InstitutionStatus = "active" | "inactive";
 type EnrollmentStatus = "active" | "suspended" | "transferred" | "inactive";
 
 interface Institution {
-	id: string;
-	name: string;
-	status: InstitutionStatus;
+  id: string;
+  name: string;
+  status: InstitutionStatus;
 }
 
 interface Student {
-	id: string;
-	name: string;
-	status: "active" | "inactive";
+  id: string;
+  name: string;
+  status: "active" | "inactive";
 }
 
 interface Enrollment {
-	id: string;
-	studentId: string;
-	institutionId: string;
-	campusId?: string;
-	courseId?: string;
-	status: EnrollmentStatus;
-	startedAt: string;
-	endedAt?: string;
+  id: string;
+  studentId: string;
+  institutionId: string;
+  campusId?: string;
+  courseId?: string;
+  status: EnrollmentStatus;
+  startedAt: string;
+  endedAt?: string;
 }
 ```
 
@@ -294,13 +294,13 @@ Contrato minimo para dominio e interacao realtime:
 
 ```ts
 interface DomainEvent<TType extends string, TPayload> {
-	eventId: string;
-	type: TType;
-	version: number;
-	source: string;
-	correlationId: string;
-	payload: TPayload;
-	occurredAt: string;
+  eventId: string;
+  type: TType;
+  version: number;
+  source: string;
+  correlationId: string;
+  payload: TPayload;
+  occurredAt: string;
 }
 ```
 
@@ -328,7 +328,7 @@ Evolucao planejada:
 - O middleware de identidade responde `401` quando nao ha sessao valida.
 - O middleware de usuario rejeita usuarios inexistentes ou inativos.
 - `AuthorizationPolicy` decide acesso por superadministrador e participacao em
-	grupos/instituicoes.
+  grupos/instituicoes.
 - A regra deve ser testada fora do Express e coberta por testes de middleware.
 
 Este mecanismo nao e adequado para producao; ele existe para validar o fluxo.
@@ -367,19 +367,19 @@ dados pessoais completos nos logs.
 - Eventos em memoria nao sobrevivem a falhas.
 - A ausencia de um banco pode ocultar constraints de unicidade e transacao.
 - Module Federation real, remotes indisponiveis e reconexao realtime sao riscos
-	centrais do primeiro incremento.
+  centrais do primeiro incremento.
 - Transferencias exigem consistencia entre o vinculo de origem e o de destino.
 - Dados pessoais exigem minimizacao, mascaramento, criptografia e auditoria de
-	acesso conforme a politica de privacidade do produto.
+  acesso conforme a politica de privacidade do produto.
 - Dados reais devem ser anonimizados ou substituidos por dados ficticios no
-	ambiente local.
+  ambiente local.
 
 ## 15. Plano de tres dias
 
 ### Dia 1 - backend Go e MariaDB/MySQL
 
 1. Consolidar contratos, migrations MariaDB, repositorios, casos de uso e
-	testes de dominio.
+   testes de dominio.
 2. Expor leitura, criacao, edicao e inativacao de instituicao.
 3. Expor cadastro e listagem de estudante com autorizacao.
 4. Publicar eventos apos escrita bem-sucedida.
@@ -391,11 +391,12 @@ dados pessoais completos nos logs.
 2. Configurar WebSocket e validar eventos realtime correlacionados.
 3. Implementar Institution, Student, Admin, Activity e Dashboard.
 4. Adicionar estados de interface e tratamento de erros.
+
 ### Dia 3 - qualidade, seguranca e deploy
 
 1. Adicionar logs estruturados, `correlationId` e métricas básicas no backend Go.
 2. Usar uma biblioteca de logging e métricas compatível com Go, mantendo os
-	adaptadores separados dos casos de uso.
+   adaptadores separados dos casos de uso.
 3. Validar acessibilidade, fluxo ponta a ponta e regressao.
 4. Configurar builds e deploy da API Go e de todos os remotes.
 5. Revisar diff, riscos, evidencias e limites para producao.
@@ -430,13 +431,13 @@ Este bloco prevalece sobre qualquer referencia anterior conflitante:
 
 - Backend: Go.
 - Persistencia: MariaDB/MySQL para todos os dados de negocio, com migrations e
-	transacoes.
+  transacoes.
 - Repositorios em memoria: proibidos para dados de negocio; permitidos apenas
-	em testes de componentes sem persistencia.
+  em testes de componentes sem persistencia.
 - O banco MariaDB/MySQL deve estar em instancia persistente nos ambientes
-	publicados.
+  publicados.
 - Transferencia deve alterar vinculo de origem e destino na mesma transacao.
 - WebSocket e Module Federation real sao obrigatorios no prototipo.
 - O plano de entrega tem tres dias.
 - Antes da implementacao, criar o schema MariaDB, os contratos compartilhados,
-	o contrato WebSocket e os testes de persistencia.
+  o contrato WebSocket e os testes de persistencia.

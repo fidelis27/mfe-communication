@@ -24,7 +24,9 @@ const labels: Record<string, string> = {
 
 export default function App() {
   const [events, setEvents] = useState<DomainEvent[]>([]);
-  const [connection, setConnection] = useState<"connecting" | "connected" | "offline">("connecting");
+  const [connection, setConnection] = useState<"connecting" | "connected" | "offline">(
+    "connecting",
+  );
 
   useEffect(() => {
     const socket = new WebSocket(socketUrl);
@@ -34,7 +36,11 @@ export default function App() {
     socket.onmessage = (message) => {
       try {
         const event = JSON.parse(message.data) as DomainEvent;
-        setEvents((current) => current.some((item) => item.eventId === event.eventId) ? current : [event, ...current].slice(0, 30));
+        setEvents((current) =>
+          current.some((item) => item.eventId === event.eventId)
+            ? current
+            : [event, ...current].slice(0, 30),
+        );
       } catch {
         setConnection("offline");
       }
@@ -50,17 +56,46 @@ export default function App() {
           <h1>Atividade do sistema.</h1>
           <p className="lede">Uma linha do tempo viva das alterações que chegam do backend.</p>
         </div>
-        <div className={`connection ${connection}`}><i /> {connection === "connected" ? "Conectado" : connection === "connecting" ? "Conectando" : "Offline"}</div>
+        <div className={`connection ${connection}`}>
+          <i />{" "}
+          {connection === "connected"
+            ? "Conectado"
+            : connection === "connecting"
+              ? "Conectando"
+              : "Offline"}
+        </div>
       </section>
       <section className="activity-feed" aria-live="polite">
-        <header><span>Eventos recentes</span><strong>{events.length.toString().padStart(2, "0")}</strong></header>
-        {events.length === 0 ? <div className="empty"><span>--</span><p>{connection === "connected" ? "Aguardando uma alteração no sistema." : "Não foi possível conectar ao canal de eventos."}</p></div> : events.map((event) => (
-          <article className="event-row" key={event.eventId}>
-            <div className="event-pin" />
-            <div className="event-content"><h2>{labels[event.type] ?? event.type}</h2><p>{event.source} · versão {event.version}</p><small>{new Date(event.occurredAt).toLocaleString("pt-BR")} · {event.correlationId}</small></div>
-            <span className="event-type">{event.type}</span>
-          </article>
-        ))}
+        <header>
+          <span>Eventos recentes</span>
+          <strong>{events.length.toString().padStart(2, "0")}</strong>
+        </header>
+        {events.length === 0 ? (
+          <div className="empty">
+            <span>--</span>
+            <p>
+              {connection === "connected"
+                ? "Aguardando uma alteração no sistema."
+                : "Não foi possível conectar ao canal de eventos."}
+            </p>
+          </div>
+        ) : (
+          events.map((event) => (
+            <article className="event-row" key={event.eventId}>
+              <div className="event-pin" />
+              <div className="event-content">
+                <h2>{labels[event.type] ?? event.type}</h2>
+                <p>
+                  {event.source} · versão {event.version}
+                </p>
+                <small>
+                  {new Date(event.occurredAt).toLocaleString("pt-BR")} · {event.correlationId}
+                </small>
+              </div>
+              <span className="event-type">{event.type}</span>
+            </article>
+          ))
+        )}
       </section>
     </main>
   );

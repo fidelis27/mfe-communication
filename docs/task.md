@@ -17,7 +17,7 @@ Gate serem aprovados.
 - [ ] Criar migrations MariaDB e conexao com `DB_HOST`, `DB_PORT`, `DB_NAME`,
 - [x] Criar modulo Go em `modules/backend` com estrutura `cmd/server` e `internal`.
 - [x] Criar migrations MariaDB e configuracao com `DB_HOST`, `DB_PORT`, `DB_NAME`,
-  `DB_USER`, `DB_PASSWORD` e `DB_TLS`.
+      `DB_USER`, `DB_PASSWORD` e `DB_TLS`.
 - [ ] Persistir instituicoes, unidades, cursos e usuarios.
 - [ ] Persistir estudantes e vinculos academicos.
 - [ ] Implementar transacao de transferencia.

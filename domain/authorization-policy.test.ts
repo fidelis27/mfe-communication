@@ -14,10 +14,34 @@ function createFakeRepo(members: MemberGroup[]): MemberGroupRepository {
   };
 }
 
-const superAdmin: User = { id: "u-super", name: "Super", email: "s@x", status: "active", superAdmin: true } as any;
-const admin: User = { id: "u-admin", name: "Admin", email: "a@x", status: "active", superAdmin: false } as any;
-const memberRead: User = { id: "u-member", name: "Member", email: "m@x", status: "active", superAdmin: false } as any;
-const noLink: User = { id: "u-out", name: "Out", email: "o@x", status: "active", superAdmin: false } as any;
+const superAdmin: User = {
+  id: "u-super",
+  name: "Super",
+  email: "s@x",
+  status: "active",
+  superAdmin: true,
+} as any;
+const admin: User = {
+  id: "u-admin",
+  name: "Admin",
+  email: "a@x",
+  status: "active",
+  superAdmin: false,
+} as any;
+const memberRead: User = {
+  id: "u-member",
+  name: "Member",
+  email: "m@x",
+  status: "active",
+  superAdmin: false,
+} as any;
+const noLink: User = {
+  id: "u-out",
+  name: "Out",
+  email: "o@x",
+  status: "active",
+  superAdmin: false,
+} as any;
 
 const members: MemberGroup[] = [
   { userId: "u-admin", groupId: "g-inst-A", role: "admin" },

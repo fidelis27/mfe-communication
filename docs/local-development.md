@@ -203,12 +203,12 @@ Abra a aplicação em:
 
 O Host carrega os remotes nestes endereços:
 
-| Componente | URL do remote |
-|---|---|
-| Student | `http://localhost:4173/assets/remoteEntry.js` |
+| Componente  | URL do remote                                 |
+| ----------- | --------------------------------------------- |
+| Student     | `http://localhost:4173/assets/remoteEntry.js` |
 | Institution | `http://localhost:4175/assets/remoteEntry.js` |
-| Activity | `http://localhost:4176/assets/remoteEntry.js` |
-| Dashboard | `http://localhost:4178/assets/remoteEntry.js` |
+| Activity    | `http://localhost:4176/assets/remoteEntry.js` |
+| Dashboard   | `http://localhost:4178/assets/remoteEntry.js` |
 
 ## 8. Verificar os remotes
 
