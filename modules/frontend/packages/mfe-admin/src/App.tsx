@@ -70,18 +70,20 @@ export default function App() {
             <span>01</span>
             <h2>Nova pessoa</h2>
           </div>
-          <label>
+          <label htmlFor="admin-name">
             Nome
             <input
+              id="admin-name"
               value={name}
               onChange={(event) => setName(event.target.value)}
               placeholder="Ex.: Ana Souza"
               required
             />
           </label>
-          <label>
+          <label htmlFor="admin-email">
             E-mail
             <input
+              id="admin-email"
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
@@ -89,8 +91,9 @@ export default function App() {
               required
             />
           </label>
-          <label className="check">
+          <label className="check" htmlFor="admin-super-admin">
             <input
+              id="admin-super-admin"
               type="checkbox"
               checked={superAdmin}
               onChange={(event) => setSuperAdmin(event.target.checked)}
@@ -100,7 +103,14 @@ export default function App() {
           <button type="submit">
             Adicionar pessoa <b>→</b>
           </button>
-          {message && <p className={state === "error" ? "message error" : "message"}>{message}</p>}
+          {message && (
+            <p
+              className={state === "error" ? "message error" : "message"}
+              role={state === "error" ? "alert" : "status"}
+            >
+              {message}
+            </p>
+          )}
         </form>
         <section className="user-list" aria-live="polite">
           <div className="section-heading">

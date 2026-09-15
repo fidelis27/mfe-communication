@@ -20,6 +20,9 @@ export default function App() {
 
   return (
     <div className="host-shell">
+      <a className="skip-link" href="#module-content">
+        Ir para o conteúdo
+      </a>
       <aside className="host-sidebar">
         <div className="brand">
           <span>SE</span>
@@ -36,6 +39,7 @@ export default function App() {
               className={activeModule === module.id ? "nav-item active" : "nav-item"}
               key={module.id}
               onClick={() => setActiveModule(module.id)}
+              aria-current={activeModule === module.id ? "page" : undefined}
             >
               <span className="nav-mark">
                 {module.id === "student"
@@ -61,7 +65,7 @@ export default function App() {
           <small>API + WebSocket</small>
         </div>
       </aside>
-      <main className="host-main">
+      <main className="host-main" id="module-content" tabIndex={-1}>
         <header className="topbar">
           <span>Workspace / {modules.find((module) => module.id === activeModule)?.label}</span>
           <span className="user-chip">● Demo Active</span>

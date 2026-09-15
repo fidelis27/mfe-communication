@@ -10,6 +10,18 @@ body {
   margin: 0;
   min-width: 320px;
 }
+.skip-link {
+  background: #f4f0e8;
+  color: #18332f;
+  left: 12px;
+  padding: 10px 14px;
+  position: fixed;
+  top: -60px;
+  z-index: 10;
+}
+.skip-link:focus {
+  top: 12px;
+}
 .host-shell {
   display: grid;
   grid-template-columns: 248px 1fr;
