@@ -21,12 +21,15 @@ export default function App() {
     enrollments: [],
   });
   const [state, setState] = useState<"loading" | "success" | "error">("loading");
+  const [errorMessage, setErrorMessage] = useState("");
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const [connection, setConnection] = useState<"connecting" | "connected" | "offline">(
     "connecting",
   );
 
   const load = useCallback(async () => {
+    setState("loading");
+    setErrorMessage("");
     try {
       const headers = { "x-demo-user": demoUser };
       const [institutions, students, enrollments] = await Promise.all([
@@ -43,7 +46,8 @@ export default function App() {
       });
       setUpdatedAt(new Date());
       setState("success");
-    } catch {
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Erro inesperado.");
       setState("error");
     }
   }, []);
@@ -105,7 +109,7 @@ export default function App() {
               : "Falha ao atualizar"}
         </span>
       </section>
-      <section className="metrics" aria-live="polite">
+      <section className="metrics" aria-live="polite" aria-busy={state === "loading"}>
         <article className="metric metric-large">
           <span>Instituições ativas</span>
           <strong>
@@ -132,11 +136,25 @@ export default function App() {
       <section className="dashboard-note">
         <div className="note-mark">↗</div>
         <div>
-          <h2>Dados em movimento</h2>
-          <p>
-            Este painel reage às alterações emitidas pelo backend e respeita o escopo do usuário
-            conectado.
-          </p>
+          {state === "loading" && <p>Carregando indicadores autorizados...</p>}
+          {state === "error" && (
+            <>
+              <h2>Não foi possível atualizar</h2>
+              <p>{errorMessage}</p>
+              <button type="button" onClick={() => void load()}>
+                Tentar novamente
+              </button>
+            </>
+          )}
+          {state === "success" && (
+            <>
+              <h2>Dados em movimento</h2>
+              <p>
+                Este painel reage às alterações emitidas pelo backend e respeita o escopo do usuário
+                conectado.
+              </p>
+            </>
+          )}
         </div>
       </section>
     </main>
