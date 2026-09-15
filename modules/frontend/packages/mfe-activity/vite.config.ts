@@ -6,11 +6,9 @@ export default defineConfig({
   plugins: [
     react(),
     federation({
-      name: "host",
-      remotes: {
-        mfe_student: "http://localhost:4173/assets/remoteEntry.js",
-        mfe_activity: "http://localhost:4176/assets/remoteEntry.js",
-      },
+      name: "mfe_activity",
+      filename: "remoteEntry.js",
+      exposes: { "./App": "./src/App.tsx" },
       shared: ["react", "react-dom"],
     }),
   ],
