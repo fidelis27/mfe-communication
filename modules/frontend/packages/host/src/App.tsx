@@ -2,6 +2,7 @@ import { lazy, Suspense, useState } from "react";
 import "./App.css";
 
 const StudentApp = lazy(() => import("mfe_student/App"));
+const ActivityApp = lazy(() => import("mfe_activity/App"));
 const InstitutionApp = lazy(() => import("mfe_institution/App"));
 
 const modules = [
@@ -35,6 +36,9 @@ export default function App() {
           <Suspense fallback={<div className="remote-state">Carregando módulo de estudantes...</div>}>
             <StudentApp />
           </Suspense>
+        ) : activeModule === "activity" ? (
+          <Suspense fallback={<div className="remote-state">Carregando atividade...</div>}>
+            <ActivityApp />
         ) : activeModule === "institution" ? (
           <Suspense fallback={<div className="remote-state">Carregando módulo de instituições...</div>}>
             <InstitutionApp />
