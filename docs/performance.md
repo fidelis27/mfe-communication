@@ -5,6 +5,7 @@ Backend Go (hexagonal) em `modules/backend`, frontend React + Vite Module
 Federation em `modules/frontend/packages` (host + 5 remotes + shared).
 
 Regras de trabalho (não negociáveis):
+
 - Uma PR por bloco abaixo. NÃO agrupe blocos.
 - Branch `fix/<slug>` ou `feat/<slug>`, commit convencional, corpo de PR com
   seção "Validações" listando os comandos executados.

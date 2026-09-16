@@ -10,4 +10,5 @@ export type StudentEvent = {
   occurredAt: string;
 };
 
+export * from "./events";
 export * from "./types";

@@ -9,7 +9,7 @@ export default defineConfig({
       name: "mfe_student",
       filename: "remoteEntry.js",
       exposes: { "./App": "./src/App.tsx" },
-      shared: ["react", "react-dom"],
+      shared: ["react", "react-dom", "@mfe/shared"],
     }),
   ],
   build: { target: "esnext", modulePreload: false, cssCodeSplit: false },
