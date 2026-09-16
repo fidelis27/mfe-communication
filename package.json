@@ -12,6 +12,7 @@
     "start:dev": "ts-node server/index.en.ts",
     "dev:local": "powershell -ExecutionPolicy Bypass -File ./scripts/start-local.ps1",
     "stop:local": "powershell -ExecutionPolicy Bypass -File ./scripts/stop-local.ps1",
+    "validate:local": "powershell -ExecutionPolicy Bypass -File ./scripts/validate-local.ps1",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write --ignore-unknown .",
