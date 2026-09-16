@@ -54,7 +54,11 @@ try {
   Write-Host "PASS backend WebSocket (Open)"
 } finally {
   if ($socket.State -eq [System.Net.WebSockets.WebSocketState]::Open) {
-    $socket.CloseAsync([System.Net.WebSockets.WebSocketCloseStatus]::NormalClosure, "validation", [Threading.CancellationToken]::None).GetAwaiter().GetResult()
+    try {
+      $socket.CloseAsync([System.Net.WebSockets.WebSocketCloseStatus]::NormalClosure, "validation", [Threading.CancellationToken]::None).GetAwaiter().GetResult()
+    } catch {
+      Write-Host "WebSocket close cleanup skipped: $($_.Exception.Message)"
+    }
   }
   $socket.Dispose()
 }
