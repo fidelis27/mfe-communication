@@ -1,4 +1,4 @@
-import { Component, ErrorInfo, lazy, ReactNode, Suspense, useState } from "react";
+import { Component, ErrorInfo, lazy, ReactNode, Suspense, useEffect, useState } from "react";
 import "./App.css";
 
 const StudentApp = lazy(() => import("mfe_student/App"));
@@ -8,12 +8,20 @@ const DashboardApp = lazy(() => import("mfe_dashboard/App"));
 const AdminApp = lazy(() => import("mfe_admin/App"));
 
 const modules = [
-  { id: "student", label: "Estudantes", detail: "Cadastros e vínculos" },
-  { id: "institution", label: "Instituições", detail: "Unidades e escopos" },
-  { id: "activity", label: "Atividade", detail: "Eventos do sistema" },
-  { id: "dashboard", label: "Dashboard", detail: "Indicadores" },
-  { id: "admin", label: "Admin", detail: "Pessoas e grupos" },
+  { id: "student", path: "/estudantes", label: "Estudantes", detail: "Cadastros e vínculos" },
+  { id: "institution", path: "/instituicoes", label: "Instituições", detail: "Unidades e escopos" },
+  { id: "activity", path: "/atividade", label: "Atividade", detail: "Eventos do sistema" },
+  { id: "dashboard", path: "/dashboard", label: "Dashboard", detail: "Indicadores" },
+  { id: "admin", path: "/admin", label: "Admin", detail: "Pessoas e grupos" },
 ];
+
+function moduleFromPath(pathname: string) {
+  return modules.find((module) => module.path === pathname)?.id ?? "preparing";
+}
+
+function moduleLabel(moduleId: string) {
+  return modules.find((module) => module.id === moduleId)?.label ?? "Módulo em preparação";
+}
 
 type RemoteBoundaryProps = { moduleName: string; children: ReactNode };
 type RemoteBoundaryState = { hasError: boolean };
@@ -51,7 +59,22 @@ class RemoteBoundary extends Component<RemoteBoundaryProps, RemoteBoundaryState>
 }
 
 export default function App() {
-  const [activeModule, setActiveModule] = useState("student");
+  const [activeModule, setActiveModule] = useState(() =>
+    moduleFromPath(typeof window === "undefined" ? "/estudantes" : window.location.pathname),
+  );
+
+  useEffect(() => {
+    const handlePopState = () => setActiveModule(moduleFromPath(window.location.pathname));
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  function navigate(moduleId: string) {
+    const module = modules.find((item) => item.id === moduleId);
+    if (!module) return;
+    window.history.pushState({}, "", module.path);
+    setActiveModule(module.id);
+  }
 
   return (
     <div className="host-shell">
@@ -73,7 +96,7 @@ export default function App() {
             <button
               className={activeModule === module.id ? "nav-item active" : "nav-item"}
               key={module.id}
-              onClick={() => setActiveModule(module.id)}
+              onClick={() => navigate(module.id)}
               aria-current={activeModule === module.id ? "page" : undefined}
             >
               <span className="nav-mark">
@@ -102,13 +125,10 @@ export default function App() {
       </aside>
       <main className="host-main" id="module-content" tabIndex={-1}>
         <header className="topbar">
-          <span>Workspace / {modules.find((module) => module.id === activeModule)?.label}</span>
+          <span>Workspace / {moduleLabel(activeModule)}</span>
           <span className="user-chip">● Demo Active</span>
         </header>
-        <RemoteBoundary
-          key={activeModule}
-          moduleName={modules.find((module) => module.id === activeModule)?.label ?? activeModule}
-        >
+        <RemoteBoundary key={activeModule} moduleName={moduleLabel(activeModule)}>
           {activeModule === "student" ? (
             <Suspense
               fallback={<div className="remote-state">Carregando módulo de estudantes...</div>}
@@ -136,7 +156,7 @@ export default function App() {
           ) : (
             <section className="remote-state">
               <p className="eyebrow">Módulo em preparação</p>
-              <h1>{modules.find((module) => module.id === activeModule)?.label}</h1>
+              <h1>{moduleLabel(activeModule)}</h1>
               <p>A estrutura está pronta para receber o próximo remote.</p>
             </section>
           )}
