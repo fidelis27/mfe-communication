@@ -27,23 +27,30 @@ export default function App() {
     "connecting",
   );
 
-  const loadStudents = useCallback(async () => {
+  const loadStudents = useCallback(async (signal?: AbortSignal) => {
     setState("loading");
     setMessage("");
     try {
-      const response = await fetch(`${apiUrl}/students`, { headers: { "x-demo-user": demoUser } });
+      const response = await fetch(`${apiUrl}/students`, {
+        headers: { "x-demo-user": demoUser },
+        signal,
+      });
       if (!response.ok) throw new Error("Não foi possível carregar os estudantes.");
       const result = (await response.json()) as Student[];
       setStudents(result);
       setState(result.length === 0 ? "empty" : "success");
     } catch (error) {
+      if (signal?.aborted || (error instanceof DOMException && error.name === "AbortError")) {
+        return;
+      }
       setMessage(error instanceof Error ? error.message : "Erro inesperado.");
       setState("error");
     }
   }, []);
 
   useEffect(() => {
-    void loadStudents();
+    const controller = new AbortController();
+    void loadStudents(controller.signal);
 
     let stopped = false;
     let socket: WebSocket | undefined;
@@ -86,6 +93,7 @@ export default function App() {
       stopped = true;
       if (retryTimer !== undefined) window.clearTimeout(retryTimer);
       socket?.close();
+      controller.abort();
     };
   }, [loadStudents]);
 
