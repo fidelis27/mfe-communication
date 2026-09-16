@@ -11,6 +11,7 @@ type Membership = {
 };
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
 const demoUser = import.meta.env.VITE_DEMO_USER ?? "demo-active";
+const canGrantSuperAdmin = import.meta.env.VITE_DEMO_SUPER_ADMIN === "true";
 
 export default function App() {
   const [users, setUsers] = useState<User[]>([]);
@@ -191,15 +192,17 @@ export default function App() {
               required
             />
           </label>
-          <label className="check" htmlFor="admin-super-admin">
-            <input
-              id="admin-super-admin"
-              type="checkbox"
-              checked={superAdmin}
-              onChange={(event) => setSuperAdmin(event.target.checked)}
-            />{" "}
-            Superadministrador
-          </label>
+          {canGrantSuperAdmin && (
+            <label className="check" htmlFor="admin-super-admin">
+              <input
+                id="admin-super-admin"
+                type="checkbox"
+                checked={superAdmin}
+                onChange={(event) => setSuperAdmin(event.target.checked)}
+              />{" "}
+              Superadministrador
+            </label>
+          )}
           <button type="submit">
             Adicionar pessoa <b>→</b>
           </button>
@@ -212,7 +215,7 @@ export default function App() {
             </p>
           )}
         </form>
-        <section className="user-list" aria-live="polite">
+        <section className="user-list" aria-live="polite" aria-busy={state === "loading"}>
           <div className="section-heading">
             <span>02</span>
             <h2>Pessoas cadastradas</h2>
