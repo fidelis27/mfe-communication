@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react";
+import { Component, ErrorInfo, lazy, ReactNode, Suspense, useState } from "react";
 import "./App.css";
 
 const StudentApp = lazy(() => import("mfe_student/App"));
@@ -14,6 +14,41 @@ const modules = [
   { id: "dashboard", label: "Dashboard", detail: "Indicadores" },
   { id: "admin", label: "Admin", detail: "Pessoas e grupos" },
 ];
+
+type RemoteBoundaryProps = { moduleName: string; children: ReactNode };
+type RemoteBoundaryState = { hasError: boolean };
+
+class RemoteBoundary extends Component<RemoteBoundaryProps, RemoteBoundaryState> {
+  state: RemoteBoundaryState = { hasError: false };
+
+  static getDerivedStateFromError(): RemoteBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("Remote failed to load", { error, componentStack: info.componentStack });
+  }
+
+  retry = () => {
+    this.setState({ hasError: false });
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <section className="remote-state remote-error" role="alert">
+          <p className="eyebrow">Módulo indisponível</p>
+          <h1>{this.props.moduleName}</h1>
+          <p>Não foi possível carregar este módulo agora.</p>
+          <button type="button" onClick={this.retry}>
+            Tentar novamente
+          </button>
+        </section>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export default function App() {
   const [activeModule, setActiveModule] = useState("student");
@@ -70,37 +105,42 @@ export default function App() {
           <span>Workspace / {modules.find((module) => module.id === activeModule)?.label}</span>
           <span className="user-chip">● Demo Active</span>
         </header>
-        {activeModule === "student" ? (
-          <Suspense
-            fallback={<div className="remote-state">Carregando módulo de estudantes...</div>}
-          >
-            <StudentApp />
-          </Suspense>
-        ) : activeModule === "activity" ? (
-          <Suspense fallback={<div className="remote-state">Carregando atividade...</div>}>
-            <ActivityApp />
-          </Suspense>
-        ) : activeModule === "institution" ? (
-          <Suspense
-            fallback={<div className="remote-state">Carregando módulo de instituições...</div>}
-          >
-            <InstitutionApp />
-          </Suspense>
-        ) : activeModule === "dashboard" ? (
-          <Suspense fallback={<div className="remote-state">Carregando dashboard...</div>}>
-            <DashboardApp />
-          </Suspense>
-        ) : activeModule === "admin" ? (
-          <Suspense fallback={<div className="remote-state">Carregando administração...</div>}>
-            <AdminApp />
-          </Suspense>
-        ) : (
-          <section className="remote-state">
-            <p className="eyebrow">Módulo em preparação</p>
-            <h1>{modules.find((module) => module.id === activeModule)?.label}</h1>
-            <p>A estrutura está pronta para receber o próximo remote.</p>
-          </section>
-        )}
+        <RemoteBoundary
+          key={activeModule}
+          moduleName={modules.find((module) => module.id === activeModule)?.label ?? activeModule}
+        >
+          {activeModule === "student" ? (
+            <Suspense
+              fallback={<div className="remote-state">Carregando módulo de estudantes...</div>}
+            >
+              <StudentApp />
+            </Suspense>
+          ) : activeModule === "activity" ? (
+            <Suspense fallback={<div className="remote-state">Carregando atividade...</div>}>
+              <ActivityApp />
+            </Suspense>
+          ) : activeModule === "institution" ? (
+            <Suspense
+              fallback={<div className="remote-state">Carregando módulo de instituições...</div>}
+            >
+              <InstitutionApp />
+            </Suspense>
+          ) : activeModule === "dashboard" ? (
+            <Suspense fallback={<div className="remote-state">Carregando dashboard...</div>}>
+              <DashboardApp />
+            </Suspense>
+          ) : activeModule === "admin" ? (
+            <Suspense fallback={<div className="remote-state">Carregando administração...</div>}>
+              <AdminApp />
+            </Suspense>
+          ) : (
+            <section className="remote-state">
+              <p className="eyebrow">Módulo em preparação</p>
+              <h1>{modules.find((module) => module.id === activeModule)?.label}</h1>
+              <p>A estrutura está pronta para receber o próximo remote.</p>
+            </section>
+          )}
+        </RemoteBoundary>
       </main>
     </div>
   );
