@@ -208,6 +208,17 @@ já estejam usando a porta esperada. Para parar os processos dessas portas:
 npm run stop:local
 ```
 
+Com os serviços ativos, valide o fluxo operacional completo com um único
+comando:
+
+```powershell
+npm run validate:local
+```
+
+Ele verifica health, autenticação, CORS, métricas, WebSocket e os
+`remoteEntry.js` do Host e dos cinco remotes. A API e a origem podem ser
+alteradas pelas variáveis `API_BASE_URL` e `CHECK_ORIGIN`.
+
 O script pressupõe que o MariaDB já esteja ativo no XAMPP. Se o banco ainda
 não estiver rodando, inicie-o antes do comando acima.
 
