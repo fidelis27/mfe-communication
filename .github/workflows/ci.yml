@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  frontend-quality:
+    name: Frontend quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+          cache: npm
+      - run: npm ci --legacy-peer-deps
+      - run: npm run lint
+      - run: npm test
+      - run: npm run format:check
+      - run: npm audit --audit-level=high
+
+  frontend-build:
+    name: Build ${{ matrix.workspace }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        workspace:
+          - mfe-host
+          - mfe-student
+          - mfe-institution
+          - mfe-activity
+          - mfe-dashboard
+          - mfe-admin
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+          cache: npm
+      - run: npm ci --legacy-peer-deps
+      - run: npm run build --workspace=${{ matrix.workspace }}
+
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: modules/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.6"
+          cache-dependency-path: modules/backend/go.sum
+      - run: go build ./...
+      - run: go vet ./...
+      - run: go test -race ./...
+      - run: go test ./internal/adapters/httpserver -coverprofile=coverage
+      - name: Enforce HTTP adapter coverage floor
+        shell: bash
+        run: |
+          actual=$(go tool cover -func coverage | awk '/total:/ {print substr($3, 1, length($3)-1)}')
+          threshold=19.1
+          awk -v actual="$actual" -v threshold="$threshold" 'BEGIN { if (actual < threshold) { printf "coverage %.1f%% is below %.1f%%\n", actual, threshold; exit 1 } printf "coverage %.1f%% meets %.1f%%\n", actual, threshold }'
+      - run: go install golang.org/x/vuln/cmd/govulncheck@latest
+      - run: govulncheck ./...
+
+  ci:
+    name: CI gate
+    if: always()
+    needs: [frontend-quality, frontend-build, backend]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require all CI jobs to pass
+        run: |
+          if [[ "${{ needs.frontend-quality.result }}" != "success" || "${{ needs.frontend-build.result }}" != "success" || "${{ needs.backend.result }}" != "success" ]]; then
+            echo "One or more required CI jobs failed."
+            exit 1
+          fi
+          echo "All required CI jobs passed."
