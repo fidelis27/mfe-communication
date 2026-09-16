@@ -195,6 +195,10 @@ npx vite build
 
 ## 7. Subir os remotes e o Host
 
+Copie `.env.example` para `.env` na raiz quando precisar sobrescrever portas,
+URLs dos remotes ou a API. O Host lê `VITE_MFE_*_URL` durante o build; sem
+essas variáveis, mantém os endereços locais documentados abaixo.
+
 Para iniciar backend, Host e todos os remotes com um comando no Windows:
 
 ```powershell

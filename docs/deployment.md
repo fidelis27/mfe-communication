@@ -74,8 +74,14 @@ VITE_MFE_INSTITUTION_URL=https://secretaria-institution.example
 VITE_MFE_STUDENT_URL=https://secretaria-student.example
 VITE_MFE_ACTIVITY_URL=https://secretaria-activity.example
 VITE_MFE_DASHBOARD_URL=https://secretaria-dashboard.example
+VITE_MFE_ADMIN_URL=https://secretaria-admin.example
 VITE_API_URL=https://secretaria-api.onrender.com
+VITE_DEMO_USER=demo-active
 ```
+
+As variáveis `VITE_MFE_*_URL` são consumidas pelo build do Host para montar os
+remotes. Os fallbacks `localhost` existem apenas para desenvolvimento local;
+ambientes publicados devem sempre fornecer URLs HTTPS próprias.
 
 Vercel oferece deploy por Git e ambientes de preview. Cloudflare Pages e uma
 alternativa adequada para artefatos estaticos Vite. A escolha final pode ser
