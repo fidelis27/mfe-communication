@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => {
           mfe_dashboard: remoteUrl("VITE_MFE_DASHBOARD_URL", "http://localhost:4178"),
           mfe_admin: remoteUrl("VITE_MFE_ADMIN_URL", "http://localhost:4179"),
         },
-        shared: ["react", "react-dom", "@mfe/shared"],
+        shared: ["react", "react-dom"],
       }),
     ],
     build: { target: "esnext", modulePreload: false, cssCodeSplit: false },
