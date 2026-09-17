@@ -248,6 +248,12 @@ Antes de considerar a API pronta, configurar no Render as variaveis secretas
 um MariaDB/MySQL externo com persistencia. Sem esse banco, o processo Go nao
 consegue iniciar a conexao e o endpoint `/health` nao retorna `200`.
 
+O MySQL Free da Aiven usa uma CA propria que nao estava presente no trust store
+do container Go. Para destravar o prototipo, o Render usa temporariamente
+`DB_TLS_SKIP_VERIFY=true` junto com `DB_TLS=true`. Em um ambiente real, trocar
+essa opcao por um CA da Aiven configurado como Secret File e manter a validacao
+do certificado habilitada.
+
 ## 6.1 Processo automatizado de deploy do Host no Vercel
 
 O deploy do frontend Host foi automatizado a partir do repositório GitHub e
