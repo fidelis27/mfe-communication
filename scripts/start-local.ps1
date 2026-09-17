@@ -36,5 +36,24 @@ foreach ($service in $services) {
   Write-Host "Started $($service.Name) on port $($service.Port)"
 }
 
+$healthUrl = "http://localhost:$($env:PORT)/health"
+$healthReady = $false
+for ($attempt = 1; $attempt -le 30; $attempt++) {
+  try {
+    $health = Invoke-WebRequest -Uri $healthUrl -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
+    if ($health.StatusCode -eq 200) {
+      $healthReady = $true
+      break
+    }
+  } catch {
+    # The Go process may still be compiling or waiting for MariaDB.
+  }
+  Start-Sleep -Seconds 1
+}
+
+if (-not $healthReady) {
+  throw "Backend did not become healthy at $healthUrl. Check MariaDB and the backend terminal."
+}
+
 Write-Host "Host: http://localhost:4174/"
 Write-Host "Stop services with: .\scripts\stop-local.ps1"

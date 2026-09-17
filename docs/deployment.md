@@ -186,16 +186,129 @@ MFE Student:
   Build command: npm run build
   Output directory: dist
 
+MFE Institution:
+  Root directory: modules/frontend/packages/mfe-institution
+  Build command: npm run build
+  Output directory: dist
+
+MFE Activity:
+  Root directory: modules/frontend/packages/mfe-activity
+  Build command: npm run build
+  Output directory: dist
+
+MFE Dashboard:
+  Root directory: modules/frontend/packages/mfe-dashboard
+  Build command: npm run build
+  Output directory: dist
+
+MFE Admin:
+  Root directory: modules/frontend/packages/mfe-admin
+  Build command: npm run build
+  Output directory: dist
+
 API:
   Root directory: .
   Build command: npm install && npm run build
   Start command: npm run start:dev
 ```
 
+Este padrao e compatível com o Vercel em monorepo: cada subdiretorio vira um
+projeto separado dentro do mesmo repositorio GitHub. O Vercel identifica a
+pasta do app, executa seu build e publica o `dist` correspondente. Em seguida,
+o Host aponta para cada URL publica do remote com variaveis de ambiente como
+`VITE_MFE_STUDENT_URL` e `VITE_MFE_INSTITUTION_URL`.
+
 Os comandos reais devem ser ajustados depois que o projeto possuir um build
 unificado e um comando de producao para o backend. `start:dev` nao deve ser o
 comando final de producao sem verificar compilacao, sinais de encerramento,
 logs e variaveis de ambiente.
+
+## 6.1 Processo automatizado de deploy do Host no Vercel
+
+O deploy do frontend Host foi automatizado a partir do repositório GitHub e
+validado com o fluxo real do Vercel. O processo atual e:
+
+```text
+1. Importar o repositório https://github.com/fidelis27/mfe-communication
+2. Selecionar o projeto Vercel com nome: mfe-communication-host
+3. Definir Root Directory como: modules/frontend/packages/host
+4. Usar Vite como preset do framework
+5. Configurar Build Command: npm run build
+6. Configurar Output Directory: dist
+7. Salvar e disparar o deploy
+8. A cada push na branch principal, o Vercel executa o build e publica a versao
+   automaticamente
+```
+
+Configuracao recomendada do projeto no Vercel:
+
+```text
+Project Name: mfe-communication-host
+Root Directory: modules/frontend/packages/host
+Build Command: npm run build
+Output Directory: dist
+Framework Preset: Vite
+```
+
+Variaveis de ambiente esperadas no Host:
+
+```text
+VITE_MFE_STUDENT_URL=https://<student-vercel-url>
+VITE_MFE_INSTITUTION_URL=https://<institution-vercel-url>
+VITE_MFE_ACTIVITY_URL=https://<activity-vercel-url>
+VITE_MFE_DASHBOARD_URL=https://<dashboard-vercel-url>
+VITE_MFE_ADMIN_URL=https://<admin-vercel-url>
+VITE_API_URL=https://<api-render-url>
+VITE_DEMO_USER=demo-active
+```
+
+Validacao local executada antes do deploy:
+
+```bash
+npm run build --workspace=@mfe/shared
+npm run build --workspace=mfe-host
+```
+
+Resultado verificado: ambos os builds terminaram com sucesso e geraram artefatos
+na pasta `dist` do host. A criacao dos projetos no Vercel foi validada, mas um
+projeto com status `Created` ainda precisa de conexao ao repositorio e de um
+deploy de producao com status `Ready`.
+
+Estado observado no painel Vercel em 2026-09-16:
+
+```text
+mfe-communication-host: Ready
+mfe-communication-mfe-student: Ready
+mfe-communication-mfe-admin: Ready
+mfe-communication-mfe-activity: Ready
+mfe-communication-mfe-institution: Ready
+mfe-communication-mfe-dashboard: Ready
+```
+
+O fluxo somente deve ser considerado concluido quando cada projeto tiver
+repositorio conectado, deployment de producao `Ready` e uma URL publica
+validada. Depois disso, as URLs dos remotes devem ser cadastradas no Host.
+
+URLs de producao confirmadas nesta etapa:
+
+```text
+mfe-communication-host:
+  https://mfe-communication-host.vercel.app
+mfe-communication-mfe-student:
+  https://mfe-communication-mfe-student.vercel.app
+mfe-communication-mfe-admin:
+  https://mfe-communication-mfe-admin.vercel.app
+mfe-communication-mfe-activity:
+  https://mfe-communication-mfe-activity.vercel.app
+mfe-communication-mfe-institution:
+  https://mfe-communication-mfe-institution.vercel.app
+mfe-communication-mfe-dashboard:
+  https://mfe-communication-mfe-dashboard-awmdgmlnp-fidelis27s-projects.vercel.app
+```
+
+Importante: os seis frontends foram publicados como projetos independentes no
+Vercel. A API continua sendo um servico independente e ainda precisa receber
+seu endereco publico e suas variaveis de ambiente conforme a arquitetura MFE.
 
 ## 7. Seguranca e LGPD
 
