@@ -223,6 +223,31 @@ unificado e um comando de producao para o backend. `start:dev` nao deve ser o
 comando final de producao sem verificar compilacao, sinais de encerramento,
 logs e variaveis de ambiente.
 
+## 6.2 Backend publicado no Render
+
+O Web Service `secretaria-api` foi criado no Render a partir do repositorio
+`fidelis27/mfe-communication`.
+
+```text
+URL: https://secretaria-api-58jh.onrender.com
+Root Directory: modules/backend
+Runtime: Go
+Build Command: go build -o app ./cmd/server
+Start Command: ./app
+Health Check: /health
+Plano: Free
+```
+
+O primeiro deploy usou o comando Go padrao sem `./cmd/server` e falhou porque o
+modulo possui o entrypoint em `modules/backend/cmd/server`. O comando foi
+corrigido no painel do Render e um novo deploy foi iniciado com sucesso no
+estagio de compilacao.
+
+Antes de considerar a API pronta, configurar no Render as variaveis secretas
+`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` e `DB_TLS=true` para
+um MariaDB/MySQL externo com persistencia. Sem esse banco, o processo Go nao
+consegue iniciar a conexao e o endpoint `/health` nao retorna `200`.
+
 ## 6.1 Processo automatizado de deploy do Host no Vercel
 
 O deploy do frontend Host foi automatizado a partir do repositório GitHub e
