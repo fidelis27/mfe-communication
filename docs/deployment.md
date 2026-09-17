@@ -248,6 +248,15 @@ Antes de considerar a API pronta, configurar no Render as variaveis secretas
 um MariaDB/MySQL externo com persistencia. Sem esse banco, o processo Go nao
 consegue iniciar a conexao e o endpoint `/health` nao retorna `200`.
 
+Com a API conectada ao banco, executar no Shell do Render:
+
+```bash
+go run ./cmd/migrate
+```
+
+O comando cria `schema_migrations`, aplica `001` ate `005` em ordem e nao
+repete versoes ja aplicadas.
+
 O MySQL Free da Aiven usa uma CA propria que nao estava presente no trust store
 do container Go. Para destravar o prototipo, o Render usa temporariamente
 `DB_TLS_SKIP_VERIFY=true` junto com `DB_TLS=true`. Em um ambiente real, trocar
