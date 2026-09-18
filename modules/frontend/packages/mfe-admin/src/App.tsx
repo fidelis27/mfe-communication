@@ -9,12 +9,14 @@ type Membership = {
   institutionId: string;
   role: "admin" | "member";
 };
+type Institution = { id: string; name: string; cnpj?: string | null; status?: string };
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
 const demoUser = import.meta.env.VITE_DEMO_USER ?? "demo-active";
 const canGrantSuperAdmin = import.meta.env.VITE_DEMO_SUPER_ADMIN === "true";
 
 export default function App() {
   const [users, setUsers] = useState<User[]>([]);
+  const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [superAdmin, setSuperAdmin] = useState(false);
@@ -37,10 +39,26 @@ export default function App() {
       if (!response.ok) throw new Error("Não foi possível carregar as pessoas.");
       const result = (await response.json()) as User[];
       setUsers(result);
+      setMemberUserId((current) => current || result[0]?.id || "");
       setState(result.length ? "success" : "empty");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Erro inesperado.");
       setState("error");
+    }
+  }
+
+  async function loadInstitutions() {
+    try {
+      const response = await fetch(`${apiUrl}/institutions`, {
+        headers: { "x-demo-user": demoUser },
+      });
+      if (!response.ok) throw new Error("Não foi possível carregar as instituições.");
+      const result = (await response.json()) as Institution[];
+      setInstitutions(result);
+      setGroupInstitutionId((current) => current || result[0]?.id || "");
+    } catch (error) {
+      setGroupMessage(error instanceof Error ? error.message : "Erro inesperado.");
+      setGroupState("error");
     }
   }
 
@@ -77,6 +95,7 @@ export default function App() {
 
   useEffect(() => {
     void loadUsers();
+    void loadInstitutions();
     void loadGroups();
   }, []);
 
@@ -122,7 +141,7 @@ export default function App() {
         throw new Error(body.error ?? "Não foi possível criar o grupo.");
       }
       const created = (await response.json()) as Group;
-      setGroupInstitutionId("");
+      setGroupInstitutionId((current) => current || institutions[0]?.id || "");
       setSelectedGroupId(created.id);
       setGroupMessage("Grupo criado.");
       await loadGroups();
@@ -146,7 +165,7 @@ export default function App() {
         const body = (await response.json()) as { error?: string };
         throw new Error(body.error ?? "Não foi possível adicionar o membro.");
       }
-      setMemberUserId("");
+      setMemberUserId(users[0]?.id ?? "");
       setGroupMessage("Membro adicionado.");
       await loadMemberships(selectedGroupId);
     } catch (error) {
@@ -248,15 +267,25 @@ export default function App() {
           <form className="group-form" onSubmit={createGroup}>
             <label htmlFor="group-institution">
               Nova instituição
-              <input
+              <select
                 id="group-institution"
                 value={groupInstitutionId}
                 onChange={(event) => setGroupInstitutionId(event.target.value)}
-                placeholder="institution-1"
                 required
-              />
+                disabled={institutions.length === 0}
+              >
+                {institutions.length === 0 ? (
+                  <option value="">Carregando instituições...</option>
+                ) : (
+                  institutions.map((institution) => (
+                    <option key={institution.id} value={institution.id}>
+                      {institution.name}
+                    </option>
+                  ))
+                )}
+              </select>
             </label>
-            <button type="submit">
+            <button type="submit" disabled={institutions.length === 0}>
               Criar grupo <b>→</b>
             </button>
           </form>
@@ -283,13 +312,20 @@ export default function App() {
             {selectedGroupId && (
               <>
                 <form className="member-form" onSubmit={addMember}>
-                  <input
+                  <select
                     aria-label="ID da pessoa"
                     value={memberUserId}
                     onChange={(event) => setMemberUserId(event.target.value)}
-                    placeholder="ID da pessoa"
                     required
-                  />
+                    disabled={!users.length}
+                  >
+                    {!users.length && <option value="">Nenhuma pessoa</option>}
+                    {users.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.name} ({user.id})
+                      </option>
+                    ))}
+                  </select>
                   <select
                     aria-label="Papel"
                     value={memberRole}
@@ -298,7 +334,7 @@ export default function App() {
                     <option value="member">Membro</option>
                     <option value="admin">Administrador</option>
                   </select>
-                  <button type="submit" aria-label="Adicionar membro">
+                  <button type="submit" aria-label="Adicionar membro" disabled={!users.length}>
                     +
                   </button>
                 </form>

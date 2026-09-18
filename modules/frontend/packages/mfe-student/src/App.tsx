@@ -9,16 +9,43 @@ type Student = {
   status: string;
 };
 
+type Institution = {
+  id: string;
+  name: string;
+  cnpj?: string | null;
+  status?: string;
+};
+
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
 const demoUser = import.meta.env.VITE_DEMO_USER ?? "demo-active";
 
 export default function App() {
   const [students, setStudents] = useState<Student[]>([]);
+  const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [name, setName] = useState("");
-  const [institutionId, setInstitutionId] = useState("transfer-origin");
+  const [institutionId, setInstitutionId] = useState("");
   const [state, setState] = useState<"loading" | "empty" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
   const { events, connection } = useDomainEvents(apiUrl, demoUser);
+
+  const loadInstitutions = useCallback(async () => {
+    try {
+      const response = await fetch(`${apiUrl}/institutions`, {
+        headers: { "x-demo-user": demoUser },
+      });
+      if (!response.ok) {
+        throw new Error("Não foi possível carregar as instituições.");
+      }
+      const result = (await response.json()) as Institution[];
+      setInstitutions(result);
+      if (result.length > 0 && !institutionId) {
+        setInstitutionId(result[0].id);
+      }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Erro ao carregar instituições.");
+      setState("error");
+    }
+  }, [apiUrl, demoUser, institutionId]);
 
   const loadStudents = useCallback(async (signal?: AbortSignal) => {
     setState("loading");
@@ -43,12 +70,13 @@ export default function App() {
 
   useEffect(() => {
     const controller = new AbortController();
+    void loadInstitutions();
     void loadStudents(controller.signal);
 
     return () => {
       controller.abort();
     };
-  }, [loadStudents]);
+  }, [loadInstitutions, loadStudents]);
 
   useEffect(() => {
     const event = events.find((item) => item.type === "STUDENT_CREATED");
@@ -63,6 +91,13 @@ export default function App() {
   async function createStudent(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
+
+    if (!institutionId) {
+      setMessage("Selecione uma instituição antes de cadastrar.");
+      setState("error");
+      return;
+    }
+
     try {
       const response = await fetch(`${apiUrl}/students`, {
         method: "POST",
@@ -74,6 +109,9 @@ export default function App() {
         throw new Error(body.error ?? "Não foi possível cadastrar o estudante.");
       }
       setName("");
+      if (institutions.length > 0) {
+        setInstitutionId(institutions[0].id);
+      }
       setMessage("Estudante cadastrado.");
       setState("success");
     } catch (error) {
@@ -119,12 +157,23 @@ export default function App() {
           </label>
           <label htmlFor="student-institution">
             Instituição
-            <input
+            <select
               id="student-institution"
               value={institutionId}
               onChange={(event) => setInstitutionId(event.target.value)}
               required
-            />
+              disabled={institutions.length === 0}
+            >
+              {institutions.length === 0 ? (
+                <option value="">Carregando instituições...</option>
+              ) : (
+                institutions.map((institution) => (
+                  <option key={institution.id} value={institution.id}>
+                    {institution.name}
+                  </option>
+                ))
+              )}
+            </select>
           </label>
           <button type="submit">
             Cadastrar estudante <span>→</span>
