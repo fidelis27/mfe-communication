@@ -260,7 +260,7 @@ export default function App() {
       <section className="groups-panel">
         <div className="section-heading">
           <span>03</span>
-          <h2>Grupos e memberships</h2>
+          <h2>Grupos e acessos</h2>
           <strong>{groups.length.toString().padStart(2, "0")}</strong>
         </div>
         <div className="groups-grid">
@@ -291,7 +291,7 @@ export default function App() {
           </form>
           <div className="group-browser">
             <label htmlFor="group-select">
-              Grupo selecionado
+              Grupo da instituição
               <select
                 id="group-select"
                 value={selectedGroupId}
@@ -301,7 +301,8 @@ export default function App() {
                 {!groups.length && <option value="">Nenhum grupo</option>}
                 {groups.map((group) => (
                   <option key={group.id} value={group.id}>
-                    {group.institutionId} · {group.id.slice(0, 8)}
+                    Grupo de {institutions.find((institution) => institution.id === group.institutionId)?.name ??
+                      "instituição não identificada"}
                   </option>
                 ))}
               </select>
@@ -311,9 +312,10 @@ export default function App() {
             {groupState === "error" && <p className="empty error">{groupMessage}</p>}
             {selectedGroupId && (
               <>
+                <p className="member-caption">Pessoa do grupo e nível de acesso</p>
                 <form className="member-form" onSubmit={addMember}>
                   <select
-                    aria-label="ID da pessoa"
+                    aria-label="Pessoa do grupo"
                     value={memberUserId}
                     onChange={(event) => setMemberUserId(event.target.value)}
                     required
