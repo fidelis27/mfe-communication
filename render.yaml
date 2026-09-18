@@ -19,3 +19,5 @@ services:
         sync: false
       - key: DB_TLS
         value: "true"
+      - key: CORS_ORIGINS
+        value: "https://mfe-communication-host.vercel.app,https://mfe-communication-mfe-activity.vercel.app,https://mfe-communication-mfe-student.vercel.app,https://mfe-communication-mfe-institution.vercel.app,https://mfe-communication-mfe-dashboard.vercel.app,https://mfe-communication-mfe-admin.vercel.app"
