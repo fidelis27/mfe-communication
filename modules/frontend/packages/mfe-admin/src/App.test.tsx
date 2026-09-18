@@ -84,9 +84,9 @@ describe("Admin states and accessibility", () => {
       }),
     ));
 
-    await waitFor(() => expect(screen.getByLabelText("ID da pessoa")).toHaveValue("user-456"));
-  const addMemberButton = screen.getByRole("button", { name: "Adicionar membro" });
-  fireEvent.submit(addMemberButton.closest("form")!);
+    await waitFor(() => expect(screen.getByLabelText("Pessoa do grupo")).toHaveValue("user-456"));
+    const addMemberButton = screen.getByRole("button", { name: "Adicionar membro" });
+    fireEvent.submit(addMemberButton.closest("form")!);
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining("/groups/group-789/members"),

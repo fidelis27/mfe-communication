@@ -27,9 +27,9 @@ body {
   text-transform: uppercase;
 }
 .institution-hero h1 {
-  font-size: clamp(42px, 7vw, 82px);
+  font-size: clamp(36px, 5vw, 58px);
   font-weight: 400;
-  line-height: 0.98;
+  line-height: 1.02;
   margin: 18px 0;
 }
 .lede {

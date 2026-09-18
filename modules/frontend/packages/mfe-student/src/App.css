@@ -121,6 +121,24 @@ input {
 input:focus {
   border-color: #bd633f;
 }
+select {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #9daea5;
+  color: #18332f;
+  font: 18px Georgia, serif;
+  outline: 0;
+  padding: 10px 24px 10px 0;
+  width: 100%;
+}
+select:focus {
+  border-color: #bd633f;
+}
+select:disabled {
+  color: #71817a;
+  cursor: wait;
+}
 button {
   background: #18332f;
   border: 0;
