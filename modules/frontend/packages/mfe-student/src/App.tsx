@@ -38,14 +38,14 @@ export default function App() {
       }
       const result = (await response.json()) as Institution[];
       setInstitutions(result);
-      if (result.length > 0 && !institutionId) {
-        setInstitutionId(result[0].id);
+      if (result.length > 0) {
+        setInstitutionId((current) => current || result[0].id);
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Erro ao carregar instituições.");
       setState("error");
     }
-  }, [apiUrl, demoUser, institutionId]);
+  }, []);
 
   const loadStudents = useCallback(async (signal?: AbortSignal) => {
     setState("loading");
