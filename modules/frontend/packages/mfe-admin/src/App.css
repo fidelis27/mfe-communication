@@ -30,15 +30,15 @@ body {
   text-transform: uppercase;
 }
 .admin-heading h1 {
-  font-size: clamp(44px, 7vw, 82px);
+  font-size: clamp(2.1rem, 3.8vw, 3rem);
   font-weight: 400;
-  line-height: 0.98;
+  line-height: 1.02;
   margin: 18px 0;
 }
 .lede {
   color: #777383;
   font:
-    18px/1.5 Arial,
+    16px/1.5 Arial,
     sans-serif;
   max-width: 510px;
 }
@@ -75,7 +75,7 @@ body {
     sans-serif;
 }
 .section-heading h2 {
-  font-size: 22px;
+  font-size: 1.2rem;
   font-weight: 400;
   margin: 0;
 }
@@ -172,7 +172,7 @@ input:focus {
   justify-content: center;
 }
 .user-row h3 {
-  font-size: 17px;
+  font-size: 1rem;
   font-weight: 400;
   margin: 0 0 4px;
 }
@@ -244,6 +244,11 @@ select {
   gap: 12px;
   grid-template-columns: 1fr 150px 42px;
   margin: 28px 0 8px;
+}
+.member-caption {
+  color: #777383;
+  font: 12px Arial, sans-serif;
+  margin: 28px 0 -16px;
 }
 .member-form input {
   border-bottom: 1px solid #afa4b4;
