@@ -1,6 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 $root = Split-Path -Parent $PSScriptRoot
+$backend = Join-Path (Split-Path $root -Parent) "secretaria-backend"
 $packages = Join-Path $root "modules/frontend/packages"
 
 $env:PORT = if ($env:PORT) { $env:PORT } else { "3333" }
@@ -10,9 +11,11 @@ $env:DB_NAME = if ($env:DB_NAME) { $env:DB_NAME } else { "test" }
 $env:DB_USER = if ($env:DB_USER) { $env:DB_USER } else { "root" }
 $env:DB_PASSWORD = if ($env:DB_PASSWORD) { $env:DB_PASSWORD } else { "" }
 $env:DB_TLS = if ($env:DB_TLS) { $env:DB_TLS } else { "false" }
+$env:KEYCLOAK_ISSUER = if ($env:KEYCLOAK_ISSUER) { $env:KEYCLOAK_ISSUER } else { "http://localhost:8080/realms/secretaria-escolar" }
+$env:KEYCLOAK_CLIENT_ID = if ($env:KEYCLOAK_CLIENT_ID) { $env:KEYCLOAK_CLIENT_ID } else { "secretaria-api" }
 
 $services = @(
-  @{ Name = "backend"; Path = (Join-Path $root "modules/backend"); Port = 3333 },
+  @{ Name = "backend"; Path = $backend; Port = 3333 },
   @{ Name = "student"; Path = (Join-Path $packages "mfe-student"); Port = 4173 },
   @{ Name = "host"; Path = (Join-Path $packages "host"); Port = 4174 },
   @{ Name = "institution"; Path = (Join-Path $packages "mfe-institution"); Port = 4175 },
@@ -29,6 +32,9 @@ foreach ($service in $services) {
   }
 
   if ($service.Name -eq "backend") {
+    if (-not (Test-Path (Join-Path $service.Path "go.mod"))) {
+      throw "Backend repository not found at $($service.Path). Clone https://github.com/fidelis27/secretaria-backend beside this repository."
+    }
     Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$($service.Path)'; go run ./cmd/server" | Out-Null
   } else {
     Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$($service.Path)'; npx vite preview --host 127.0.0.1 --port $($service.Port)" | Out-Null

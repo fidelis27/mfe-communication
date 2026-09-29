@@ -1,7 +1,7 @@
 # Contexto
 
 Repositório: mfe-communication — protótipo "Secretaria Escolar".
-Backend Go (hexagonal) em `modules/backend`, frontend React + Vite Module
+Backend Go (hexagonal) no repositorio `secretaria-backend`, frontend React + Vite Module
 Federation em `modules/frontend/packages` (host + 5 remotes + shared).
 
 Regras de trabalho (não negociáveis):
@@ -20,7 +20,7 @@ Regras de trabalho (não negociáveis):
 
 ## PR 1 — fix: aplicar CanManageUsers nas rotas de usuário
 
-Em `modules/backend/internal/adapters/httpserver/server.go`, as rotas
+Em `secretaria-backend/internal/adapters/httpserver/server.go`, as rotas
 `GET /users` e `POST /users` não consultam a policy. `CanManageUsers` existe
 em `internal/domain/authorization/policy.go` e é testada, mas nunca é chamada.
 Hoje qualquer usuário autenticado consegue criar outro com `superAdmin: true`.

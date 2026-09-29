@@ -230,7 +230,8 @@ O Web Service `secretaria-api` foi criado no Render a partir do repositorio
 
 ```text
 URL: https://secretaria-api-58jh.onrender.com
-Root Directory: modules/backend
+Repository: fidelis27/secretaria-backend
+Root Directory: .
 Runtime: Go
 Build Command: go build -o app ./cmd/server
 Start Command: ./app
@@ -239,7 +240,7 @@ Plano: Free
 ```
 
 O primeiro deploy usou o comando Go padrao sem `./cmd/server` e falhou porque o
-modulo possui o entrypoint em `modules/backend/cmd/server`. O comando foi
+modulo possui o entrypoint em `cmd/server`. O comando foi
 corrigido no painel do Render e um novo deploy foi iniciado com sucesso no
 estagio de compilacao.
 

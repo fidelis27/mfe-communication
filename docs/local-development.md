@@ -9,7 +9,8 @@ Este guia descreve como subir o backend Go, o MariaDB pelo XAMPP, os MFEs e aces
 - XAMPP instalado em `C:\xampp`.
 - MariaDB/MySQL do XAMPP configurado para a porta `3306`.
 
-O backend fica em `modules/backend` e os frontends em `modules/frontend/packages`.
+Clone `https://github.com/fidelis27/secretaria-backend` como pasta irmã de
+`mfe-communication`. Os frontends ficam em `modules/frontend/packages`.
 
 ## 1. Subir o MariaDB pelo XAMPP
 
@@ -44,7 +45,8 @@ Aplique as migrations na ordem:
 
 ```powershell
 $database = "test"
-Get-ChildItem .\modules\backend\migrations\*.sql | Sort-Object Name | ForEach-Object {
+$backend = Join-Path (Split-Path (Get-Location).Path -Parent) "secretaria-backend"
+Get-ChildItem "$backend\migrations\*.sql" | Sort-Object Name | ForEach-Object {
   Get-Content -Raw $_.FullName | C:\xampp\mysql\bin\mysql.exe -uroot $database
 }
 ```
@@ -59,7 +61,7 @@ As migrations atuais são:
 Para executar somente uma migration:
 
 ```powershell
-Get-Content -Raw .\modules\backend\migrations\004_seed_demo_super_admin.sql | C:\xampp\mysql\bin\mysql.exe -uroot test
+Get-Content -Raw "$backend\migrations\004_seed_demo_super_admin.sql" | C:\xampp\mysql\bin\mysql.exe -uroot test
 ```
 
 ## 3. Acessar o banco no phpMyAdmin
@@ -103,7 +105,9 @@ $env:DB_USER="root"
 $env:DB_PASSWORD=""
 $env:DB_TLS="false"
 $env:CORS_ORIGINS="http://localhost:4173,http://localhost:4174,http://localhost:4175,http://localhost:4176,http://localhost:4178,http://localhost:4179"
-go -C modules/backend run ./cmd/server
+Push-Location $backend
+go run ./cmd/server
+Pop-Location
 ```
 
 O backend fica em `http://localhost:3333`.
@@ -119,10 +123,11 @@ curl.exe -i http://localhost:3333/health
 
 A resposta esperada é `200` com `{"ok":true}`.
 
-As métricas básicas ficam disponíveis para um usuário autenticado:
+Configure também `KEYCLOAK_ISSUER` e `KEYCLOAK_CLIENT_ID` para autenticação.
+As métricas básicas exigem access token:
 
 ```powershell
-curl.exe -i http://localhost:3333/metrics -H "x-demo-user: demo-active"
+curl.exe -i http://localhost:3333/metrics -H "Authorization: Bearer <access-token>"
 ```
 
 O endpoint retorna contadores no formato Prometheus para requisições totais,
@@ -133,22 +138,22 @@ requisição é registrado.
 As rotas protegidas usam o usuário demo:
 
 ```powershell
-curl.exe -i http://localhost:3333/institutions -H "x-demo-user: demo-active"
+curl.exe -i http://localhost:3333/institutions -H "Authorization: Bearer <access-token>"
 ```
 
 O gerenciamento de grupos usa as rotas abaixo:
 
 ```powershell
-curl.exe -i http://localhost:3333/groups -H "x-demo-user: demo-active"
+curl.exe -i http://localhost:3333/groups -H "Authorization: Bearer <access-token>"
 curl.exe -i -X POST http://localhost:3333/groups `
   -H "Content-Type: application/json" `
-  -H "x-demo-user: demo-active" `
+  -H "Authorization: Bearer <access-token>" `
   -d '{"institutionId":"institution-1"}'
 curl.exe -i http://localhost:3333/groups/{groupId}/members `
-  -H "x-demo-user: demo-active"
+  -H "Authorization: Bearer <access-token>"
 curl.exe -i -X POST http://localhost:3333/groups/{groupId}/members `
   -H "Content-Type: application/json" `
-  -H "x-demo-user: demo-active" `
+  -H "Authorization: Bearer <access-token>" `
   -d '{"userId":"user-1","role":"member"}'
 ```
 
@@ -161,7 +166,7 @@ Sem o header, a API retorna `401`. Usuário inexistente ou inativo retorna `403`
 O WebSocket fica em:
 
 ```text
-ws://localhost:3333/events?demoUser=demo-active
+ws://localhost:3333/events (subprotocol: bearer.<access-token>)
 ```
 
 ## 5. Instalar dependências frontend

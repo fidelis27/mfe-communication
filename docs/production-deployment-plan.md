@@ -45,7 +45,7 @@ MariaDB/MySQL gerenciado com backup
 - Criar Web Service com build:
 
 ```powershell
-go build -o server ./modules/backend/cmd/server
+go build -o server ./cmd/server
 ```
 
 - Configurar `PORT`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`,
