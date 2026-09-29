@@ -30,15 +30,15 @@ body {
   text-transform: uppercase;
 }
 .dashboard-heading h1 {
-  font-size: clamp(44px, 7vw, 82px);
+  font-size: clamp(2.1rem, 3.8vw, 3rem);
   font-weight: 400;
-  line-height: 0.98;
+  line-height: 1.02;
   margin: 18px 0;
 }
 .lede {
   color: #6e7e7d;
   font:
-    18px/1.5 Arial,
+    16px/1.5 Arial,
     sans-serif;
   max-width: 510px;
 }
@@ -90,7 +90,7 @@ body {
 }
 .metric strong {
   display: block;
-  font-size: 74px;
+  font-size: clamp(2.2rem, 4vw, 3.6rem);
   font-weight: 400;
   line-height: 1;
   margin: 38px 0 10px;
@@ -120,7 +120,7 @@ body {
   font-size: 36px;
 }
 .dashboard-note h2 {
-  font-size: 22px;
+  font-size: 1.2rem;
   font-weight: 400;
   margin: 0 0 6px;
 }
