@@ -76,8 +76,9 @@ Estas informações foram obtidas por engenharia reversa do repositório:
 - O pacote compartilhado declara tipos para eventos de instituição e
   estudante, mas não existe produtor, consumidor, transporte ou persistência
   de eventos.
-- O backend Express possui health check, autenticação demonstrativa por
-  `x-demo-user` e uma rota PUT de exemplo para instituição.
+- A nota original descrevia um backend Express demonstrativo com `x-demo-user`;
+  o backend atual é Go, separado em `fidelis27/secretaria-backend`, autenticado
+  por JWT Supabase e autorizado contra usuários e permissões MariaDB/MySQL.
 - A persistência disponível é em memória.
 - A autorização já modela superadministrador, administrador e membro por
   instituição/grupo.

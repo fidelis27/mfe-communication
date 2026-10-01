@@ -8,37 +8,29 @@ Este guia descreve como subir o backend Go, o MariaDB pelo XAMPP, os MFEs e aces
 - Node.js e npm instalados.
 - XAMPP instalado em `C:\xampp`.
 - MariaDB/MySQL do XAMPP configurado para a porta `3306`.
-- Docker Desktop instalado para executar o Keycloak local.
+- Uma conta Supabase com Auth habilitado para autenticar usuarios locais.
 
 Clone `https://github.com/fidelis27/secretaria-backend` como pasta irmã de
 `mfe-communication`. Os frontends ficam em `modules/frontend/packages`.
 
-## 0. Subir o Keycloak local
+## 0. Configurar Supabase Auth
 
-Na raiz do projeto, execute:
+Crie um projeto Supabase e habilite o provedor de e-mail/senha. Mantenha a
+confirmacao de e-mail habilitada e desabilite cadastro publico; provisione no
+Supabase somente as contas autorizadas que tambem existam como usuarios ativos
+na tabela `users` do backend.
+
+Defina o Project URL e a chave anon/public no ambiente antes de compilar os
+workspaces, ou configure-os nas variaveis de build de cada projeto Vercel:
 
 ```powershell
-docker compose up -d keycloak
+$env:VITE_SUPABASE_URL="https://<project-ref>.supabase.co"
+$env:VITE_SUPABASE_ANON_KEY="<anon-public-key>"
 ```
 
-O realm `secretaria-escolar`, o client público `secretaria-frontend` e o
-usuário de teste `demo-active` são importados automaticamente. Para acessar o
-console administrativo, use `http://localhost:8080` com `admin` / `admin`.
-
-No frontend local, use:
-
-```text
-VITE_KEYCLOAK_URL=http://localhost:8080
-VITE_KEYCLOAK_REALM=secretaria-escolar
-VITE_KEYCLOAK_CLIENT_ID=secretaria-frontend
-```
-
-No backend local, use:
-
-```text
-KEYCLOAK_ISSUER=http://localhost:8080/realms/secretaria-escolar
-KEYCLOAK_CLIENT_ID=secretaria-frontend
-```
+Configure no backend `OIDC_ISSUER` com o Project URL seguido de `/auth/v1` e
+`OIDC_AUDIENCE=authenticated`. A chave anon e publica; nunca coloque a
+`service_role` no frontend.
 
 ## 1. Subir o MariaDB pelo XAMPP
 
@@ -132,6 +124,8 @@ $env:DB_NAME="test"
 $env:DB_USER="root"
 $env:DB_PASSWORD=""
 $env:DB_TLS="false"
+$env:OIDC_ISSUER="https://<project-ref>.supabase.co/auth/v1"
+$env:OIDC_AUDIENCE="authenticated"
 $env:CORS_ORIGINS="http://localhost:4173,http://localhost:4174,http://localhost:4175,http://localhost:4176,http://localhost:4178,http://localhost:4179"
 Push-Location $backend
 go run ./cmd/server
@@ -151,7 +145,7 @@ curl.exe -i http://localhost:3333/health
 
 A resposta esperada é `200` com `{"ok":true}`.
 
-Configure também `KEYCLOAK_ISSUER` e `KEYCLOAK_CLIENT_ID` para autenticação.
+Configure `OIDC_ISSUER` e `OIDC_AUDIENCE` no backend para autenticação Supabase.
 As métricas básicas exigem access token:
 
 ```powershell

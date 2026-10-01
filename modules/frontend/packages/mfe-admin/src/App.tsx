@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
-import { authenticatedFetch, initializeAuth } from "@mfe/shared";
+import { authenticatedFetch } from "@mfe/shared";
 import "./App.css";
 
 type User = { id: string; name: string; email: string; status: string; superAdmin: boolean };
@@ -12,9 +12,6 @@ type Membership = {
 };
 type Institution = { id: string; name: string; cnpj?: string | null; status?: string };
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
-const keycloakUrl = import.meta.env.VITE_KEYCLOAK_URL ?? "";
-const keycloakRealm = import.meta.env.VITE_KEYCLOAK_REALM ?? "";
-const keycloakClientId = import.meta.env.VITE_KEYCLOAK_CLIENT_ID ?? "";
 const canGrantSuperAdmin = import.meta.env.VITE_DEMO_SUPER_ADMIN === "true";
 
 export default function App() {
@@ -35,17 +32,6 @@ export default function App() {
     "loading",
   );
   const [groupMessage, setGroupMessage] = useState("");
-
-  useEffect(() => {
-    if (!keycloakUrl || !keycloakRealm || !keycloakClientId) return;
-    void initializeAuth({
-      url: keycloakUrl,
-      realm: keycloakRealm,
-      clientId: keycloakClientId,
-      onLoad: "check-sso",
-      silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
-    });
-  }, []);
 
   async function loadUsers() {
     try {
@@ -311,8 +297,9 @@ export default function App() {
                 {!groups.length && <option value="">Nenhum grupo</option>}
                 {groups.map((group) => (
                   <option key={group.id} value={group.id}>
-                    Grupo de {institutions.find((institution) => institution.id === group.institutionId)?.name ??
-                      "instituição não identificada"}
+                    Grupo de{" "}
+                    {institutions.find((institution) => institution.id === group.institutionId)
+                      ?.name ?? "instituição não identificada"}
                   </option>
                 ))}
               </select>

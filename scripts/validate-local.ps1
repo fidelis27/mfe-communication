@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 $apiBase = if ($env:API_BASE_URL) { $env:API_BASE_URL } else { "http://localhost:3333" }
-$demoUser = if ($env:DEMO_USER) { $env:DEMO_USER } else { "demo-active" }
+$accessToken = $env:SUPABASE_ACCESS_TOKEN
 $origin = if ($env:CHECK_ORIGIN) { $env:CHECK_ORIGIN } else { "http://localhost:4174" }
 
 function Assert-Equal([int] $actual, [int] $expected, [string] $check) {
@@ -24,7 +24,13 @@ function Get-Status([string] $uri, [hashtable] $headers = @{}, [string] $method 
 
 Assert-Equal (Get-Status "$apiBase/health") 200 "backend health"
 Assert-Equal (Get-Status "$apiBase/institutions") 401 "protected API without identity"
-Assert-Equal (Get-Status "$apiBase/metrics" @{ "x-demo-user" = $demoUser }) 200 "authenticated metrics"
+
+if ($accessToken) {
+  $authHeaders = @{ Authorization = "Bearer $accessToken" }
+  Assert-Equal (Get-Status "$apiBase/metrics" $authHeaders) 200 "authenticated metrics"
+} else {
+  Write-Warning "Authenticated API and WebSocket checks skipped; set SUPABASE_ACCESS_TOKEN to a valid access token."
+}
 
 $corsHeaders = @{
   Origin = $origin
@@ -44,23 +50,30 @@ foreach ($remote in $remoteEntries.GetEnumerator()) {
   Assert-Equal (Get-Status "http://localhost:$($remote.Value)/assets/remoteEntry.js") 200 "$($remote.Key) remoteEntry"
 }
 
-$socket = [System.Net.WebSockets.ClientWebSocket]::new()
-$socketUri = [Uri](($apiBase -replace '^http', 'ws') + "/events?demoUser=$demoUser")
-try {
-  $socket.ConnectAsync($socketUri, [Threading.CancellationToken]::None).GetAwaiter().GetResult()
-  if ($socket.State -ne [System.Net.WebSockets.WebSocketState]::Open) {
-    throw "WebSocket did not reach Open state"
-  }
-  Write-Host "PASS backend WebSocket (Open)"
-} finally {
-  if ($socket.State -eq [System.Net.WebSockets.WebSocketState]::Open) {
-    try {
-      $socket.CloseAsync([System.Net.WebSockets.WebSocketCloseStatus]::NormalClosure, "validation", [Threading.CancellationToken]::None).GetAwaiter().GetResult()
-    } catch {
-      Write-Host "WebSocket close cleanup skipped: $($_.Exception.Message)"
+if ($accessToken) {
+  $socket = [System.Net.WebSockets.ClientWebSocket]::new()
+  $socket.Options.AddSubProtocol("bearer.$accessToken")
+  $socketUri = [Uri](($apiBase -replace '^http', 'ws') + "/events")
+  try {
+    $socket.ConnectAsync($socketUri, [Threading.CancellationToken]::None).GetAwaiter().GetResult()
+    if ($socket.State -ne [System.Net.WebSockets.WebSocketState]::Open) {
+      throw "WebSocket did not reach Open state"
     }
+    Write-Host "PASS backend WebSocket (Open)"
+  } finally {
+    if ($socket.State -eq [System.Net.WebSockets.WebSocketState]::Open) {
+      try {
+        $socket.CloseAsync([System.Net.WebSockets.WebSocketCloseStatus]::NormalClosure, "validation", [Threading.CancellationToken]::None).GetAwaiter().GetResult()
+      } catch {
+        Write-Host "WebSocket close cleanup skipped: $($_.Exception.Message)"
+      }
+    }
+    $socket.Dispose()
   }
-  $socket.Dispose()
 }
 
-Write-Host "Local validation completed successfully."
+if ($accessToken) {
+  Write-Host "Local validation completed successfully."
+} else {
+  Write-Warning "Local validation completed with authenticated API/WebSocket checks skipped."
+}
