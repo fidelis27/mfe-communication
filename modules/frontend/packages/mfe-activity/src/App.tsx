@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { authenticatedFetch, initializeAuth, useDomainEvents } from "@mfe/shared";
 import "./App.css";
 
 type DomainEvent = {
@@ -12,8 +13,9 @@ type DomainEvent = {
 };
 
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
-const demoUser = import.meta.env.VITE_DEMO_USER ?? "demo-active";
-const socketUrl = `${apiUrl.replace(/^http/, "ws")}/events?demoUser=${encodeURIComponent(demoUser)}`;
+const keycloakUrl = import.meta.env.VITE_KEYCLOAK_URL ?? "";
+const keycloakRealm = import.meta.env.VITE_KEYCLOAK_REALM ?? "";
+const keycloakClientId = import.meta.env.VITE_KEYCLOAK_CLIENT_ID ?? "";
 
 const labels: Record<string, string> = {
   STUDENT_CREATED: "Estudante cadastrado",
@@ -28,17 +30,24 @@ export default function App() {
     "loading",
   );
   const [historyError, setHistoryError] = useState("");
-  const [connection, setConnection] = useState<"connecting" | "connected" | "offline">(
-    "connecting",
-  );
+  const { events: liveEvents, connection } = useDomainEvents(apiUrl);
+
+  useEffect(() => {
+    if (!keycloakUrl || !keycloakRealm || !keycloakClientId) return;
+    void initializeAuth({
+      url: keycloakUrl,
+      realm: keycloakRealm,
+      clientId: keycloakClientId,
+      onLoad: "check-sso",
+      silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
+    });
+  }, []);
 
   async function loadHistory() {
     setHistoryState("loading");
     setHistoryError("");
     try {
-      const response = await fetch(`${apiUrl}/events/history?limit=30`, {
-        headers: { "x-demo-user": demoUser },
-      });
+      const response = await authenticatedFetch(`${apiUrl}/events/history?limit=30`);
       if (!response.ok) throw new Error("Não foi possível carregar o histórico.");
       const history = (await response.json()) as DomainEvent[];
       setEvents(history);
@@ -51,50 +60,19 @@ export default function App() {
 
   useEffect(() => {
     void loadHistory();
-
-    let stopped = false;
-    let socket: WebSocket | undefined;
-    let retryTimer: number | undefined;
-    let retryAttempt = 0;
-
-    const connect = () => {
-      if (stopped) return;
-      setConnection(retryAttempt === 0 ? "connecting" : "offline");
-      socket = new WebSocket(socketUrl);
-      socket.onopen = () => {
-        retryAttempt = 0;
-        setConnection("connected");
-      };
-      socket.onclose = () => {
-        if (stopped) return;
-        setConnection("offline");
-        const delay = Math.min(1000 * 2 ** retryAttempt, 10000);
-        retryAttempt += 1;
-        retryTimer = window.setTimeout(connect, delay);
-      };
-      socket.onerror = () => socket?.close();
-      socket.onmessage = (message) => {
-        try {
-          const event = JSON.parse(message.data) as DomainEvent;
-          setEvents((current) =>
-            current.some((item) => item.eventId === event.eventId)
-              ? current
-              : [event, ...current].slice(0, 30),
-          );
-          setHistoryState("success");
-        } catch {
-          socket?.close();
-        }
-      };
-    };
-
-    connect();
-    return () => {
-      stopped = true;
-      if (retryTimer !== undefined) window.clearTimeout(retryTimer);
-      socket?.close();
-    };
   }, []);
+
+  useEffect(() => {
+    if (liveEvents.length === 0) return;
+    setEvents((current) => {
+      const next = [...liveEvents, ...current];
+      return next.filter(
+        (event, index, array) =>
+          index === array.findIndex((candidate) => candidate.eventId === event.eventId),
+      ).slice(0, 30);
+    });
+    setHistoryState("success");
+  }, [liveEvents]);
 
   return (
     <main className="activity-shell">

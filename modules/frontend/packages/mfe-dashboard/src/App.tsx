@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { authenticatedFetch, initializeAuth, useDomainEvents } from "@mfe/shared";
 import "./App.css";
 
 type Institution = { id: string; status: string };
@@ -11,8 +12,9 @@ type DashboardData = {
 };
 
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
-const demoUser = import.meta.env.VITE_DEMO_USER ?? "demo-active";
-const socketUrl = `${apiUrl.replace(/^http/, "ws")}/events?demoUser=${encodeURIComponent(demoUser)}`;
+const keycloakUrl = import.meta.env.VITE_KEYCLOAK_URL ?? "";
+const keycloakRealm = import.meta.env.VITE_KEYCLOAK_REALM ?? "";
+const keycloakClientId = import.meta.env.VITE_KEYCLOAK_CLIENT_ID ?? "";
 
 export default function App() {
   const [data, setData] = useState<DashboardData>({
@@ -23,19 +25,27 @@ export default function App() {
   const [state, setState] = useState<"loading" | "success" | "error">("loading");
   const [errorMessage, setErrorMessage] = useState("");
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
-  const [connection, setConnection] = useState<"connecting" | "connected" | "offline">(
-    "connecting",
-  );
+  const { connection } = useDomainEvents(apiUrl);
+
+  useEffect(() => {
+    if (!keycloakUrl || !keycloakRealm || !keycloakClientId) return;
+    void initializeAuth({
+      url: keycloakUrl,
+      realm: keycloakRealm,
+      clientId: keycloakClientId,
+      onLoad: "check-sso",
+      silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
+    });
+  }, []);
 
   const load = useCallback(async () => {
     setState("loading");
     setErrorMessage("");
     try {
-      const headers = { "x-demo-user": demoUser };
       const [institutions, students, enrollments] = await Promise.all([
-        fetch(`${apiUrl}/institutions`, { headers }),
-        fetch(`${apiUrl}/students`, { headers }),
-        fetch(`${apiUrl}/enrollments`, { headers }),
+        authenticatedFetch(`${apiUrl}/institutions`),
+        authenticatedFetch(`${apiUrl}/students`),
+        authenticatedFetch(`${apiUrl}/enrollments`),
       ]);
       if (![institutions, students, enrollments].every((response) => response.ok))
         throw new Error("Não foi possível atualizar os indicadores.");
@@ -54,33 +64,6 @@ export default function App() {
 
   useEffect(() => {
     void load();
-    let stopped = false;
-    let socket: WebSocket | undefined;
-    let retryTimer: number | undefined;
-    let retryAttempt = 0;
-    const connect = () => {
-      if (stopped) return;
-      socket = new WebSocket(socketUrl);
-      socket.onopen = () => {
-        retryAttempt = 0;
-        setConnection("connected");
-      };
-      socket.onclose = () => {
-        if (stopped) return;
-        setConnection("offline");
-        const delay = Math.min(1000 * 2 ** retryAttempt, 10000);
-        retryAttempt += 1;
-        retryTimer = window.setTimeout(connect, delay);
-      };
-      socket.onerror = () => socket?.close();
-      socket.onmessage = () => void load();
-    };
-    connect();
-    return () => {
-      stopped = true;
-      if (retryTimer !== undefined) window.clearTimeout(retryTimer);
-      socket?.close();
-    };
   }, [load]);
 
   const activeEnrollments = data.enrollments.filter(
