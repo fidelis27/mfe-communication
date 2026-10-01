@@ -1,5 +1,14 @@
-import { Component, ErrorInfo, lazy, ReactNode, Suspense, useEffect, useState } from "react";
-import { initializeAuth, isAuthenticated, login, logout } from "@mfe/shared";
+import {
+  Component,
+  ErrorInfo,
+  FormEvent,
+  lazy,
+  ReactNode,
+  Suspense,
+  useEffect,
+  useState,
+} from "react";
+import { initializeAuth, login, logout, subscribeToAuthState } from "@mfe/shared";
 import "./App.css";
 
 const StudentApp = lazy(() => import("mfe_student/App"));
@@ -59,25 +68,44 @@ class RemoteBoundary extends Component<RemoteBoundaryProps, RemoteBoundaryState>
   }
 }
 
-const keycloakUrl = import.meta.env.VITE_KEYCLOAK_URL ?? "http://localhost:8080";
-const keycloakRealm = import.meta.env.VITE_KEYCLOAK_REALM ?? "secretaria-escolar";
-const keycloakClientId = import.meta.env.VITE_KEYCLOAK_CLIENT_ID ?? "secretaria-frontend";
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? "";
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? "";
 
 export default function App() {
   const [activeModule, setActiveModule] = useState(() =>
     moduleFromPath(typeof window === "undefined" ? "/estudantes" : window.location.pathname),
   );
+  const [authReady, setAuthReady] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [signingIn, setSigningIn] = useState(false);
 
   useEffect(() => {
-    if (!keycloakUrl || !keycloakRealm || !keycloakClientId) return;
-    void initializeAuth({
-      url: keycloakUrl,
-      realm: keycloakRealm,
-      clientId: keycloakClientId,
-      onLoad: "check-sso",
-      silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
-    }).then((success) => setAuthenticated(success || isAuthenticated()));
+    if (!supabaseUrl || !supabaseAnonKey) {
+      setAuthReady(true);
+      return;
+    }
+
+    let active = true;
+    let unsubscribe = () => {};
+    void initializeAuth({ url: supabaseUrl, anonKey: supabaseAnonKey })
+      .then((hasSession) => {
+        if (!active) return;
+        setAuthenticated(hasSession);
+        setAuthReady(true);
+        unsubscribe = subscribeToAuthState(setAuthenticated);
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        setAuthError(error instanceof Error ? error.message : "Não foi possível iniciar a sessão.");
+        setAuthReady(true);
+      });
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -93,15 +121,82 @@ export default function App() {
     setActiveModule(module.id);
   }
 
-  if (!keycloakUrl || !keycloakRealm || !authenticated) {
+  async function signIn(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setAuthError("");
+    setSigningIn(true);
+    try {
+      await login(email, password);
+      setAuthenticated(true);
+      setPassword("");
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : "Não foi possível entrar.");
+    } finally {
+      setSigningIn(false);
+    }
+  }
+
+  async function signOut() {
+    setAuthError("");
+    try {
+      await logout();
+      setAuthenticated(false);
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : "Não foi possível encerrar a sessão.");
+    }
+  }
+
+  if (!authReady) {
+    return (
+      <main className="remote-state" aria-live="polite">
+        <p className="eyebrow">Secretaria escolar</p>
+        <h1>Verificando sessão</h1>
+      </main>
+    );
+  }
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return (
+      <main className="remote-state" role="alert">
+        <p className="eyebrow">Secretaria escolar</p>
+        <h1>Autenticação não configurada</h1>
+        <p>Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY para habilitar o login.</p>
+      </main>
+    );
+  }
+
+  if (!authenticated) {
     return (
       <main className="remote-state">
         <p className="eyebrow">Secretaria escolar</p>
         <h1>Login necessário</h1>
-        <p>Entre para acessar os módulos autorizados.</p>
-        <button type="button" onClick={() => void login()}>
-          Entrar
-        </button>
+        <p>Entre com sua conta autorizada para acessar os módulos.</p>
+        <form onSubmit={signIn}>
+          <label>
+            E-mail
+            <input
+              type="email"
+              autoComplete="username"
+              required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+            />
+          </label>
+          <label>
+            Senha
+            <input
+              type="password"
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+            />
+          </label>
+          {authError && <p role="alert">{authError}</p>}
+          <button type="submit" disabled={signingIn}>
+            {signingIn ? "Entrando..." : "Entrar"}
+          </button>
+        </form>
       </main>
     );
   }
@@ -156,7 +251,8 @@ export default function App() {
       <main className="host-main" id="module-content" tabIndex={-1}>
         <header className="topbar">
           <span>Workspace / {moduleLabel(activeModule)}</span>
-          <button className="user-chip" type="button" onClick={() => void logout()}>
+          {authError && <span role="alert">{authError}</span>}
+          <button className="user-chip" type="button" onClick={() => void signOut()}>
             Sair
           </button>
         </header>

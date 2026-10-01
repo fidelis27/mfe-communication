@@ -65,7 +65,7 @@ backoff exponencial e filtro por `type` string.
   tipos publicados pelo backend (`STUDENT_CREATED`, `STUDENT_TRANSFERRED`,
   `ENROLLMENT_SUSPENDED`, `ENROLLMENT_REOPENED`, e os de institution),
   com `version` para permitir evolução do contrato.
-- Hook `useDomainEvents(apiUrl, demoUser)` encapsulando conexão, reconexão
+- Hook `useDomainEvents(apiUrl)` encapsulando conexão autenticada, reconexão
   com backoff, cleanup e parsing tipado; consumidor filtra por tipo sem
   comparar string solta.
 - Migrar mfe-student primeiro. Os demais MFEs em PR separada.
@@ -1031,4 +1031,3 @@ Add caching everywhere
 A prioridade é:
 
 **performance real + simplicidade + manutenção + evidência.**
-

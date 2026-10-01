@@ -21,7 +21,8 @@ completos.
   delegado, mas nao administra usuarios, grupos ou politicas.
 - **Usuario inativo ou nao autenticado:** nao acessa operacoes protegidas.
 
-No prototipo, a identidade e selecionada pela cabecalho `x-demo-user`.
+O login usa Supabase Auth. Somente contas provisionadas e vinculadas a usuarios
+ativos no banco local podem acessar as operacoes protegidas.
 
 ## 3. MVP
 

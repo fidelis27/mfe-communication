@@ -18,7 +18,7 @@ Interface MFE
 
 - **Host:** navegacao, composicao e ciclo de vida dos MFEs.
 - **MFE:** tela, estado visual e interacao do seu bounded context.
-- **Backend Go:** autenticacao demonstrativa, autorizacao, casos de uso,
+- **Backend Go:** validacao de JWT Supabase/OIDC, autorizacao, casos de uso,
   persistencia autoritativa em MariaDB/MySQL e publicacao de eventos.
 - **Shared:** tipos e esquemas de contratos; nao deve conter regra de negocio
   de outro dominio.
@@ -324,7 +324,9 @@ Evolucao planejada:
 
 ## 11. Autenticacao e autorizacao
 
-- A autenticacao demo resolve o usuario por `x-demo-user`.
+- O Host autentica via Supabase Auth; os MFEs enviam access token Bearer.
+- O backend valida issuer, audience e assinatura via OIDC/JWKS, e associa o
+  e-mail do token a um usuario ativo no banco local.
 - O middleware de identidade responde `401` quando nao ha sessao valida.
 - O middleware de usuario rejeita usuarios inexistentes ou inativos.
 - `AuthorizationPolicy` decide acesso por superadministrador e participacao em

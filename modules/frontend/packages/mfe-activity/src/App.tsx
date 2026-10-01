@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { authenticatedFetch, initializeAuth, useDomainEvents } from "@mfe/shared";
+import { authenticatedFetch, useDomainEvents } from "@mfe/shared";
 import "./App.css";
 
 type DomainEvent = {
@@ -13,9 +13,6 @@ type DomainEvent = {
 };
 
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
-const keycloakUrl = import.meta.env.VITE_KEYCLOAK_URL ?? "";
-const keycloakRealm = import.meta.env.VITE_KEYCLOAK_REALM ?? "";
-const keycloakClientId = import.meta.env.VITE_KEYCLOAK_CLIENT_ID ?? "";
 
 const labels: Record<string, string> = {
   STUDENT_CREATED: "Estudante cadastrado",
@@ -31,17 +28,6 @@ export default function App() {
   );
   const [historyError, setHistoryError] = useState("");
   const { events: liveEvents, connection } = useDomainEvents(apiUrl);
-
-  useEffect(() => {
-    if (!keycloakUrl || !keycloakRealm || !keycloakClientId) return;
-    void initializeAuth({
-      url: keycloakUrl,
-      realm: keycloakRealm,
-      clientId: keycloakClientId,
-      onLoad: "check-sso",
-      silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
-    });
-  }, []);
 
   async function loadHistory() {
     setHistoryState("loading");
@@ -66,10 +52,12 @@ export default function App() {
     if (liveEvents.length === 0) return;
     setEvents((current) => {
       const next = [...liveEvents, ...current];
-      return next.filter(
-        (event, index, array) =>
-          index === array.findIndex((candidate) => candidate.eventId === event.eventId),
-      ).slice(0, 30);
+      return next
+        .filter(
+          (event, index, array) =>
+            index === array.findIndex((candidate) => candidate.eventId === event.eventId),
+        )
+        .slice(0, 30);
     });
     setHistoryState("success");
   }, [liveEvents]);
