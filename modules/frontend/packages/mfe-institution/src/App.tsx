@@ -1,9 +1,12 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import { authenticatedFetch, initializeAuth } from "@mfe/shared";
 import "./App.css";
 
 type Institution = { id: string; name: string; cnpj?: string; status: string };
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
-const demoUser = import.meta.env.VITE_DEMO_USER ?? "demo-active";
+const keycloakUrl = import.meta.env.VITE_KEYCLOAK_URL ?? "";
+const keycloakRealm = import.meta.env.VITE_KEYCLOAK_REALM ?? "";
+const keycloakClientId = import.meta.env.VITE_KEYCLOAK_CLIENT_ID ?? "";
 
 export default function App() {
   const [institutions, setInstitutions] = useState<Institution[]>([]);
@@ -12,13 +15,22 @@ export default function App() {
   const [state, setState] = useState<"loading" | "empty" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
 
+  useEffect(() => {
+    if (!keycloakUrl || !keycloakRealm || !keycloakClientId) return;
+    void initializeAuth({
+      url: keycloakUrl,
+      realm: keycloakRealm,
+      clientId: keycloakClientId,
+      onLoad: "check-sso",
+      silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
+    });
+  }, []);
+
   const loadInstitutions = useCallback(async () => {
     setState("loading");
     setMessage("");
     try {
-      const response = await fetch(`${apiUrl}/institutions`, {
-        headers: { "x-demo-user": demoUser },
-      });
+      const response = await authenticatedFetch(`${apiUrl}/institutions`);
       if (!response.ok) throw new Error("Não foi possível carregar as instituições.");
       const result = (await response.json()) as Institution[];
       setInstitutions(result);
@@ -37,9 +49,9 @@ export default function App() {
     event.preventDefault();
     setMessage("");
     try {
-      const response = await fetch(`${apiUrl}/institutions`, {
+      const response = await authenticatedFetch(`${apiUrl}/institutions`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-demo-user": demoUser },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, cnpj }),
       });
       if (!response.ok) {

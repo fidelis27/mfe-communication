@@ -1,5 +1,5 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { useDomainEvents } from "@mfe/shared";
+import { authenticatedFetch, initializeAuth, useDomainEvents } from "@mfe/shared";
 import "./App.css";
 
 type Student = {
@@ -17,7 +17,9 @@ type Institution = {
 };
 
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
-const demoUser = import.meta.env.VITE_DEMO_USER ?? "demo-active";
+const keycloakUrl = import.meta.env.VITE_KEYCLOAK_URL ?? "";
+const keycloakRealm = import.meta.env.VITE_KEYCLOAK_REALM ?? "";
+const keycloakClientId = import.meta.env.VITE_KEYCLOAK_CLIENT_ID ?? "";
 
 export default function App() {
   const [students, setStudents] = useState<Student[]>([]);
@@ -26,13 +28,22 @@ export default function App() {
   const [institutionId, setInstitutionId] = useState("");
   const [state, setState] = useState<"loading" | "empty" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
-  const { events, connection } = useDomainEvents(apiUrl, demoUser);
+  const { events, connection } = useDomainEvents(apiUrl);
+
+  useEffect(() => {
+    if (!keycloakUrl || !keycloakRealm || !keycloakClientId) return;
+    void initializeAuth({
+      url: keycloakUrl,
+      realm: keycloakRealm,
+      clientId: keycloakClientId,
+      onLoad: "check-sso",
+      silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
+    });
+  }, []);
 
   const loadInstitutions = useCallback(async () => {
     try {
-      const response = await fetch(`${apiUrl}/institutions`, {
-        headers: { "x-demo-user": demoUser },
-      });
+      const response = await authenticatedFetch(`${apiUrl}/institutions`);
       if (!response.ok) {
         throw new Error("Não foi possível carregar as instituições.");
       }
@@ -51,10 +62,7 @@ export default function App() {
     setState("loading");
     setMessage("");
     try {
-      const response = await fetch(`${apiUrl}/students`, {
-        headers: { "x-demo-user": demoUser },
-        signal,
-      });
+      const response = await authenticatedFetch(`${apiUrl}/students`, { signal });
       if (!response.ok) throw new Error("Não foi possível carregar os estudantes.");
       const result = (await response.json()) as Student[];
       setStudents(result);
@@ -99,9 +107,9 @@ export default function App() {
     }
 
     try {
-      const response = await fetch(`${apiUrl}/students`, {
+      const response = await authenticatedFetch(`${apiUrl}/students`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-demo-user": demoUser },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, institutionId }),
       });
       if (!response.ok) {

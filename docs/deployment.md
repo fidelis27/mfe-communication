@@ -75,8 +75,10 @@ VITE_MFE_STUDENT_URL=https://secretaria-student.example
 VITE_MFE_ACTIVITY_URL=https://secretaria-activity.example
 VITE_MFE_DASHBOARD_URL=https://secretaria-dashboard.example
 VITE_MFE_ADMIN_URL=https://secretaria-admin.example
-VITE_API_URL=https://secretaria-api.onrender.com
-VITE_DEMO_USER=demo-active
+VITE_API_URL=https://secretaria-backend.onrender.com
+VITE_KEYCLOAK_URL=https://<keycloak-public-host>
+VITE_KEYCLOAK_REALM=secretaria-escolar
+VITE_KEYCLOAK_CLIENT_ID=secretaria-frontend
 ```
 
 As variáveis `VITE_MFE_*_URL` são consumidas pelo build do Host para montar os
@@ -93,12 +95,12 @@ Usar um Web Service para Go conectado a um MariaDB/MySQL hospedado. O banco
 nao deve depender do filesystem local do Web Service:
 
 ```text
-https://secretaria-api.onrender.com
+https://secretaria-backend.onrender.com
 ```
 
 O servico deve suportar Go e WebSocket. O servidor deve escutar `PORT` em
-`0.0.0.0` e receber `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` e
-`DB_TLS` por variaveis de ambiente.
+`0.0.0.0` e receber `DB_*`, `KEYCLOAK_ISSUER` e `KEYCLOAK_CLIENT_ID` por
+variaveis de ambiente.
 
 Limites relevantes do plano gratuito, conforme a documentacao do Render:
 
@@ -229,7 +231,7 @@ O Web Service `secretaria-api` foi criado no Render a partir do repositorio
 `fidelis27/mfe-communication`.
 
 ```text
-URL: https://secretaria-api-58jh.onrender.com
+URL: https://secretaria-backend.onrender.com
 Repository: fidelis27/secretaria-backend
 Root Directory: .
 Runtime: Go

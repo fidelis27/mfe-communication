@@ -8,9 +8,37 @@ Este guia descreve como subir o backend Go, o MariaDB pelo XAMPP, os MFEs e aces
 - Node.js e npm instalados.
 - XAMPP instalado em `C:\xampp`.
 - MariaDB/MySQL do XAMPP configurado para a porta `3306`.
+- Docker Desktop instalado para executar o Keycloak local.
 
 Clone `https://github.com/fidelis27/secretaria-backend` como pasta irmã de
 `mfe-communication`. Os frontends ficam em `modules/frontend/packages`.
+
+## 0. Subir o Keycloak local
+
+Na raiz do projeto, execute:
+
+```powershell
+docker compose up -d keycloak
+```
+
+O realm `secretaria-escolar`, o client público `secretaria-frontend` e o
+usuário de teste `demo-active` são importados automaticamente. Para acessar o
+console administrativo, use `http://localhost:8080` com `admin` / `admin`.
+
+No frontend local, use:
+
+```text
+VITE_KEYCLOAK_URL=http://localhost:8080
+VITE_KEYCLOAK_REALM=secretaria-escolar
+VITE_KEYCLOAK_CLIENT_ID=secretaria-frontend
+```
+
+No backend local, use:
+
+```text
+KEYCLOAK_ISSUER=http://localhost:8080/realms/secretaria-escolar
+KEYCLOAK_CLIENT_ID=secretaria-frontend
+```
 
 ## 1. Subir o MariaDB pelo XAMPP
 

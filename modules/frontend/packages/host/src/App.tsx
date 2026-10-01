@@ -1,4 +1,5 @@
 import { Component, ErrorInfo, lazy, ReactNode, Suspense, useEffect, useState } from "react";
+import { initializeAuth, isAuthenticated, login, logout } from "@mfe/shared";
 import "./App.css";
 
 const StudentApp = lazy(() => import("mfe_student/App"));
@@ -58,10 +59,26 @@ class RemoteBoundary extends Component<RemoteBoundaryProps, RemoteBoundaryState>
   }
 }
 
+const keycloakUrl = import.meta.env.VITE_KEYCLOAK_URL ?? "http://localhost:8080";
+const keycloakRealm = import.meta.env.VITE_KEYCLOAK_REALM ?? "secretaria-escolar";
+const keycloakClientId = import.meta.env.VITE_KEYCLOAK_CLIENT_ID ?? "secretaria-frontend";
+
 export default function App() {
   const [activeModule, setActiveModule] = useState(() =>
     moduleFromPath(typeof window === "undefined" ? "/estudantes" : window.location.pathname),
   );
+  const [authenticated, setAuthenticated] = useState(false);
+
+  useEffect(() => {
+    if (!keycloakUrl || !keycloakRealm || !keycloakClientId) return;
+    void initializeAuth({
+      url: keycloakUrl,
+      realm: keycloakRealm,
+      clientId: keycloakClientId,
+      onLoad: "check-sso",
+      silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
+    }).then((success) => setAuthenticated(success || isAuthenticated()));
+  }, []);
 
   useEffect(() => {
     const handlePopState = () => setActiveModule(moduleFromPath(window.location.pathname));
@@ -74,6 +91,19 @@ export default function App() {
     if (!module) return;
     window.history.pushState({}, "", module.path);
     setActiveModule(module.id);
+  }
+
+  if (!keycloakUrl || !keycloakRealm || !authenticated) {
+    return (
+      <main className="remote-state">
+        <p className="eyebrow">Secretaria escolar</p>
+        <h1>Login necessário</h1>
+        <p>Entre para acessar os módulos autorizados.</p>
+        <button type="button" onClick={() => void login()}>
+          Entrar
+        </button>
+      </main>
+    );
   }
 
   return (
@@ -126,7 +156,9 @@ export default function App() {
       <main className="host-main" id="module-content" tabIndex={-1}>
         <header className="topbar">
           <span>Workspace / {moduleLabel(activeModule)}</span>
-          <span className="user-chip">● Demo Active</span>
+          <button className="user-chip" type="button" onClick={() => void logout()}>
+            Sair
+          </button>
         </header>
         <RemoteBoundary key={activeModule} moduleName={moduleLabel(activeModule)}>
           {activeModule === "student" ? (
