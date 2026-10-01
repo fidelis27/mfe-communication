@@ -348,8 +348,8 @@ Comandos planejados:
 ```bash
 npm test
 npm run build
-go -C modules/backend test ./...
-go -C modules/backend run ./cmd/server
+go test ./... # no clone secretaria-backend
+go run ./cmd/server # no clone secretaria-backend
 ```
 
 Antes da entrega, o TypeScript deve ser compilado sem erros e o fluxo

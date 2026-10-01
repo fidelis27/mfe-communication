@@ -37,7 +37,7 @@ docs/
   deployment.md
   local-development.md
 modules/
-  backend/
+  secretaria-backend/ (repositorio independente)
     cmd/server/
     internal/application/
     internal/domain/

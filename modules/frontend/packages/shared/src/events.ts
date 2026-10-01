@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { authenticatedWebSocket } from "./auth";
 
 export type InstitutionEventType =
   "INSTITUTION_CREATED" | "INSTITUTION_UPDATED" | "INSTITUTION_INACTIVATED";
@@ -56,7 +57,7 @@ function isDomainEvent(value: unknown): value is DomainEvent {
   );
 }
 
-export function useDomainEvents(apiUrl: string, demoUser: string) {
+export function useDomainEvents(apiUrl: string) {
   const [events, setEvents] = useState<DomainEvent[]>([]);
   const [connection, setConnection] = useState<DomainConnection>("connecting");
 
@@ -65,12 +66,19 @@ export function useDomainEvents(apiUrl: string, demoUser: string) {
     let socket: WebSocket | undefined;
     let retryTimer: number | undefined;
     let retryAttempt = 0;
-    const socketUrl = `${apiUrl.replace(/^http/, "ws")}/events?demoUser=${encodeURIComponent(demoUser)}`;
+    const socketUrl = `${apiUrl.replace(/^http/, "ws")}/events`;
 
-    const connect = () => {
+    const connect = async () => {
       if (stopped) return;
       setConnection(retryAttempt === 0 ? "connecting" : "offline");
-      socket = new WebSocket(socketUrl);
+
+      try {
+        socket = await authenticatedWebSocket(socketUrl);
+      } catch {
+        setConnection("offline");
+        return;
+      }
+
       socket.onopen = () => {
         retryAttempt = 0;
         setConnection("connected");
@@ -80,7 +88,9 @@ export function useDomainEvents(apiUrl: string, demoUser: string) {
         setConnection("offline");
         const delay = Math.min(1000 * 2 ** retryAttempt, 10000);
         retryAttempt += 1;
-        retryTimer = window.setTimeout(connect, delay);
+        retryTimer = window.setTimeout(() => {
+          void connect();
+        }, delay);
       };
       socket.onerror = () => socket?.close();
       socket.onmessage = (message) => {
@@ -96,13 +106,13 @@ export function useDomainEvents(apiUrl: string, demoUser: string) {
       };
     };
 
-    connect();
+    void connect();
     return () => {
       stopped = true;
       if (retryTimer !== undefined) window.clearTimeout(retryTimer);
       socket?.close();
     };
-  }, [apiUrl, demoUser]);
+  }, [apiUrl]);
 
   return { events, connection };
 }

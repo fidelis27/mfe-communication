@@ -13,7 +13,7 @@ Gate serem aprovados.
 
 ## Dia 1 - backend Go e MariaDB/MySQL
 
-- [x] Criar modulo Go em `modules/backend` com estrutura `cmd/server` e `internal`.
+- [x] Criar modulo Go no repositorio independente `secretaria-backend` com estrutura `cmd/server` e `internal`.
 - [x] Criar migrations MariaDB e configuracao com `DB_HOST`, `DB_PORT`, `DB_NAME`,
       `DB_USER`, `DB_PASSWORD` e `DB_TLS`.
 - [x] Persistir instituicoes e usuarios.

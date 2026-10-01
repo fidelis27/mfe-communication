@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
+import { authenticatedFetch, initializeAuth } from "@mfe/shared";
 import "./App.css";
 
 type User = { id: string; name: string; email: string; status: string; superAdmin: boolean };
@@ -11,7 +12,9 @@ type Membership = {
 };
 type Institution = { id: string; name: string; cnpj?: string | null; status?: string };
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
-const demoUser = import.meta.env.VITE_DEMO_USER ?? "demo-active";
+const keycloakUrl = import.meta.env.VITE_KEYCLOAK_URL ?? "";
+const keycloakRealm = import.meta.env.VITE_KEYCLOAK_REALM ?? "";
+const keycloakClientId = import.meta.env.VITE_KEYCLOAK_CLIENT_ID ?? "";
 const canGrantSuperAdmin = import.meta.env.VITE_DEMO_SUPER_ADMIN === "true";
 
 export default function App() {
@@ -33,9 +36,20 @@ export default function App() {
   );
   const [groupMessage, setGroupMessage] = useState("");
 
+  useEffect(() => {
+    if (!keycloakUrl || !keycloakRealm || !keycloakClientId) return;
+    void initializeAuth({
+      url: keycloakUrl,
+      realm: keycloakRealm,
+      clientId: keycloakClientId,
+      onLoad: "check-sso",
+      silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
+    });
+  }, []);
+
   async function loadUsers() {
     try {
-      const response = await fetch(`${apiUrl}/users`, { headers: { "x-demo-user": demoUser } });
+      const response = await authenticatedFetch(`${apiUrl}/users`);
       if (!response.ok) throw new Error("Não foi possível carregar as pessoas.");
       const result = (await response.json()) as User[];
       setUsers(result);
@@ -49,9 +63,7 @@ export default function App() {
 
   async function loadInstitutions() {
     try {
-      const response = await fetch(`${apiUrl}/institutions`, {
-        headers: { "x-demo-user": demoUser },
-      });
+      const response = await authenticatedFetch(`${apiUrl}/institutions`);
       if (!response.ok) throw new Error("Não foi possível carregar as instituições.");
       const result = (await response.json()) as Institution[];
       setInstitutions(result);
@@ -64,7 +76,7 @@ export default function App() {
 
   async function loadGroups() {
     try {
-      const response = await fetch(`${apiUrl}/groups`, { headers: { "x-demo-user": demoUser } });
+      const response = await authenticatedFetch(`${apiUrl}/groups`);
       if (!response.ok) throw new Error("Não foi possível carregar os grupos.");
       const result = (await response.json()) as Group[];
       setGroups(result);
@@ -82,9 +94,7 @@ export default function App() {
       return;
     }
     try {
-      const response = await fetch(`${apiUrl}/groups/${groupId}/members`, {
-        headers: { "x-demo-user": demoUser },
-      });
+      const response = await authenticatedFetch(`${apiUrl}/groups/${groupId}/members`);
       if (!response.ok) throw new Error("Não foi possível carregar os membros.");
       setMemberships((await response.json()) as Membership[]);
     } catch (error) {
@@ -107,9 +117,9 @@ export default function App() {
     event.preventDefault();
     setMessage("");
     try {
-      const response = await fetch(`${apiUrl}/users`, {
+      const response = await authenticatedFetch(`${apiUrl}/users`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-demo-user": demoUser },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, superAdmin }),
       });
       if (!response.ok) {
@@ -131,9 +141,9 @@ export default function App() {
     event.preventDefault();
     setGroupMessage("");
     try {
-      const response = await fetch(`${apiUrl}/groups`, {
+      const response = await authenticatedFetch(`${apiUrl}/groups`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-demo-user": demoUser },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ institutionId: groupInstitutionId }),
       });
       if (!response.ok) {
@@ -156,9 +166,9 @@ export default function App() {
     if (!selectedGroupId) return;
     setGroupMessage("");
     try {
-      const response = await fetch(`${apiUrl}/groups/${selectedGroupId}/members`, {
+      const response = await authenticatedFetch(`${apiUrl}/groups/${selectedGroupId}/members`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-demo-user": demoUser },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: memberUserId, role: memberRole }),
       });
       if (!response.ok) {
@@ -182,7 +192,7 @@ export default function App() {
           <h1>Pessoas e permissões.</h1>
           <p className="lede">Mantenha o mapa de acesso da secretaria claro, ativo e auditável.</p>
         </div>
-        <span className="scope-chip">Escopo: {demoUser}</span>
+        <span className="scope-chip">Escopo: usuário autenticado</span>
       </section>
       <section className="admin-grid">
         <form className="admin-form" onSubmit={createUser}>

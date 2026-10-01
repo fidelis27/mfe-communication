@@ -48,40 +48,15 @@ jobs:
       - run: npm ci --legacy-peer-deps
       - run: npm run build --workspace=${{ matrix.workspace }}
 
-  backend:
-    name: Backend
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: modules/backend
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: "1.26.6"
-          cache-dependency-path: modules/backend/go.sum
-      - run: go build ./...
-      - run: go vet ./...
-      - run: go test -race ./...
-      - run: go test ./internal/adapters/httpserver -coverprofile=coverage
-      - name: Enforce HTTP adapter coverage floor
-        shell: bash
-        run: |
-          actual=$(go tool cover -func coverage | awk '/total:/ {print substr($3, 1, length($3)-1)}')
-          threshold=19.1
-          awk -v actual="$actual" -v threshold="$threshold" 'BEGIN { if (actual < threshold) { printf "coverage %.1f%% is below %.1f%%\n", actual, threshold; exit 1 } printf "coverage %.1f%% meets %.1f%%\n", actual, threshold }'
-      - run: go install golang.org/x/vuln/cmd/govulncheck@latest
-      - run: govulncheck ./...
-
   ci:
     name: CI gate
     if: always()
-    needs: [frontend-quality, frontend-build, backend]
+    needs: [frontend-quality, frontend-build]
     runs-on: ubuntu-latest
     steps:
       - name: Require all CI jobs to pass
         run: |
-          if [[ "${{ needs.frontend-quality.result }}" != "success" || "${{ needs.frontend-build.result }}" != "success" || "${{ needs.backend.result }}" != "success" ]]; then
+          if [[ "${{ needs.frontend-quality.result }}" != "success" || "${{ needs.frontend-build.result }}" != "success" ]]; then
             echo "One or more required CI jobs failed."
             exit 1
           fi
