@@ -285,7 +285,7 @@ select {
   justify-content: space-between;
   padding: 12px 0;
 }
-@media (max-width: 760px) {
+@media (max-width: 1040px) {
   .admin-shell {
     padding: 40px 22px;
   }
