@@ -9,7 +9,11 @@ export default defineConfig({
       name: "mfe_dashboard",
       filename: "remoteEntry.js",
       exposes: { "./App": "./src/App.tsx" },
-      shared: ["react", "react-dom", "@mfe/shared"],
+      shared: {
+        react: { singleton: true },
+        "react-dom": { singleton: true },
+        "@mfe/shared": { singleton: true },
+      },
     }),
   ],
   build: { target: "esnext", modulePreload: false, cssCodeSplit: false },

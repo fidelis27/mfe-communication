@@ -11,5 +11,6 @@ export type StudentEvent = {
 };
 
 export * from "./events";
+export * from "./bus";
 export * from "./auth";
 export * from "./types";

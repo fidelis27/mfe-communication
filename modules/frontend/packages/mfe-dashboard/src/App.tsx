@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { authenticatedFetch, useDomainEvents } from "@mfe/shared";
+import { authenticatedFetch, useDomainEvents, useListen } from "@mfe/shared";
 import "./App.css";
 
 type Institution = { id: string; status: string };
@@ -22,7 +22,40 @@ export default function App() {
   const [state, setState] = useState<"loading" | "success" | "error">("loading");
   const [errorMessage, setErrorMessage] = useState("");
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
-  const { connection } = useDomainEvents(apiUrl);
+  const hostReady = typeof globalThis !== "undefined" && globalThis.__mfeHostReady === true;
+  const fallback = useDomainEvents(hostReady ? "" : apiUrl);
+  const [connection, setConnection] = useState<"connecting" | "connected" | "offline">("connecting");
+
+  useListen("domain", "domain:connection", (status) => {
+    if (status === "connecting" || status === "connected" || status === "offline") {
+      setConnection(status);
+    }
+  });
+
+  useListen("domain", "STUDENT_CREATED", () => {
+    void load();
+  });
+  useListen("domain", "STUDENT_UPDATED", () => {
+    void load();
+  });
+  useListen("domain", "INSTITUTION_CREATED", () => {
+    void load();
+  });
+  useListen("domain", "INSTITUTION_UPDATED", () => {
+    void load();
+  });
+  useListen("domain", "INSTITUTION_INACTIVATED", () => {
+    void load();
+  });
+  useListen("domain", "STUDENT_TRANSFERRED", () => {
+    void load();
+  });
+  useListen("domain", "ENROLLMENT_SUSPENDED", () => {
+    void load();
+  });
+  useListen("domain", "ENROLLMENT_REOPENED", () => {
+    void load();
+  });
 
   const load = useCallback(async () => {
     setState("loading");
@@ -51,6 +84,13 @@ export default function App() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (hostReady) return;
+    if (fallback.events.length === 0) return;
+    setConnection(fallback.connection);
+    void load();
+  }, [fallback.connection, fallback.events.length, hostReady, load]);
 
   const activeEnrollments = data.enrollments.filter(
     (enrollment) => enrollment.status === "active",

@@ -59,9 +59,15 @@ function isDomainEvent(value: unknown): value is DomainEvent {
 
 export function useDomainEvents(apiUrl: string) {
   const [events, setEvents] = useState<DomainEvent[]>([]);
-  const [connection, setConnection] = useState<DomainConnection>("connecting");
+  const [connection, setConnection] = useState<DomainConnection>(apiUrl ? "connecting" : "offline");
 
   useEffect(() => {
+    if (!apiUrl) {
+      setEvents([]);
+      setConnection("offline");
+      return;
+    }
+
     let stopped = false;
     let socket: WebSocket | undefined;
     let retryTimer: number | undefined;

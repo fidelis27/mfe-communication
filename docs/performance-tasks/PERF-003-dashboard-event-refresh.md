@@ -1,5 +1,9 @@
 # PERF-003 - Reduzir refresh do Dashboard
 
+## Status
+
+Concluído.
+
 ## Objetivo
 
 Evitar tres GETs completos a cada mensagem WebSocket recebida pelo Dashboard.
