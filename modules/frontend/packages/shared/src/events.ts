@@ -97,7 +97,7 @@ export function useDomainEvents(apiUrl: string) {
         try {
           const event: unknown = JSON.parse(message.data);
           if (!isDomainEvent(event) || event.version !== 1) return;
-          setEvents((current) =>
+          setEvents((current: DomainEvent[]) =>
             current.some((item) => item.eventId === event.eventId) ? current : [event, ...current],
           );
         } catch {

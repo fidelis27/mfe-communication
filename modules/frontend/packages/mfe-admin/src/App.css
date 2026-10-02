@@ -247,7 +247,9 @@ select {
 }
 .member-caption {
   color: #777383;
-  font: 12px Arial, sans-serif;
+  font:
+    12px Arial,
+    sans-serif;
   margin: 28px 0 -16px;
 }
 .member-form input {

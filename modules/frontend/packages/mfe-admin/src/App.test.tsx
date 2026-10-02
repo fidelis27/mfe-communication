@@ -45,7 +45,15 @@ describe("Admin states and accessibility", () => {
       if (url.includes("/users")) {
         return Promise.resolve(
           new Response(
-            JSON.stringify([{ id: "user-456", name: "Ana Souza", email: "ana@demo", status: "active", superAdmin: false }]),
+            JSON.stringify([
+              {
+                id: "user-456",
+                name: "Ana Souza",
+                email: "ana@demo",
+                status: "active",
+                superAdmin: false,
+              },
+            ]),
             { status: 200 },
           ),
         );
@@ -75,25 +83,29 @@ describe("Admin states and accessibility", () => {
     const createGroupButton = screen.getByRole("button", { name: /criar grupo/i });
     fireEvent.submit(createGroupButton.closest("form")!);
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("/groups"),
-      expect.objectContaining({
-        method: "POST",
-        headers: expect.objectContaining({ "Content-Type": "application/json" }),
-        body: JSON.stringify({ institutionId: "inst-123" }),
-      }),
-    ));
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining("/groups"),
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({ "Content-Type": "application/json" }),
+          body: JSON.stringify({ institutionId: "inst-123" }),
+        }),
+      ),
+    );
 
     await waitFor(() => expect(screen.getByLabelText("Pessoa do grupo")).toHaveValue("user-456"));
     const addMemberButton = screen.getByRole("button", { name: "Adicionar membro" });
     fireEvent.submit(addMemberButton.closest("form")!);
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("/groups/group-789/members"),
-      expect.objectContaining({
-        method: "POST",
-        body: JSON.stringify({ userId: "user-456", role: "member" }),
-      }),
-    ));
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.stringContaining("/groups/group-789/members"),
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({ userId: "user-456", role: "member" }),
+        }),
+      ),
+    );
   });
 });
