@@ -56,6 +56,10 @@
   text-transform: uppercase;
 }
 
+.host-nav-wrap {
+  min-width: 0;
+}
+
 .nav-item {
   align-items: center;
   background: transparent;
@@ -69,6 +73,10 @@
   text-align: left;
   text-decoration: none;
   width: 100%;
+}
+
+.nav-copy {
+  min-width: 0;
 }
 
 .nav-item.active {
@@ -207,11 +215,69 @@
   margin-top: 18px;
 }
 
+.remote-skeleton .eyebrow {
+  margin-bottom: 18px;
+}
+
+.skeleton-line,
+.skeleton-card {
+  animation: skeleton-pulse 1.2s ease-in-out infinite alternate;
+  background: linear-gradient(90deg, rgba(24, 51, 47, 0.08), rgba(24, 51, 47, 0.16));
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-title {
+  height: 38px;
+  max-width: 360px;
+}
+
+.skeleton-copy {
+  height: 18px;
+  margin-top: 16px;
+  max-width: 520px;
+}
+
+.skeleton-copy.short {
+  max-width: 320px;
+}
+
+.skeleton-card-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  margin-top: 32px;
+}
+
+.skeleton-card {
+  min-height: 160px;
+}
+
 .eyebrow {
   color: var(--color-accent);
   font: 700 var(--font-size-2xs) var(--font-sans);
   letter-spacing: 1.4px;
   text-transform: uppercase;
+}
+
+.sr-only {
+  border: 0;
+  clip: rect(0, 0, 0, 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  width: 1px;
+}
+
+@keyframes skeleton-pulse {
+  from {
+    opacity: 0.65;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @media (max-width: 720px) {
@@ -228,11 +294,40 @@
     display: none;
   }
 
+  .host-nav-wrap {
+    margin-inline: -18px;
+    padding-inline: 18px;
+    position: relative;
+  }
+
+  .host-nav-wrap::before,
+  .host-nav-wrap::after {
+    bottom: 0;
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    width: 20px;
+    z-index: 1;
+  }
+
+  .host-nav-wrap::before {
+    background: linear-gradient(90deg, var(--color-surface-dark), transparent);
+    left: 0;
+  }
+
+  .host-nav-wrap::after {
+    background: linear-gradient(270deg, var(--color-surface-dark), transparent);
+    right: 0;
+  }
+
   .host-sidebar nav {
     display: flex;
     gap: 4px;
     margin-top: 20px;
     overflow-x: auto;
+    padding-bottom: 6px;
+    scrollbar-width: thin;
   }
 
   .nav-item {
