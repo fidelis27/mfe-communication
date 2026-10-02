@@ -1,4 +1,5 @@
 import { createClient, type Session, type SupabaseClient } from "@supabase/supabase-js";
+import type { AuthIdentity } from "./types";
 
 export type AuthConfig = {
   url: string;
@@ -78,6 +79,11 @@ export async function accessToken(): Promise<string | undefined> {
   return readLocalAccessToken();
 }
 
+export async function readAuthIdentity(): Promise<AuthIdentity | null> {
+  const token = await accessToken();
+  return token ? parseAuthIdentity(token) : null;
+}
+
 async function readLocalAccessToken(): Promise<string | undefined> {
   if (!client) return undefined;
   const { data, error } = await client.auth.getSession();
@@ -133,4 +139,40 @@ function removeHeader(headers: Record<string, string>, name: string): void {
   for (const key of Object.keys(headers)) {
     if (key.toLowerCase() === name) delete headers[key];
   }
+}
+
+export function parseAuthIdentity(token: string): AuthIdentity | null {
+  const [, payload] = token.split(".");
+  if (!payload) return null;
+
+  try {
+    const decoded = JSON.parse(decodeJwtPart(payload)) as {
+      sub?: string;
+      email?: string;
+      user_metadata?: { name?: string; full_name?: string };
+      app_metadata?: { roles?: unknown };
+    };
+    const roles = Array.isArray(decoded.app_metadata?.roles)
+      ? decoded.app_metadata.roles.filter((role): role is string => typeof role === "string")
+      : [];
+
+    if (!decoded.sub) return null;
+
+    return {
+      userId: decoded.sub,
+      email: decoded.email ?? null,
+      name: decoded.user_metadata?.name ?? decoded.user_metadata?.full_name ?? null,
+      roles,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function decodeJwtPart(part: string): string {
+  const normalized = part.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+  const binary = atob(padded);
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
 }

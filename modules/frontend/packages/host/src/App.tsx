@@ -1,8 +1,10 @@
 import {
+  default as React,
   Component,
   ErrorInfo,
   FormEvent,
   lazy,
+  MouseEvent,
   ReactNode,
   Suspense,
   useEffect,
@@ -35,6 +37,22 @@ function moduleLabel(moduleId: string) {
 
 type RemoteBoundaryProps = { moduleName: string; children: ReactNode };
 type RemoteBoundaryState = { hasError: boolean };
+
+function RemoteSkeleton({ label }: { label: string }) {
+  return (
+    <section className="remote-state remote-skeleton" aria-live="polite" aria-busy="true">
+      <p className="eyebrow">Carregando módulo</p>
+      <div className="skeleton-line skeleton-title" />
+      <div className="skeleton-line skeleton-copy" />
+      <div className="skeleton-line skeleton-copy short" />
+      <div className="skeleton-card-grid" aria-hidden="true">
+        <div className="skeleton-card" />
+        <div className="skeleton-card" />
+      </div>
+      <span className="sr-only">{label}</span>
+    </section>
+  );
+}
 
 class RemoteBoundary extends Component<RemoteBoundaryProps, RemoteBoundaryState> {
   state: RemoteBoundaryState = { hasError: false };
@@ -121,6 +139,27 @@ export default function App() {
     setActiveModule(module.id);
   }
 
+  function handleNavigationClick(
+    event: MouseEvent<HTMLAnchorElement>,
+    moduleId: string,
+    path: string,
+  ) {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    if (window.location.pathname === path && activeModule === moduleId) return;
+    navigate(moduleId);
+  }
+
   async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setAuthError("");
@@ -143,6 +182,49 @@ export default function App() {
       setAuthenticated(false);
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : "Não foi possível encerrar a sessão.");
+    }
+  }
+
+  function renderActiveModule() {
+    switch (activeModule) {
+      case "student":
+        return (
+          <Suspense fallback={<RemoteSkeleton label="Carregando módulo de estudantes" />}>
+            <StudentApp />
+          </Suspense>
+        );
+      case "activity":
+        return (
+          <Suspense fallback={<RemoteSkeleton label="Carregando atividade" />}>
+            <ActivityApp />
+          </Suspense>
+        );
+      case "institution":
+        return (
+          <Suspense fallback={<RemoteSkeleton label="Carregando módulo de instituições" />}>
+            <InstitutionApp />
+          </Suspense>
+        );
+      case "dashboard":
+        return (
+          <Suspense fallback={<RemoteSkeleton label="Carregando dashboard" />}>
+            <DashboardApp />
+          </Suspense>
+        );
+      case "admin":
+        return (
+          <Suspense fallback={<RemoteSkeleton label="Carregando administração" />}>
+            <AdminApp />
+          </Suspense>
+        );
+      default:
+        return (
+          <section className="remote-state">
+            <p className="eyebrow">Módulo em preparação</p>
+            <h1>{moduleLabel(activeModule)}</h1>
+            <p>A estrutura está pronta para receber o próximo remote.</p>
+          </section>
+        );
     }
   }
 
@@ -216,37 +298,31 @@ export default function App() {
           </div>
         </div>
         <p className="sidebar-label">Módulos</p>
-        <nav aria-label="Módulos da secretaria">
-          {modules.map((module) => (
-            <button
-              className={activeModule === module.id ? "nav-item active" : "nav-item"}
-              key={module.id}
-              onClick={() => navigate(module.id)}
-              aria-current={activeModule === module.id ? "page" : undefined}
-            >
-              <span className="nav-mark">
-                {module.id === "student"
-                  ? "01"
-                  : module.id === "institution"
-                    ? "02"
-                    : module.id === "activity"
-                      ? "03"
-                      : module.id === "dashboard"
-                        ? "04"
-                        : "05"}
-              </span>
-              <span>
-                <b>{module.label}</b>
-                <small>{module.detail}</small>
-              </span>
-            </button>
-          ))}
-        </nav>
-        <div className="sidebar-footer">
-          <span className="online-dot" /> Ambiente local
-          <br />
-          <small>API + WebSocket</small>
+        <div className="host-nav-wrap">
+          <nav aria-label="Módulos da secretaria">
+            {modules.map((module) => (
+              <a
+                className={activeModule === module.id ? "nav-item active" : "nav-item"}
+                key={module.id}
+                href={module.path}
+                onClick={(event) => handleNavigationClick(event, module.id, module.path)}
+                aria-current={activeModule === module.id ? "page" : undefined}
+              >
+                <span className="nav-copy">
+                  <b>{module.label}</b>
+                  <small>{module.detail}</small>
+                </span>
+              </a>
+            ))}
+          </nav>
         </div>
+        {import.meta.env.DEV && (
+          <div className="sidebar-footer">
+            <span className="online-dot" /> Ambiente local
+            <br />
+            <small>API + WebSocket</small>
+          </div>
+        )}
       </aside>
       <main className="host-main" id="module-content" tabIndex={-1}>
         <header className="topbar">
@@ -257,37 +333,7 @@ export default function App() {
           </button>
         </header>
         <RemoteBoundary key={activeModule} moduleName={moduleLabel(activeModule)}>
-          {activeModule === "student" ? (
-            <Suspense
-              fallback={<div className="remote-state">Carregando módulo de estudantes...</div>}
-            >
-              <StudentApp />
-            </Suspense>
-          ) : activeModule === "activity" ? (
-            <Suspense fallback={<div className="remote-state">Carregando atividade...</div>}>
-              <ActivityApp />
-            </Suspense>
-          ) : activeModule === "institution" ? (
-            <Suspense
-              fallback={<div className="remote-state">Carregando módulo de instituições...</div>}
-            >
-              <InstitutionApp />
-            </Suspense>
-          ) : activeModule === "dashboard" ? (
-            <Suspense fallback={<div className="remote-state">Carregando dashboard...</div>}>
-              <DashboardApp />
-            </Suspense>
-          ) : activeModule === "admin" ? (
-            <Suspense fallback={<div className="remote-state">Carregando administração...</div>}>
-              <AdminApp />
-            </Suspense>
-          ) : (
-            <section className="remote-state">
-              <p className="eyebrow">Módulo em preparação</p>
-              <h1>{moduleLabel(activeModule)}</h1>
-              <p>A estrutura está pronta para receber o próximo remote.</p>
-            </section>
-          )}
+          {renderActiveModule()}
         </RemoteBoundary>
       </main>
     </div>
