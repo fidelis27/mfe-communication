@@ -12,10 +12,12 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./tokens.css": "./src/tokens.css",
     "./package.json": "./package.json"
   },
   "files": [
-    "dist"
+    "dist",
+    "src/tokens.css"
   ],
   "peerDependencies": {
     "react": "^18.2.0"
