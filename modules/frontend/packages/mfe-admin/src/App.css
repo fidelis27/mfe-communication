@@ -30,7 +30,7 @@ body {
   text-transform: uppercase;
 }
 .admin-heading h1 {
-  font-size: clamp(2.1rem, 3.8vw, 3rem);
+  font-size: clamp(1.6rem, 2.6vw, 2.1rem);
   font-weight: 400;
   line-height: 1.02;
   margin: 18px 0;
@@ -285,7 +285,7 @@ select {
   justify-content: space-between;
   padding: 12px 0;
 }
-@media (max-width: 760px) {
+@media (max-width: 1040px) {
   .admin-shell {
     padding: 40px 22px;
   }

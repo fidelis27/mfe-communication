@@ -141,7 +141,7 @@ body {
   padding: 12vh clamp(22px, 7vw, 100px);
 }
 .remote-state h1 {
-  font-size: clamp(2.1rem, 4vw, 3rem);
+  font-size: clamp(1.6rem, 2.6vw, 2.1rem);
   font-weight: 400;
   margin: 12px 0;
 }
