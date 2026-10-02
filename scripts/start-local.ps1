@@ -11,8 +11,8 @@ $env:DB_NAME = if ($env:DB_NAME) { $env:DB_NAME } else { "test" }
 $env:DB_USER = if ($env:DB_USER) { $env:DB_USER } else { "root" }
 $env:DB_PASSWORD = if ($env:DB_PASSWORD) { $env:DB_PASSWORD } else { "" }
 $env:DB_TLS = if ($env:DB_TLS) { $env:DB_TLS } else { "false" }
-$env:KEYCLOAK_ISSUER = if ($env:KEYCLOAK_ISSUER) { $env:KEYCLOAK_ISSUER } else { "http://localhost:8080/realms/secretaria-escolar" }
-$env:KEYCLOAK_CLIENT_ID = if ($env:KEYCLOAK_CLIENT_ID) { $env:KEYCLOAK_CLIENT_ID } else { "secretaria-api" }
+$env:OIDC_ISSUER = if ($env:OIDC_ISSUER) { $env:OIDC_ISSUER } elseif ($env:VITE_SUPABASE_URL) { "$($env:VITE_SUPABASE_URL.TrimEnd('/'))/auth/v1" } else { "" }
+$env:OIDC_AUDIENCE = if ($env:OIDC_AUDIENCE) { $env:OIDC_AUDIENCE } else { "authenticated" }
 
 $services = @(
   @{ Name = "backend"; Path = $backend; Port = 3333 },

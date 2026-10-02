@@ -65,7 +65,7 @@ backoff exponencial e filtro por `type` string.
   tipos publicados pelo backend (`STUDENT_CREATED`, `STUDENT_TRANSFERRED`,
   `ENROLLMENT_SUSPENDED`, `ENROLLMENT_REOPENED`, e os de institution),
   com `version` para permitir evolução do contrato.
-- Hook `useDomainEvents(apiUrl, demoUser)` encapsulando conexão, reconexão
+- Hook `useDomainEvents(apiUrl)` encapsulando conexão autenticada, reconexão
   com backoff, cleanup e parsing tipado; consumidor filtra por tipo sem
   comparar string solta.
 - Migrar mfe-student primeiro. Os demais MFEs em PR separada.
@@ -143,16 +143,16 @@ dashboard, admin) não têm o mesmo cuidado.
 
 Você é um Senior/Staff Frontend Engineer especialista em:
 
-* React
-* TypeScript
-* Micro Frontends
-* Web Performance
-* Browser Runtime Performance
-* JavaScript
-* HTTP
-* APIs
-* Build Systems
-* Arquitetura Frontend
+- React
+- TypeScript
+- Micro Frontends
+- Web Performance
+- Browser Runtime Performance
+- JavaScript
+- HTTP
+- APIs
+- Build Systems
+- Arquitetura Frontend
 
 Você está trabalhando neste repositório:
 
@@ -197,18 +197,18 @@ Antes da análise de performance, faça um mapa da aplicação.
 
 Identifique:
 
-* Host
-* Micro Frontends
-* Entry points
-* Rotas
-* Componentes principais
-* Comunicação entre MFEs
-* Gerenciamento de estado
-* APIs utilizadas
-* Estratégia de carregamento
-* Build system
-* Deploy
-* Dependências compartilhadas
+- Host
+- Micro Frontends
+- Entry points
+- Rotas
+- Componentes principais
+- Comunicação entre MFEs
+- Gerenciamento de estado
+- APIs utilizadas
+- Estratégia de carregamento
+- Build system
+- Deploy
+- Dependências compartilhadas
 
 Crie uma representação semelhante a:
 
@@ -234,25 +234,25 @@ Analise profundamente o carregamento inicial.
 
 Verifique:
 
-* JavaScript inicial
-* CSS inicial
-* imagens
-* fontes
-* scripts
-* chunks
-* dependências
-* ordem de carregamento
-* requests iniciais
-* código executado antes do primeiro render
+- JavaScript inicial
+- CSS inicial
+- imagens
+- fontes
+- scripts
+- chunks
+- dependências
+- ordem de carregamento
+- requests iniciais
+- código executado antes do primeiro render
 
 Procure:
 
-* JavaScript desnecessário
-* componentes carregados antes de serem necessários
-* MFEs carregados imediatamente sem necessidade
-* dependências grandes
-* código morto
-* imports que impedem tree shaking
+- JavaScript desnecessário
+- componentes carregados antes de serem necessários
+- MFEs carregados imediatamente sem necessidade
+- dependências grandes
+- código morto
+- imports que impedem tree shaking
 
 Avalie:
 
@@ -286,23 +286,23 @@ Analise especificamente:
 
 Verifique:
 
-* Cada MFE é carregado somente quando necessário?
-* Existe lazy loading?
-* Existe code splitting?
-* Existe carregamento antecipado desnecessário?
-* Um MFE lento bloqueia o Host?
-* Existe fallback/loading state?
-* Existe Error Boundary?
+- Cada MFE é carregado somente quando necessário?
+- Existe lazy loading?
+- Existe code splitting?
+- Existe carregamento antecipado desnecessário?
+- Um MFE lento bloqueia o Host?
+- Existe fallback/loading state?
+- Existe Error Boundary?
 
 ## Dependências duplicadas
 
 Procure especialmente:
 
-* React carregado múltiplas vezes
-* React DOM carregado múltiplas vezes
-* bibliotecas duplicadas
-* versões diferentes da mesma biblioteca
-* dependências compartilhadas incorretamente
+- React carregado múltiplas vezes
+- React DOM carregado múltiplas vezes
+- bibliotecas duplicadas
+- versões diferentes da mesma biblioteca
+- dependências compartilhadas incorretamente
 
 Avalie o custo de cada MFE carregar suas próprias dependências.
 
@@ -324,11 +324,11 @@ Host
 
 Se existir duplicação, explique:
 
-* tamanho adicional
-* impacto no download
-* impacto no parse
-* impacto na execução
-* impacto na memória
+- tamanho adicional
+- impacto no download
+- impacto no parse
+- impacto na execução
+- impacto na memória
 
 ---
 
@@ -338,26 +338,26 @@ Analise como os Micro Frontends se comunicam.
 
 Procure:
 
-* Custom Events
-* Event Bus
-* callbacks
-* shared state
-* Context
-* postMessage
-* listeners
-* subscriptions
+- Custom Events
+- Event Bus
+- callbacks
+- shared state
+- Context
+- postMessage
+- listeners
+- subscriptions
 
 Para cada mecanismo, analise:
 
-* quantidade de eventos
-* frequência
-* tamanho dos payloads
-* listeners duplicados
-* listeners não removidos
-* eventos disparados durante render
-* eventos disparados excessivamente
-* comunicação desnecessária
-* acoplamento
+- quantidade de eventos
+- frequência
+- tamanho dos payloads
+- listeners duplicados
+- listeners não removidos
+- eventos disparados durante render
+- eventos disparados excessivamente
+- comunicação desnecessária
+- acoplamento
 
 Procure especialmente por:
 
@@ -385,31 +385,31 @@ Faça uma auditoria de renderização.
 
 Procure:
 
-* re-renders desnecessários
-* componentes renderizando frequentemente
-* props instáveis
-* objetos recriados
-* arrays recriados
-* callbacks recriados
-* Context causando renderização em cascata
-* estado global causando renders excessivos
-* componentes muito grandes
+- re-renders desnecessários
+- componentes renderizando frequentemente
+- props instáveis
+- objetos recriados
+- arrays recriados
+- callbacks recriados
+- Context causando renderização em cascata
+- estado global causando renders excessivos
+- componentes muito grandes
 
 Analise criticamente:
 
 ```typescript
-useMemo
-useCallback
-React.memo
+useMemo;
+useCallback;
+React.memo;
 ```
 
 Para cada ocorrência, determine:
 
-* Existe benefício?
-* O cálculo é realmente caro?
-* A referência precisa ser estável?
-* O memo pode ser removido?
-* O custo do memo pode ser maior que o benefício?
+- Existe benefício?
+- O cálculo é realmente caro?
+- A referência precisa ser estável?
+- O memo pode ser removido?
+- O custo do memo pode ser maior que o benefício?
 
 IMPORTANTE:
 
@@ -423,21 +423,21 @@ Audite todos os `useEffect`.
 
 Procure:
 
-* chamadas de API
-* efeitos executando mais vezes do que deveriam
-* dependências incorretas
-* efeitos que causam novos renders
-* efeitos que atualizam estado desnecessariamente
-* requests duplicados
-* efeitos que poderiam ser substituídos por derivação de dados
-* efeitos sem cleanup
+- chamadas de API
+- efeitos executando mais vezes do que deveriam
+- dependências incorretas
+- efeitos que causam novos renders
+- efeitos que atualizam estado desnecessariamente
+- requests duplicados
+- efeitos que poderiam ser substituídos por derivação de dados
+- efeitos sem cleanup
 
 Investigue especialmente padrões como:
 
 ```typescript
 useEffect(() => {
-  fetchData()
-}, [someObject])
+  fetchData();
+}, [someObject]);
 ```
 
 quando `someObject` é recriado durante render.
@@ -464,16 +464,16 @@ API
 
 Identifique:
 
-* requests duplicados
-* requests sequenciais
-* requests paralelos que poderiam ser agrupados
-* requests desnecessários
-* requests executados novamente sem necessidade
-* falta de cache
-* falta de deduplicação
-* payloads grandes
-* dados que não são utilizados
-* endpoints chamados por múltiplos MFEs
+- requests duplicados
+- requests sequenciais
+- requests paralelos que poderiam ser agrupados
+- requests desnecessários
+- requests executados novamente sem necessidade
+- falta de cache
+- falta de deduplicação
+- payloads grandes
+- dados que não são utilizados
+- endpoints chamados por múltiplos MFEs
 
 Procure padrões como:
 
@@ -485,10 +485,10 @@ MFE C → GET /users
 
 Avalie se existe oportunidade de:
 
-* cache
-* request deduplication
-* shared data
-* backend aggregation
+- cache
+- request deduplication
+- shared data
+- backend aggregation
 
 ---
 
@@ -499,7 +499,7 @@ Verifique requests que podem continuar depois que um componente foi desmontado.
 Procure:
 
 ```typescript
-AbortController
+AbortController;
 ```
 
 e identifique onde ele seria necessário.
@@ -522,9 +522,9 @@ Isso pode gerar dados incorretos na UI.
 
 Avalie:
 
-* debounce
-* cancellation
-* request deduplication
+- debounce
+- cancellation
+- request deduplication
 
 ---
 
@@ -543,19 +543,19 @@ em renderizações.
 
 Analise:
 
-* tamanho das listas
-* quantidade de elementos renderizados
-* cálculos dentro do render
-* filtros repetidos
-* ordenações repetidas
-* componentes pesados dentro das listas
+- tamanho das listas
+- quantidade de elementos renderizados
+- cálculos dentro do render
+- filtros repetidos
+- ordenações repetidas
+- componentes pesados dentro das listas
 
 Avalie quando seria necessário:
 
-* pagination
-* infinite scroll
-* virtualization
-* memoization
+- pagination
+- infinite scroll
+- virtualization
+- memoization
 
 Não introduza virtualização se a quantidade de dados não justificar.
 
@@ -565,15 +565,15 @@ Não introduza virtualização se a quantidade de dados não justificar.
 
 Procure:
 
-* loops desnecessários
-* cálculos repetidos
-* parsing excessivo
-* JSON muito grande
-* serialização/deserialização
-* objetos gigantes
-* processamento no main thread
-* long tasks
-* operações síncronas pesadas
+- loops desnecessários
+- cálculos repetidos
+- parsing excessivo
+- JSON muito grande
+- serialização/deserialização
+- objetos gigantes
+- processamento no main thread
+- long tasks
+- operações síncronas pesadas
 
 Identifique possíveis problemas de:
 
@@ -592,16 +592,16 @@ Faça uma auditoria específica de memória.
 
 Procure:
 
-* event listeners
-* timers
-* intervals
-* subscriptions
-* observers
-* WebSockets
-* references mantidas após unmount
-* caches sem limite
-* closures mantendo objetos grandes
-* componentes desmontados que continuam executando
+- event listeners
+- timers
+- intervals
+- subscriptions
+- observers
+- WebSockets
+- references mantidas após unmount
+- caches sem limite
+- closures mantendo objetos grandes
+- componentes desmontados que continuam executando
 
 Analise especialmente a navegação:
 
@@ -629,18 +629,18 @@ Analise o build.
 
 Verifique:
 
-* bundle size
-* chunks
-* tree shaking
-* code splitting
-* dynamic imports
-* minificação
-* compressão
-* source maps
-* dependências
-* dependências duplicadas
-* bibliotecas grandes
-* imports incorretos
+- bundle size
+- chunks
+- tree shaking
+- code splitting
+- dynamic imports
+- minificação
+- compressão
+- source maps
+- dependências
+- dependências duplicadas
+- bibliotecas grandes
+- imports incorretos
 
 Procure imports como:
 
@@ -666,15 +666,15 @@ Não substitua dependências automaticamente. Primeiro quantifique o impacto.
 
 Procure:
 
-* arquivos não utilizados
-* componentes não utilizados
-* funções não utilizadas
-* imports não utilizados
-* dependências não utilizadas
-* feature flags antigas
-* código comentado
-* código legado
-* exports não utilizados
+- arquivos não utilizados
+- componentes não utilizados
+- funções não utilizadas
+- imports não utilizados
+- dependências não utilizadas
+- feature flags antigas
+- código comentado
+- código legado
+- exports não utilizados
 
 Explique:
 
@@ -698,15 +698,15 @@ Memory
 
 Analise:
 
-* tamanho das imagens
-* formatos
-* lazy loading
-* responsive images
-* imagens acima da dobra
-* imagens abaixo da dobra
-* SVG
-* fontes
-* ícones
+- tamanho das imagens
+- formatos
+- lazy loading
+- responsive images
+- imagens acima da dobra
+- imagens abaixo da dobra
+- SVG
+- fontes
+- ícones
 
 Avalie:
 
@@ -726,17 +726,17 @@ quando aplicável.
 
 Analise:
 
-* número de requests
-* requests bloqueantes
-* waterfall
-* HTTP caching
-* Cache-Control
-* ETag
-* compressão
-* CDN
-* HTTP/2
-* HTTP/3
-* keep-alive
+- número de requests
+- requests bloqueantes
+- waterfall
+- HTTP caching
+- Cache-Control
+- ETag
+- compressão
+- CDN
+- HTTP/2
+- HTTP/3
+- keep-alive
 
 Procure oportunidades de reduzir:
 
@@ -753,11 +753,11 @@ Blocking
 
 Avalie:
 
-* LCP
-* INP
-* CLS
-* FCP
-* TTFB
+- LCP
+- INP
+- CLS
+- FCP
+- TTFB
 
 Explique quais partes da arquitetura podem afetar cada métrica.
 
@@ -781,40 +781,40 @@ Crie um plano de investigação usando:
 
 Verificar:
 
-* requests
-* tamanho
-* tempo
-* waterfall
-* cache
-* duplicação
+- requests
+- tamanho
+- tempo
+- waterfall
+- cache
+- duplicação
 
 ### Performance
 
 Verificar:
 
-* long tasks
-* scripting
-* rendering
-* painting
-* layout
-* garbage collection
+- long tasks
+- scripting
+- rendering
+- painting
+- layout
+- garbage collection
 
 ### Memory
 
 Verificar:
 
-* heap snapshots
-* detached DOM
-* listeners
-* crescimento de memória
+- heap snapshots
+- detached DOM
+- listeners
+- crescimento de memória
 
 ### React DevTools
 
 Verificar:
 
-* commits
-* renders
-* componentes que renderizam excessivamente
+- commits
+- renders
+- componentes que renderizam excessivamente
 
 ---
 
@@ -839,10 +839,10 @@ Não invente números como requisitos absolutos.
 
 Explique que os valores devem ser calibrados de acordo com:
 
-* ambiente
-* dispositivo
-* rede
-* objetivo da aplicação
+- ambiente
+- dispositivo
+- rede
+- objetivo da aplicação
 
 ---
 
@@ -964,11 +964,11 @@ Mudanças arquiteturais.
 
 Liste coisas que parecem otimizações, mas que você NÃO recomenda fazer porque:
 
-* não existe evidência de problema;
-* impacto é insignificante;
-* aumenta complexidade;
-* dificulta manutenção;
-* cria overengineering.
+- não existe evidência de problema;
+- impacto é insignificante;
+- aumenta complexidade;
+- dificulta manutenção;
+- cria overengineering.
 
 Esta seção é obrigatória.
 
@@ -1031,4 +1031,3 @@ Add caching everywhere
 A prioridade é:
 
 **performance real + simplicidade + manutenção + evidência.**
-

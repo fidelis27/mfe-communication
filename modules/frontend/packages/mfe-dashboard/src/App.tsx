@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { authenticatedFetch, initializeAuth, useDomainEvents } from "@mfe/shared";
+import { authenticatedFetch, useDomainEvents } from "@mfe/shared";
 import "./App.css";
 
 type Institution = { id: string; status: string };
@@ -12,9 +12,6 @@ type DashboardData = {
 };
 
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
-const keycloakUrl = import.meta.env.VITE_KEYCLOAK_URL ?? "";
-const keycloakRealm = import.meta.env.VITE_KEYCLOAK_REALM ?? "";
-const keycloakClientId = import.meta.env.VITE_KEYCLOAK_CLIENT_ID ?? "";
 
 export default function App() {
   const [data, setData] = useState<DashboardData>({
@@ -26,17 +23,6 @@ export default function App() {
   const [errorMessage, setErrorMessage] = useState("");
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const { connection } = useDomainEvents(apiUrl);
-
-  useEffect(() => {
-    if (!keycloakUrl || !keycloakRealm || !keycloakClientId) return;
-    void initializeAuth({
-      url: keycloakUrl,
-      realm: keycloakRealm,
-      clientId: keycloakClientId,
-      onLoad: "check-sso",
-      silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
-    });
-  }, []);
 
   const load = useCallback(async () => {
     setState("loading");

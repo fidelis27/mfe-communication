@@ -127,7 +127,9 @@ select {
   border: 0;
   border-bottom: 1px solid #9daea5;
   color: #18332f;
-  font: 18px Georgia, serif;
+  font:
+    18px Georgia,
+    serif;
   outline: 0;
   padding: 10px 24px 10px 0;
   width: 100%;
