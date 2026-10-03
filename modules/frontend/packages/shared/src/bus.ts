@@ -40,19 +40,12 @@ function drainQueue(moduleId: string, channel: string, listeners: Set<BusListene
   const bus = getBus();
   const key = channelKey(moduleId, channel);
   const queue = bus.queues.get(key) ?? [];
-  const remaining: QueuedBusEvent[] = [];
+  bus.queues.delete(key);
   const now = Date.now();
 
   for (const item of queue) {
     if (item.expiresAt <= now) continue;
-    remaining.push(item);
     for (const listener of listeners) listener(item.payload);
-  }
-
-  if (remaining.length === 0) {
-    bus.queues.delete(key);
-  } else {
-    bus.queues.set(key, remaining.slice(0, 100));
   }
 }
 
@@ -79,11 +72,9 @@ export function dispatch<TChannel extends ChannelName>(
   const ttl = options.ttl ?? 10000;
   const entry: QueuedBusEvent = { payload, expiresAt: Date.now() + ttl };
 
-  if (queue.length >= 100) {
-    queue.shift();
-  }
+  if (queue.length >= 100) queue.shift();
   queue.push(entry);
-  bus.queues.set(key, queue.slice(-100));
+  bus.queues.set(key, queue);
 }
 
 export function listen<TChannel extends ChannelName>(

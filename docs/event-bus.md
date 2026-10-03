@@ -36,7 +36,8 @@ useListen("domain", "STUDENT_CREATED", (payload) => {
 ## Fila e TTL
 
 - Se não houver listener em um canal, o evento entra em fila por `moduleId:channel`.
-- Quando o primeiro listener for registrado, a fila é drenada em ordem.
+- Com um ou mais listeners registrados, cada evento novo é entregue a todos os listeners (fan-out); nessa situação não se cria fila.
+- Quando o primeiro listener for registrado, a fila é drenada em ordem; cada item não expirado é entregue uma vez e todos os itens são removidos da fila, inclusive os expirados.
 - Eventos expirados pelo TTL são descartados.
 - A fila tem limite de 100 itens por canal; itens antigos são removidos.
 

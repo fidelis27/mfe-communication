@@ -22,6 +22,36 @@ describe("shared event bus", () => {
     unsubscribe();
   });
 
+  it("removes queued events after the first listener receives them", () => {
+    const firstListener = vi.fn();
+    const secondListener = vi.fn();
+
+    dispatch("student", "evt:navigate", { path: "/instituicoes" });
+
+    const unsubscribe = listen("student", "evt:navigate", firstListener);
+    expect(firstListener).toHaveBeenCalledTimes(1);
+    unsubscribe();
+
+    const unsubscribeAgain = listen("student", "evt:navigate", secondListener);
+    expect(secondListener).not.toHaveBeenCalled();
+    unsubscribeAgain();
+  });
+
+  it("fans out an event to every listener without buffering it", () => {
+    const firstListener = vi.fn();
+    const secondListener = vi.fn();
+    const unsubscribeFirst = listen("student", "evt:navigate", firstListener);
+    const unsubscribeSecond = listen("student", "evt:navigate", secondListener);
+
+    dispatch("student", "evt:navigate", { path: "/instituicoes" });
+
+    expect(firstListener).toHaveBeenCalledTimes(1);
+    expect(secondListener).toHaveBeenCalledTimes(1);
+    expect(globalThis.__mfeBus?.queues.get("student:evt:navigate")).toBeUndefined();
+    unsubscribeFirst();
+    unsubscribeSecond();
+  });
+
   it("drops expired messages and respects the queue cap", () => {
     dispatch("domain", "STUDENT_CREATED", { id: "a" }, { ttl: 5 });
     dispatch("domain", "STUDENT_CREATED", { id: "b" }, { ttl: 5 });
