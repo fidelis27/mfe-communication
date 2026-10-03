@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { authenticatedFetch, useDomainEvents } from "@mfe/shared";
+import { authenticatedFetch, useDomainEvents, useListen } from "@mfe/shared";
 import "./App.css";
 
 type DomainEvent = {
@@ -27,7 +27,54 @@ export default function App() {
     "loading",
   );
   const [historyError, setHistoryError] = useState("");
-  const { events: liveEvents, connection } = useDomainEvents(apiUrl);
+  const hostReady = typeof globalThis !== "undefined" && globalThis.__mfeHostReady === true;
+  const fallback = useDomainEvents(hostReady ? "" : apiUrl);
+  const [connection, setConnection] = useState<"connecting" | "connected" | "offline">("connecting");
+
+  useListen("domain", "domain:connection", (status) => {
+    if (status === "connecting" || status === "connected" || status === "offline") {
+      setConnection(status);
+    }
+  });
+
+  function appendEvent(type: string, payload: Record<string, unknown>): void {
+    const nextEvent: DomainEvent = {
+      eventId: `${type}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      type,
+      version: 1,
+      source: "host-bus",
+      correlationId: "local-bus",
+      occurredAt: new Date().toISOString(),
+      payload,
+    };
+    setEvents((current) => mergeEvent(current, nextEvent));
+    setHistoryState("success");
+  }
+
+  useListen("domain", "STUDENT_CREATED", (payload) => {
+    appendEvent("STUDENT_CREATED", payload as Record<string, unknown>);
+  });
+
+  useListen("domain", "STUDENT_TRANSFERRED", (payload) => {
+    appendEvent("STUDENT_TRANSFERRED", payload as Record<string, unknown>);
+  });
+
+  useListen("domain", "ENROLLMENT_SUSPENDED", (payload) => {
+    appendEvent("ENROLLMENT_SUSPENDED", payload as Record<string, unknown>);
+  });
+
+  useListen("domain", "ENROLLMENT_REOPENED", (payload) => {
+    appendEvent("ENROLLMENT_REOPENED", payload as Record<string, unknown>);
+  });
+
+  function mergeEvent(current: DomainEvent[], source: DomainEvent): DomainEvent[] {
+    const next = [source, ...current];
+    return next
+      .filter(
+        (event, index, array) => index === array.findIndex((candidate) => candidate.eventId === event.eventId),
+      )
+      .slice(0, 30);
+  }
 
   async function loadHistory() {
     setHistoryState("loading");
@@ -49,9 +96,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (liveEvents.length === 0) return;
+    if (!hostReady && fallback.events.length === 0) return;
+    if (hostReady) return;
     setEvents((current) => {
-      const next = [...liveEvents, ...current];
+      const next = [...fallback.events, ...current];
       return next
         .filter(
           (event, index, array) =>
@@ -59,8 +107,9 @@ export default function App() {
         )
         .slice(0, 30);
     });
+    setConnection(fallback.connection);
     setHistoryState("success");
-  }, [liveEvents]);
+  }, [fallback.connection, fallback.events, hostReady]);
 
   return (
     <main className="activity-shell">

@@ -10,6 +10,9 @@ const authMocks = vi.hoisted(() => ({
   login: vi.fn(),
   logout: vi.fn(),
   subscribeToAuthState: vi.fn(),
+  useDispatch: vi.fn(() => vi.fn()),
+  useDomainEvents: vi.fn(() => ({ events: [], connection: "connected" })),
+  useListen: vi.fn(),
 }));
 
 vi.mock("@mfe/shared", () => authMocks);

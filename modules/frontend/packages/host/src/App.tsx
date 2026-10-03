@@ -10,7 +10,15 @@ import {
   useEffect,
   useState,
 } from "react";
-import { initializeAuth, login, logout, subscribeToAuthState } from "@mfe/shared";
+import {
+  initializeAuth,
+  login,
+  logout,
+  subscribeToAuthState,
+  useDispatch,
+  useDomainEvents,
+  useListen,
+} from "@mfe/shared";
 import "./App.css";
 
 const StudentApp = lazy(() => import("mfe_student/App"));
@@ -26,6 +34,8 @@ const modules = [
   { id: "dashboard", path: "/dashboard", label: "Dashboard", detail: "Indicadores" },
   { id: "admin", path: "/admin", label: "Admin", detail: "Pessoas e grupos" },
 ];
+
+const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
 
 function moduleFromPath(pathname: string) {
   return modules.find((module) => module.path === pathname)?.id ?? "preparing";
@@ -99,6 +109,46 @@ export default function App() {
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [signingIn, setSigningIn] = useState(false);
+  const dispatchDomain = useDispatch("domain");
+  const { events: domainEvents, connection: domainConnection } = useDomainEvents(apiUrl);
+
+  useEffect(() => {
+    (globalThis as typeof globalThis & { __mfeHostReady?: boolean }).__mfeHostReady = true;
+    return () => {
+      Reflect.deleteProperty(globalThis, "__mfeHostReady");
+    };
+  }, []);
+
+  useEffect(() => {
+    dispatchDomain("domain:connection", domainConnection);
+  }, [dispatchDomain, domainConnection]);
+
+  useEffect(() => {
+    for (const event of domainEvents) {
+      dispatchDomain(event.type, event.payload as never);
+    }
+  }, [dispatchDomain, domainEvents]);
+
+  useListen("mfe_student", "evt:navigate", ({ path }) => {
+    if (path) {
+      window.history.pushState({}, "", path);
+      setActiveModule(moduleFromPath(path));
+    }
+  });
+
+  useListen("mfe_activity", "evt:navigate", ({ path }) => {
+    if (path) {
+      window.history.pushState({}, "", path);
+      setActiveModule(moduleFromPath(path));
+    }
+  });
+
+  useListen("mfe_dashboard", "evt:navigate", ({ path }) => {
+    if (path) {
+      window.history.pushState({}, "", path);
+      setActiveModule(moduleFromPath(path));
+    }
+  });
 
   useEffect(() => {
     if (!supabaseUrl || !supabaseAnonKey) {
