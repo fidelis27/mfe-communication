@@ -3,8 +3,7 @@
 .student-shell {
   min-height: 100vh;
   padding: 64px clamp(24px, 7vw, 112px);
-  background:
-    radial-gradient(circle at 88% 12%, #f7dca5 0, transparent 28%), var(--color-surface-page);
+  background: var(--gradient-page-student);
 }
 
 .student-hero {
@@ -42,7 +41,7 @@ h1 {
 }
 
 .connection i {
-  background: #4d9b75;
+  background: var(--color-status-success-student);
   border-radius: 50%;
   height: 8px;
   width: 8px;
