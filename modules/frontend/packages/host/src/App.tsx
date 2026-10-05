@@ -8,6 +8,7 @@ import {
   ReactNode,
   Suspense,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import {
@@ -111,6 +112,7 @@ export default function App() {
   const [signingIn, setSigningIn] = useState(false);
   const dispatchDomain = useDispatch("domain");
   const { events: domainEvents, connection: domainConnection } = useDomainEvents(apiUrl);
+  const publishedEventIds = useRef(new Set<string>());
 
   useEffect(() => {
     (globalThis as typeof globalThis & { __mfeHostReady?: boolean }).__mfeHostReady = true;
@@ -125,6 +127,8 @@ export default function App() {
 
   useEffect(() => {
     for (const event of domainEvents) {
+      if (publishedEventIds.current.has(event.eventId)) continue;
+      publishedEventIds.current.add(event.eventId);
       dispatchDomain(event.type, event.payload as never);
     }
   }, [dispatchDomain, domainEvents]);
