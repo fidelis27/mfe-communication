@@ -15,6 +15,7 @@
     "validate:local": "powershell -ExecutionPolicy Bypass -File ./scripts/validate-local.ps1",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --noEmit -p .",
     "format": "prettier --write --ignore-unknown .",
     "format:check": "prettier --check --ignore-unknown ."
   },
