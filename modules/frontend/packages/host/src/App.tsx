@@ -12,6 +12,7 @@ import {
   useState,
 } from "react";
 import {
+  type EventPayloadMap,
   initializeAuth,
   login,
   logout,
@@ -37,6 +38,10 @@ const modules = [
 ];
 
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+
+type HostDomainEvent = {
+  [K in keyof EventPayloadMap]: { type: K; payload: EventPayloadMap[K]; eventId: string };
+}[keyof EventPayloadMap];
 
 function moduleFromPath(pathname: string) {
   return modules.find((module) => module.path === pathname)?.id ?? "preparing";
@@ -111,25 +116,28 @@ export default function App() {
   const [authError, setAuthError] = useState("");
   const [signingIn, setSigningIn] = useState(false);
   const dispatchDomain = useDispatch("domain");
+  const dispatchHost = useDispatch("host");
   const { events: domainEvents, connection: domainConnection } = useDomainEvents(apiUrl);
   const publishedEventIds = useRef(new Set<string>());
 
   useEffect(() => {
     (globalThis as typeof globalThis & { __mfeHostReady?: boolean }).__mfeHostReady = true;
+    dispatchHost("host:ready", { ready: true });
     return () => {
       Reflect.deleteProperty(globalThis, "__mfeHostReady");
+      dispatchHost("host:ready", { ready: false });
     };
-  }, []);
+  }, [dispatchHost]);
 
   useEffect(() => {
     dispatchDomain("domain:connection", domainConnection);
   }, [dispatchDomain, domainConnection]);
 
   useEffect(() => {
-    for (const event of domainEvents) {
+    for (const event of domainEvents as HostDomainEvent[]) {
       if (publishedEventIds.current.has(event.eventId)) continue;
       publishedEventIds.current.add(event.eventId);
-      dispatchDomain(event.type, event.payload as never);
+      dispatchDomain(event.type, event.payload);
     }
   }, [dispatchDomain, domainEvents]);
 

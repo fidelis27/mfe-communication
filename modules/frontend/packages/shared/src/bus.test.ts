@@ -1,6 +1,7 @@
 import { renderHook, act } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { dispatch, listen, useListen } from "./bus";
+import { useHostReady } from "./events";
 
 type BusTestState = {
   listeners: Map<string, Set<(payload: unknown) => void>>;
@@ -92,6 +93,20 @@ describe("shared event bus", () => {
     expect(queue.length).toBeLessThanOrEqual(100);
 
     unsubscribe();
+  });
+
+  it("reacts to host ready events without reading the global once", () => {
+    const { result } = renderHook(() => useHostReady());
+
+    expect(result.current).toBe(false);
+    act(() => {
+      dispatch("host", "host:ready", { ready: true });
+    });
+    expect(result.current).toBe(true);
+    act(() => {
+      dispatch("host", "host:ready", { ready: false });
+    });
+    expect(result.current).toBe(false);
   });
 
   it("uses a singleton bus and clears listeners on unmount", () => {

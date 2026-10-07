@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { authenticatedWebSocket } from "./auth";
+import { listen } from "./bus";
 
 export type InstitutionEventType =
   "INSTITUTION_CREATED" | "INSTITUTION_UPDATED" | "INSTITUTION_INACTIVATED";
@@ -55,6 +56,29 @@ function isDomainEvent(value: unknown): value is DomainEvent {
     typeof event.payload === "object" &&
     event.payload !== null
   );
+}
+
+export function useHostReady() {
+  const [ready, setReady] = useState(
+    typeof globalThis !== "undefined" &&
+      (globalThis as typeof globalThis & { __mfeHostReady?: boolean }).__mfeHostReady === true,
+  );
+
+  useEffect(() => {
+    const sync = () => {
+      setReady(
+        typeof globalThis !== "undefined" &&
+          (globalThis as typeof globalThis & { __mfeHostReady?: boolean }).__mfeHostReady === true,
+      );
+    };
+
+    sync();
+    return listen("host", "host:ready", ({ ready: hostReady }) => {
+      setReady(hostReady);
+    });
+  }, []);
+
+  return ready;
 }
 
 export function useDomainEvents(apiUrl: string) {
