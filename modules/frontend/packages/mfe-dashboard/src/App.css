@@ -3,7 +3,7 @@
 .dashboard-shell {
   min-height: 100vh;
   padding: 64px clamp(24px, 7vw, 112px);
-  background: linear-gradient(145deg, #f4f1e9, #e4eeeb 68%, #d4e1df);
+  background: var(--gradient-page-dashboard);
 }
 
 .dashboard-heading {
@@ -43,14 +43,14 @@
 }
 
 .sync i {
-  background: #e1a25a;
+  background: var(--color-status-warning);
   border-radius: 50%;
   height: 8px;
   width: 8px;
 }
 
 .sync.success i {
-  background: #55a378;
+  background: var(--color-status-ok);
 }
 
 .sync.error {
@@ -97,12 +97,12 @@
 }
 
 .metric-accent {
-  background: #e8c19f;
-  border-color: #c5845d;
+  background: var(--color-status-warning-soft);
+  border-color: var(--color-status-warning-border);
 }
 
 .metric-accent small {
-  color: #895136;
+  color: var(--color-status-warning-text);
 }
 
 .dashboard-note {

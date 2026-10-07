@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { authenticatedFetch, useDomainEvents, useListen } from "@mfe/shared";
+import { authenticatedFetch, useDomainEvents, useHostReady, useListen } from "@mfe/shared";
 import "./App.css";
 
 type Institution = { id: string; status: string };
@@ -22,7 +22,7 @@ export default function App() {
   const [state, setState] = useState<"loading" | "success" | "error">("loading");
   const [errorMessage, setErrorMessage] = useState("");
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
-  const hostReady = typeof globalThis !== "undefined" && globalThis.__mfeHostReady === true;
+  const hostReady = useHostReady();
   const fallback = useDomainEvents(hostReady ? "" : apiUrl);
   const [connection, setConnection] = useState<"connecting" | "connected" | "offline">("connecting");
 

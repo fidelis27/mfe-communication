@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { authenticatedFetch, useDomainEvents, useListen } from "@mfe/shared";
+import { authenticatedFetch, useDomainEvents, useHostReady, useListen } from "@mfe/shared";
 import "./App.css";
 
 type DomainEvent = {
@@ -27,7 +27,7 @@ export default function App() {
     "loading",
   );
   const [historyError, setHistoryError] = useState("");
-  const hostReady = typeof globalThis !== "undefined" && globalThis.__mfeHostReady === true;
+  const hostReady = useHostReady();
   const fallback = useDomainEvents(hostReady ? "" : apiUrl);
   const [connection, setConnection] = useState<"connecting" | "connected" | "offline">("connecting");
 

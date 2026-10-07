@@ -6,7 +6,14 @@ export type BusChannelMap = {
   "cmd:navigate": { path: string; moduleId?: string };
   "evt:navigate": { path: string; moduleId?: string };
   "domain:connection": DomainConnection;
+  "host:ready": { ready: boolean };
 };
+
+export type BusPayload<TChannel extends ChannelName> = TChannel extends keyof EventPayloadMap
+  ? EventPayloadMap[TChannel]
+  : TChannel extends keyof BusChannelMap
+    ? BusChannelMap[TChannel]
+    : never;
 
 type ChannelName = keyof BusChannelMap | keyof EventPayloadMap;
 type BusListener = (payload: unknown) => void;
@@ -52,11 +59,7 @@ function drainQueue(moduleId: string, channel: string, listeners: Set<BusListene
 export function dispatch<TChannel extends ChannelName>(
   moduleId: string,
   channel: TChannel,
-  payload: TChannel extends keyof EventPayloadMap
-    ? EventPayloadMap[TChannel]
-    : TChannel extends keyof BusChannelMap
-      ? BusChannelMap[TChannel]
-      : unknown,
+  payload: BusPayload<TChannel>,
   options: { ttl?: number } = {},
 ): void {
   const bus = getBus();
@@ -80,11 +83,7 @@ export function dispatch<TChannel extends ChannelName>(
 export function listen<TChannel extends ChannelName>(
   moduleId: string,
   channel: TChannel,
-  handler: (payload: TChannel extends keyof EventPayloadMap
-    ? EventPayloadMap[TChannel]
-    : TChannel extends keyof BusChannelMap
-      ? BusChannelMap[TChannel]
-      : unknown) => void,
+  handler: (payload: BusPayload<TChannel>) => void,
 ): () => void {
   const bus = getBus();
   const key = channelKey(moduleId, String(channel));
@@ -104,27 +103,23 @@ export function listen<TChannel extends ChannelName>(
 }
 
 export function useDispatch(moduleId: string) {
-  return useRef({
-    dispatch: <TChannel extends ChannelName>(channel: TChannel, payload: unknown, options?: { ttl?: number }) =>
-      dispatch(moduleId, channel, payload as never, options),
-  }).current.dispatch;
+  return useRef(
+    <TChannel extends ChannelName>(channel: TChannel, payload: BusPayload<TChannel>, options?: { ttl?: number }) =>
+      dispatch(moduleId, channel, payload, options),
+  ).current;
 }
 
 export function useListen<TChannel extends ChannelName>(
   moduleId: string,
   channel: TChannel,
-  handler: (payload: TChannel extends keyof EventPayloadMap
-    ? EventPayloadMap[TChannel]
-    : TChannel extends keyof BusChannelMap
-      ? BusChannelMap[TChannel]
-      : unknown) => void,
+  handler: (payload: BusPayload<TChannel>) => void,
 ) {
   const handlerRef = useRef(handler);
   handlerRef.current = handler;
 
   useEffect(() => {
     return listen(moduleId, channel, (payload) => {
-      handlerRef.current(payload as never);
+      handlerRef.current(payload as BusPayload<TChannel>);
     });
   }, [channel, moduleId]);
 }

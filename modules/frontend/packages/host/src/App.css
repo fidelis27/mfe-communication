@@ -112,7 +112,7 @@
 }
 
 .online-dot {
-  background: #70bc8c;
+  background: var(--color-status-online);
   border-radius: 50%;
   display: inline-block;
   height: 7px;

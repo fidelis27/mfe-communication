@@ -1,6 +1,16 @@
 import { renderHook, act } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { dispatch, listen, useListen } from "./bus";
+import { useHostReady } from "./events";
+
+type BusTestState = {
+  listeners: Map<string, Set<(payload: unknown) => void>>;
+  queues: Map<string, unknown[]>;
+};
+
+function busState(): BusTestState | undefined {
+  return (globalThis as typeof globalThis & { __mfeBus?: BusTestState }).__mfeBus;
+}
 
 describe("shared event bus", () => {
   beforeEach(() => {
@@ -15,7 +25,7 @@ describe("shared event bus", () => {
     const handler = vi.fn();
 
     dispatch("student", "evt:navigate", { path: "/instituicoes" });
-    expect(globalThis.__mfeBus?.queues.get("student:evt:navigate")).toHaveLength(1);
+    expect(busState()?.queues.get("student:evt:navigate")).toHaveLength(1);
 
     const unsubscribe = listen("student", "evt:navigate", handler);
     expect(handler).toHaveBeenCalledWith({ path: "/instituicoes" });
@@ -47,27 +57,56 @@ describe("shared event bus", () => {
 
     expect(firstListener).toHaveBeenCalledTimes(1);
     expect(secondListener).toHaveBeenCalledTimes(1);
-    expect(globalThis.__mfeBus?.queues.get("student:evt:navigate")).toBeUndefined();
+    expect(busState()?.queues.get("student:evt:navigate")).toBeUndefined();
     unsubscribeFirst();
     unsubscribeSecond();
   });
 
   it("drops expired messages and respects the queue cap", () => {
-    dispatch("domain", "STUDENT_CREATED", { id: "a" }, { ttl: 5 });
-    dispatch("domain", "STUDENT_CREATED", { id: "b" }, { ttl: 5 });
+    dispatch(
+      "domain",
+      "STUDENT_CREATED",
+      { id: "a", name: "Ana", institutionId: "institution-1", status: "active" },
+      { ttl: 5 },
+    );
+    dispatch(
+      "domain",
+      "STUDENT_CREATED",
+      { id: "b", name: "Bia", institutionId: "institution-1", status: "active" },
+      { ttl: 5 },
+    );
 
-    const received: unknown[] = [];
+    const received: Array<{ id: string }> = [];
     const unsubscribe = listen("domain", "STUDENT_CREATED", (payload) => received.push(payload));
-    expect(received).toEqual([{ id: "a" }, { id: "b" }]);
+    expect(received.map(({ id }) => id)).toEqual(["a", "b"]);
 
     for (let index = 0; index < 110; index += 1) {
-      dispatch("domain", "STUDENT_CREATED", { id: `item-${index}` });
+      dispatch("domain", "STUDENT_CREATED", {
+        id: `item-${index}`,
+        name: `Student ${index}`,
+        institutionId: "institution-1",
+        status: "active",
+      });
     }
 
-    const queue = globalThis.__mfeBus?.queues.get("domain:STUDENT_CREATED") ?? [];
+    const queue = busState()?.queues.get("domain:STUDENT_CREATED") ?? [];
     expect(queue.length).toBeLessThanOrEqual(100);
 
     unsubscribe();
+  });
+
+  it("reacts to host ready events without reading the global once", () => {
+    const { result } = renderHook(() => useHostReady());
+
+    expect(result.current).toBe(false);
+    act(() => {
+      dispatch("host", "host:ready", { ready: true });
+    });
+    expect(result.current).toBe(true);
+    act(() => {
+      dispatch("host", "host:ready", { ready: false });
+    });
+    expect(result.current).toBe(false);
   });
 
   it("uses a singleton bus and clears listeners on unmount", () => {
@@ -84,7 +123,7 @@ describe("shared event bus", () => {
     firstUnsubscribe();
     secondUnsubscribe();
 
-    expect(globalThis.__mfeBus?.listeners.get("host:cmd:navigate")?.size).toBeUndefined();
+    expect(busState()?.listeners.get("host:cmd:navigate")?.size).toBeUndefined();
   });
 
   it("runs the hook cleanup when the component unmounts", () => {

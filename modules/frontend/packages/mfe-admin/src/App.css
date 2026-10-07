@@ -3,7 +3,7 @@
 .admin-shell {
   min-height: 100vh;
   padding: 56px clamp(24px, 7vw, 112px);
-  background: linear-gradient(145deg, #f3f0e7, #f6f1e8 62%, #e4eee9);
+  background: var(--gradient-page-admin);
 }
 
 .admin-heading {
@@ -371,7 +371,7 @@ button:disabled {
 }
 
 .toast.error {
-  background: #fff4f1;
+  background: var(--color-danger-soft);
   border: 1px solid rgba(159, 61, 50, 0.2);
   color: var(--color-danger);
 }

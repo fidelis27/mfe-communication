@@ -3,7 +3,7 @@
 .institution-shell {
   min-height: 100vh;
   padding: 64px clamp(24px, 7vw, 112px);
-  background: linear-gradient(135deg, #e9eef0, #f8f4ec 52%, #dae8df);
+  background: var(--gradient-page-institution);
 }
 
 .institution-hero {

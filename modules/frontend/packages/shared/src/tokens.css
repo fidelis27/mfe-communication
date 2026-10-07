@@ -63,6 +63,24 @@
   --color-avatar-bg: #2d6c58;
   --color-avatar-text: #fffdf8;
 
+  --gradient-page-institution: linear-gradient(135deg, #e9eef0, #f8f4ec 52%, #dae8df);
+  --gradient-page-dashboard: linear-gradient(145deg, #f4f1e9, #e4eeeb 68%, #d4e1df);
+  --gradient-page-activity: radial-gradient(circle at 90% 12%, #c9dfdc 0, transparent 28%), #edf2f3;
+  --gradient-page-admin: linear-gradient(145deg, #f3f0e7, #f6f1e8 62%, #e4eee9);
+  --gradient-page-student:
+    radial-gradient(circle at 88% 12%, #f7dca5 0, transparent 28%), var(--color-surface-page);
+
+  --color-status-warning: #e1a25a;
+  --color-status-ok: #55a378;
+  --color-status-active: #50a477;
+  --color-status-online: #70bc8c;
+  --color-status-warning-soft: #e8c19f;
+  --color-status-warning-border: #693b24;
+  --color-status-warning-text: #724226;
+  --color-danger-soft: #fff4f1;
+  --color-status-success-student: #4d9b75;
+  --color-event-pin-border: #ffffff;
+
   color: var(--color-text-primary);
   background: var(--color-surface-page);
   color-scheme: light;
