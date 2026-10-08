@@ -13,7 +13,7 @@ const server = createServer((request, response) => {
   response.setHeader("Content-Type", "text/html; charset=utf-8");
 
   if (pathname === "/") {
-  const links = mfes.map((m) => `<li><a href="/mfe/${m.path}">${m.name}</a></li>`).join("");
+    const links = mfes.map((m) => `<li><a href="/mfe/${m.path}">${m.name}</a></li>`).join("");
     response.writeHead(200);
     response.end(`
     <html>

@@ -29,7 +29,9 @@ export default function App() {
   const [historyError, setHistoryError] = useState("");
   const hostReady = useHostReady();
   const fallback = useDomainEvents(hostReady ? "" : apiUrl);
-  const [connection, setConnection] = useState<"connecting" | "connected" | "offline">("connecting");
+  const [connection, setConnection] = useState<"connecting" | "connected" | "offline">(
+    "connecting",
+  );
 
   useListen("domain", "domain:connection", (status) => {
     if (status === "connecting" || status === "connected" || status === "offline") {
@@ -71,7 +73,8 @@ export default function App() {
     const next = [source, ...current];
     return next
       .filter(
-        (event, index, array) => index === array.findIndex((candidate) => candidate.eventId === event.eventId),
+        (event, index, array) =>
+          index === array.findIndex((candidate) => candidate.eventId === event.eventId),
       )
       .slice(0, 30);
   }

@@ -130,12 +130,15 @@ describe("shared event bus", () => {
     const remove = vi.fn();
     const listener = vi.fn();
 
-    const { unmount } = renderHook(({ moduleId, channel }) => {
-      useListen(moduleId, channel, listener);
-      return { remove: () => remove() };
-    }, {
-      initialProps: { moduleId: "demo", channel: "evt:navigate" as const },
-    });
+    const { unmount } = renderHook(
+      ({ moduleId, channel }) => {
+        useListen(moduleId, channel, listener);
+        return { remove: () => remove() };
+      },
+      {
+        initialProps: { moduleId: "demo", channel: "evt:navigate" as const },
+      },
+    );
 
     act(() => {
       dispatch("demo", "evt:navigate", { path: "/dashboard" });
