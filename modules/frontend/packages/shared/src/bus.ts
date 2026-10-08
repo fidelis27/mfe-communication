@@ -104,8 +104,11 @@ export function listen<TChannel extends ChannelName>(
 
 export function useDispatch(moduleId: string) {
   return useRef(
-    <TChannel extends ChannelName>(channel: TChannel, payload: BusPayload<TChannel>, options?: { ttl?: number }) =>
-      dispatch(moduleId, channel, payload, options),
+    <TChannel extends ChannelName>(
+      channel: TChannel,
+      payload: BusPayload<TChannel>,
+      options?: { ttl?: number },
+    ) => dispatch(moduleId, channel, payload, options),
   ).current;
 }
 

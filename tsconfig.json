@@ -12,8 +12,5 @@
     "types": ["vitest/globals", "node"]
   },
   "include": ["**/*.ts"],
-  "exclude": [
-    "node_modules",
-    "modules/frontend/packages/*/vite.config.ts"
-  ]
+  "exclude": ["node_modules", "modules/frontend/packages/*/vite.config.ts"]
 }
