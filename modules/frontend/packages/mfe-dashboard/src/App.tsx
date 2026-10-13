@@ -24,7 +24,9 @@ export default function App() {
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const hostReady = useHostReady();
   const fallback = useDomainEvents(hostReady ? "" : apiUrl);
-  const [connection, setConnection] = useState<"connecting" | "connected" | "offline">("connecting");
+  const [connection, setConnection] = useState<"connecting" | "connected" | "offline">(
+    "connecting",
+  );
 
   useListen("domain", "domain:connection", (status) => {
     if (status === "connecting" || status === "connected" || status === "offline") {
