@@ -86,7 +86,9 @@ const cssRoot = join(root, "modules", "frontend", "packages");
 for (const file of await appCssFiles(cssRoot)) {
   const source = await readFile(file, "utf8");
   if (/#(?:[0-9a-f]{3,8})\b/i.test(source)) {
-    process.stderr.write(`FAIL: fixed hexadecimal color found in ${file}. Move it to shared tokens.\n`);
+    process.stderr.write(
+      `FAIL: fixed hexadecimal color found in ${file}. Move it to shared tokens.\n`,
+    );
     hasErrors = true;
   }
 }

@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "pretest": "npm run build --workspace=@mfe/shared",
-    "test": "vitest run",
+    "test": "vitest run --maxWorkers=4",
     "test:watch": "vitest",
     "dev:local": "powershell -ExecutionPolicy Bypass -File ./scripts/start-local.ps1",
     "stop:local": "powershell -ExecutionPolicy Bypass -File ./scripts/stop-local.ps1",
