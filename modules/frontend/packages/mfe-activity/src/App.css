@@ -1,8 +1,7 @@
 @import "@mfe/shared/tokens.css";
 
 .activity-shell {
-  min-height: 100vh;
-  padding: 64px clamp(24px, 7vw, 112px);
+  padding: 32px clamp(20px, 5vw, 72px);
   background: var(--gradient-page-activity);
 }
 
@@ -86,7 +85,7 @@
   border-bottom: 1px solid var(--color-border-subtle);
   display: flex;
   gap: 24px;
-  padding: 56px 0;
+  padding: 40px 0;
 }
 
 .empty span {

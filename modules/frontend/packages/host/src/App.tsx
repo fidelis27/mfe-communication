@@ -109,6 +109,8 @@ export default function App() {
   const [activeModule, setActiveModule] = useState(() =>
     moduleFromPath(typeof window === "undefined" ? "/estudantes" : window.location.pathname),
   );
+  const [navigationOpen, setNavigationOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [authReady, setAuthReady] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
   const [email, setEmail] = useState("");
@@ -119,6 +121,12 @@ export default function App() {
   const dispatchHost = useDispatch("host");
   const { events: domainEvents, connection: domainConnection } = useDomainEvents(apiUrl);
   const publishedEventIds = useRef(new Set<string>());
+  const mainRef = useRef<HTMLElement>(null);
+  const navigationToggleRef = useRef<HTMLButtonElement>(null);
+  const firstNavigationLinkRef = useRef<HTMLAnchorElement>(null);
+  const accountToggleRef = useRef<HTMLButtonElement>(null);
+  const accountWasOpen = useRef(false);
+  const navigationWasOpen = useRef(false);
 
   useEffect(() => {
     (globalThis as typeof globalThis & { __mfeHostReady?: boolean }).__mfeHostReady = true;
@@ -142,24 +150,15 @@ export default function App() {
   }, [dispatchDomain, domainEvents]);
 
   useListen("mfe_student", "evt:navigate", ({ path }) => {
-    if (path) {
-      window.history.pushState({}, "", path);
-      setActiveModule(moduleFromPath(path));
-    }
+    if (path) navigateToPath(path);
   });
 
   useListen("mfe_activity", "evt:navigate", ({ path }) => {
-    if (path) {
-      window.history.pushState({}, "", path);
-      setActiveModule(moduleFromPath(path));
-    }
+    if (path) navigateToPath(path);
   });
 
   useListen("mfe_dashboard", "evt:navigate", ({ path }) => {
-    if (path) {
-      window.history.pushState({}, "", path);
-      setActiveModule(moduleFromPath(path));
-    }
+    if (path) navigateToPath(path);
   });
 
   useEffect(() => {
@@ -189,16 +188,81 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const handlePopState = () => setActiveModule(moduleFromPath(window.location.pathname));
+    const handlePopState = () => {
+      setActiveModule(moduleFromPath(window.location.pathname));
+      navigationWasOpen.current = false;
+      accountWasOpen.current = false;
+      setNavigationOpen(false);
+      setAccountMenuOpen(false);
+    };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
-  function navigate(moduleId: string) {
-    const module = modules.find((item) => item.id === moduleId);
-    if (!module) return;
-    window.history.pushState({}, "", module.path);
-    setActiveModule(module.id);
+  useEffect(() => {
+    const main = mainRef.current;
+    if (!main) return;
+
+    main.scrollTop = 0;
+
+    const focusHeading = () => {
+      const heading = main.querySelector("h1");
+      if (!heading) return false;
+
+      heading.setAttribute("tabindex", "-1");
+      heading.focus({ preventScroll: true });
+      return true;
+    };
+
+    if (focusHeading()) return;
+
+    const observer = new MutationObserver(() => {
+      if (focusHeading()) observer.disconnect();
+    });
+    observer.observe(main, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [activeModule, authenticated]);
+
+  useEffect(() => {
+    const target = navigationOpen
+      ? firstNavigationLinkRef.current
+      : navigationWasOpen.current
+        ? navigationToggleRef.current
+        : null;
+    navigationWasOpen.current = navigationOpen;
+    if (!target) return;
+
+    const focusTimer = window.setTimeout(() => target.focus(), 0);
+    return () => window.clearTimeout(focusTimer);
+  }, [navigationOpen]);
+
+  useEffect(() => {
+    if (!accountMenuOpen && accountWasOpen.current) {
+      accountToggleRef.current?.focus();
+    }
+    accountWasOpen.current = accountMenuOpen;
+  }, [accountMenuOpen]);
+
+  useEffect(() => {
+    if (!navigationOpen && !accountMenuOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setNavigationOpen(false);
+      setAccountMenuOpen(false);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [accountMenuOpen, navigationOpen]);
+
+  function navigateToPath(path: string) {
+    window.history.pushState({}, "", path);
+    setActiveModule(moduleFromPath(path));
+    navigationWasOpen.current = false;
+    accountWasOpen.current = false;
+    setNavigationOpen(false);
+    setAccountMenuOpen(false);
   }
 
   function handleNavigationClick(
@@ -218,8 +282,11 @@ export default function App() {
     }
 
     event.preventDefault();
-    if (window.location.pathname === path && activeModule === moduleId) return;
-    navigate(moduleId);
+    if (window.location.pathname === path && activeModule === moduleId) {
+      setNavigationOpen(false);
+      return;
+    }
+    navigateToPath(path);
   }
 
   async function signIn(event: FormEvent<HTMLFormElement>) {
@@ -238,6 +305,8 @@ export default function App() {
   }
 
   async function signOut() {
+    accountWasOpen.current = false;
+    setAccountMenuOpen(false);
     setAuthError("");
     try {
       await logout();
@@ -350,7 +419,19 @@ export default function App() {
       <a className="skip-link" href="#module-content">
         Ir para o conteúdo
       </a>
-      <aside className="host-sidebar">
+      {navigationOpen && (
+        <button
+          aria-label="Fechar navegação"
+          className="navigation-backdrop"
+          onClick={() => setNavigationOpen(false)}
+          type="button"
+        />
+      )}
+      <aside
+        aria-label="Navegação principal"
+        className={navigationOpen ? "host-sidebar navigation-open" : "host-sidebar"}
+        id="module-navigation"
+      >
         <div className="brand">
           <span>SE</span>
           <div>
@@ -362,13 +443,14 @@ export default function App() {
         <p className="sidebar-label">Módulos</p>
         <div className="host-nav-wrap">
           <nav aria-label="Módulos da secretaria">
-            {modules.map((module) => (
+            {modules.map((module, index) => (
               <a
                 className={activeModule === module.id ? "nav-item active" : "nav-item"}
                 key={module.id}
                 href={module.path}
                 onClick={(event) => handleNavigationClick(event, module.id, module.path)}
                 aria-current={activeModule === module.id ? "page" : undefined}
+                ref={index === 0 ? firstNavigationLinkRef : undefined}
               >
                 <span className="nav-copy">
                   <b>{module.label}</b>
@@ -386,13 +468,59 @@ export default function App() {
           </div>
         )}
       </aside>
-      <main className="host-main" id="module-content" tabIndex={-1}>
+      <main className="host-main" id="module-content" ref={mainRef} tabIndex={-1}>
         <header className="topbar">
-          <span>Workspace / {moduleLabel(activeModule)}</span>
-          {authError && <span role="alert">{authError}</span>}
-          <button className="user-chip" type="button" onClick={() => void signOut()}>
-            Sair
-          </button>
+          <div className="topbar-start">
+            <button
+              aria-controls="module-navigation"
+              aria-expanded={navigationOpen}
+              className="mobile-nav-toggle"
+              onClick={() => setNavigationOpen((open) => !open)}
+              ref={navigationToggleRef}
+              type="button"
+            >
+              {navigationOpen ? "Fechar menu" : "Menu"}
+            </button>
+            <nav aria-label="Breadcrumb" className="breadcrumb">
+              <ol>
+                <li>
+                  <a
+                    href="/dashboard"
+                    onClick={(event) => handleNavigationClick(event, "dashboard", "/dashboard")}
+                  >
+                    Início
+                  </a>
+                </li>
+                <li aria-current="page">{moduleLabel(activeModule)}</li>
+              </ol>
+            </nav>
+          </div>
+          <div className="topbar-end">
+            {authError && <span role="alert">{authError}</span>}
+            <div className="account-menu">
+              <button
+                aria-controls="account-actions"
+                aria-expanded={accountMenuOpen}
+                className="user-chip"
+                onClick={() => setAccountMenuOpen((open) => !open)}
+                ref={accountToggleRef}
+                type="button"
+              >
+                Conta
+              </button>
+              <div
+                aria-label="Ações da conta"
+                className="account-popup"
+                hidden={!accountMenuOpen}
+                id="account-actions"
+                role="group"
+              >
+                <button onClick={() => void signOut()} type="button">
+                  Sair
+                </button>
+              </div>
+            </div>
+          </div>
         </header>
         <RemoteBoundary key={activeModule} moduleName={moduleLabel(activeModule)}>
           {renderActiveModule()}
