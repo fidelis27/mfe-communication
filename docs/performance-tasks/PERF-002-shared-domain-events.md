@@ -1,5 +1,9 @@
 # PERF-002 - Centralizar WebSocket no Shared
 
+## Status
+
+Concluído.
+
 ## Objetivo
 
 Eliminar a duplicacao da conexao WebSocket entre `@mfe/shared`, Activity e Dashboard.

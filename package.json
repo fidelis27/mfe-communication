@@ -8,17 +8,18 @@
   ],
   "scripts": {
     "pretest": "npm run build --workspace=@mfe/shared",
-    "test": "vitest run",
+    "test": "vitest run --maxWorkers=4",
     "test:watch": "vitest",
     "dev:local": "powershell -ExecutionPolicy Bypass -File ./scripts/start-local.ps1",
     "stop:local": "powershell -ExecutionPolicy Bypass -File ./scripts/stop-local.ps1",
     "validate:local": "powershell -ExecutionPolicy Bypass -File ./scripts/validate-local.ps1",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --noEmit -p .",
+    "check:contrast": "node ./scripts/check-contrast.mjs",
     "format": "prettier --write --ignore-unknown .",
     "format:check": "prettier --check --ignore-unknown ."
   },
-  "dependencies": {},
   "devDependencies": {
     "@eslint/js": "^9.39.5",
     "@testing-library/dom": "^10.4.2",
@@ -30,6 +31,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "globals": "^15.15.0",
+    "jest-axe": "^11.0.0",
     "jsdom": "^27.0.1",
     "prettier": "^3.9.6",
     "typescript": "^5.3.0",

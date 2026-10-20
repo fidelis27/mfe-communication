@@ -123,4 +123,22 @@ describe("shared Supabase auth", () => {
       "invalid credentials",
     );
   });
+
+  it("parses auth identity from the access token payload", async () => {
+    const auth = await import("./auth");
+    const payload = {
+      sub: "user-123",
+      email: "admin@example.com",
+      user_metadata: { full_name: "Ana Admin" },
+      app_metadata: { roles: ["super_admin", "member"] },
+    };
+    const token = `header.${btoa(JSON.stringify(payload)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/u, "")}.signature`;
+
+    expect(auth.parseAuthIdentity(token)).toEqual({
+      userId: "user-123",
+      email: "admin@example.com",
+      name: "Ana Admin",
+      roles: ["super_admin", "member"],
+    });
+  });
 });

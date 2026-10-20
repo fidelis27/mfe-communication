@@ -1,14 +1,26 @@
 import {
+  default as React,
   Component,
   ErrorInfo,
   FormEvent,
   lazy,
+  MouseEvent,
   ReactNode,
   Suspense,
   useEffect,
+  useRef,
   useState,
 } from "react";
-import { initializeAuth, login, logout, subscribeToAuthState } from "@mfe/shared";
+import {
+  type EventPayloadMap,
+  initializeAuth,
+  login,
+  logout,
+  subscribeToAuthState,
+  useDispatch,
+  useDomainEvents,
+  useListen,
+} from "@mfe/shared";
 import "./App.css";
 
 const StudentApp = lazy(() => import("mfe_student/App"));
@@ -25,6 +37,12 @@ const modules = [
   { id: "admin", path: "/admin", label: "Admin", detail: "Pessoas e grupos" },
 ];
 
+const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+
+type HostDomainEvent = {
+  [K in keyof EventPayloadMap]: { type: K; payload: EventPayloadMap[K]; eventId: string };
+}[keyof EventPayloadMap];
+
 function moduleFromPath(pathname: string) {
   return modules.find((module) => module.path === pathname)?.id ?? "preparing";
 }
@@ -35,6 +53,22 @@ function moduleLabel(moduleId: string) {
 
 type RemoteBoundaryProps = { moduleName: string; children: ReactNode };
 type RemoteBoundaryState = { hasError: boolean };
+
+function RemoteSkeleton({ label }: { label: string }) {
+  return (
+    <section className="remote-state remote-skeleton" aria-live="polite" aria-busy="true">
+      <p className="eyebrow">Carregando módulo</p>
+      <div className="skeleton-line skeleton-title" />
+      <div className="skeleton-line skeleton-copy" />
+      <div className="skeleton-line skeleton-copy short" />
+      <div className="skeleton-card-grid" aria-hidden="true">
+        <div className="skeleton-card" />
+        <div className="skeleton-card" />
+      </div>
+      <span className="sr-only">{label}</span>
+    </section>
+  );
+}
 
 class RemoteBoundary extends Component<RemoteBoundaryProps, RemoteBoundaryState> {
   state: RemoteBoundaryState = { hasError: false };
@@ -75,12 +109,57 @@ export default function App() {
   const [activeModule, setActiveModule] = useState(() =>
     moduleFromPath(typeof window === "undefined" ? "/estudantes" : window.location.pathname),
   );
+  const [navigationOpen, setNavigationOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [authReady, setAuthReady] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [signingIn, setSigningIn] = useState(false);
+  const dispatchDomain = useDispatch("domain");
+  const dispatchHost = useDispatch("host");
+  const { events: domainEvents, connection: domainConnection } = useDomainEvents(apiUrl);
+  const publishedEventIds = useRef(new Set<string>());
+  const mainRef = useRef<HTMLElement>(null);
+  const navigationToggleRef = useRef<HTMLButtonElement>(null);
+  const firstNavigationLinkRef = useRef<HTMLAnchorElement>(null);
+  const accountToggleRef = useRef<HTMLButtonElement>(null);
+  const accountWasOpen = useRef(false);
+  const navigationWasOpen = useRef(false);
+
+  useEffect(() => {
+    (globalThis as typeof globalThis & { __mfeHostReady?: boolean }).__mfeHostReady = true;
+    dispatchHost("host:ready", { ready: true });
+    return () => {
+      Reflect.deleteProperty(globalThis, "__mfeHostReady");
+      dispatchHost("host:ready", { ready: false });
+    };
+  }, [dispatchHost]);
+
+  useEffect(() => {
+    dispatchDomain("domain:connection", domainConnection);
+  }, [dispatchDomain, domainConnection]);
+
+  useEffect(() => {
+    for (const event of domainEvents as HostDomainEvent[]) {
+      if (publishedEventIds.current.has(event.eventId)) continue;
+      publishedEventIds.current.add(event.eventId);
+      dispatchDomain(event.type, event.payload);
+    }
+  }, [dispatchDomain, domainEvents]);
+
+  useListen("mfe_student", "evt:navigate", ({ path }) => {
+    if (path) navigateToPath(path);
+  });
+
+  useListen("mfe_activity", "evt:navigate", ({ path }) => {
+    if (path) navigateToPath(path);
+  });
+
+  useListen("mfe_dashboard", "evt:navigate", ({ path }) => {
+    if (path) navigateToPath(path);
+  });
 
   useEffect(() => {
     if (!supabaseUrl || !supabaseAnonKey) {
@@ -109,16 +188,105 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const handlePopState = () => setActiveModule(moduleFromPath(window.location.pathname));
+    const handlePopState = () => {
+      setActiveModule(moduleFromPath(window.location.pathname));
+      navigationWasOpen.current = false;
+      accountWasOpen.current = false;
+      setNavigationOpen(false);
+      setAccountMenuOpen(false);
+    };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
-  function navigate(moduleId: string) {
-    const module = modules.find((item) => item.id === moduleId);
-    if (!module) return;
-    window.history.pushState({}, "", module.path);
-    setActiveModule(module.id);
+  useEffect(() => {
+    const main = mainRef.current;
+    if (!main) return;
+
+    main.scrollTop = 0;
+
+    const focusHeading = () => {
+      const heading = main.querySelector("h1");
+      if (!heading) return false;
+
+      heading.setAttribute("tabindex", "-1");
+      heading.focus({ preventScroll: true });
+      return true;
+    };
+
+    if (focusHeading()) return;
+
+    const observer = new MutationObserver(() => {
+      if (focusHeading()) observer.disconnect();
+    });
+    observer.observe(main, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [activeModule, authenticated]);
+
+  useEffect(() => {
+    const target = navigationOpen
+      ? firstNavigationLinkRef.current
+      : navigationWasOpen.current
+        ? navigationToggleRef.current
+        : null;
+    navigationWasOpen.current = navigationOpen;
+    if (!target) return;
+
+    const focusTimer = window.setTimeout(() => target.focus(), 0);
+    return () => window.clearTimeout(focusTimer);
+  }, [navigationOpen]);
+
+  useEffect(() => {
+    if (!accountMenuOpen && accountWasOpen.current) {
+      accountToggleRef.current?.focus();
+    }
+    accountWasOpen.current = accountMenuOpen;
+  }, [accountMenuOpen]);
+
+  useEffect(() => {
+    if (!navigationOpen && !accountMenuOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setNavigationOpen(false);
+      setAccountMenuOpen(false);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [accountMenuOpen, navigationOpen]);
+
+  function navigateToPath(path: string) {
+    window.history.pushState({}, "", path);
+    setActiveModule(moduleFromPath(path));
+    navigationWasOpen.current = false;
+    accountWasOpen.current = false;
+    setNavigationOpen(false);
+    setAccountMenuOpen(false);
+  }
+
+  function handleNavigationClick(
+    event: MouseEvent<HTMLAnchorElement>,
+    moduleId: string,
+    path: string,
+  ) {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    if (window.location.pathname === path && activeModule === moduleId) {
+      setNavigationOpen(false);
+      return;
+    }
+    navigateToPath(path);
   }
 
   async function signIn(event: FormEvent<HTMLFormElement>) {
@@ -137,12 +305,57 @@ export default function App() {
   }
 
   async function signOut() {
+    accountWasOpen.current = false;
+    setAccountMenuOpen(false);
     setAuthError("");
     try {
       await logout();
       setAuthenticated(false);
     } catch (error) {
       setAuthError(error instanceof Error ? error.message : "Não foi possível encerrar a sessão.");
+    }
+  }
+
+  function renderActiveModule() {
+    switch (activeModule) {
+      case "student":
+        return (
+          <Suspense fallback={<RemoteSkeleton label="Carregando módulo de estudantes" />}>
+            <StudentApp />
+          </Suspense>
+        );
+      case "activity":
+        return (
+          <Suspense fallback={<RemoteSkeleton label="Carregando atividade" />}>
+            <ActivityApp />
+          </Suspense>
+        );
+      case "institution":
+        return (
+          <Suspense fallback={<RemoteSkeleton label="Carregando módulo de instituições" />}>
+            <InstitutionApp />
+          </Suspense>
+        );
+      case "dashboard":
+        return (
+          <Suspense fallback={<RemoteSkeleton label="Carregando dashboard" />}>
+            <DashboardApp />
+          </Suspense>
+        );
+      case "admin":
+        return (
+          <Suspense fallback={<RemoteSkeleton label="Carregando administração" />}>
+            <AdminApp />
+          </Suspense>
+        );
+      default:
+        return (
+          <section className="remote-state">
+            <p className="eyebrow">Módulo em preparação</p>
+            <h1>{moduleLabel(activeModule)}</h1>
+            <p>A estrutura está pronta para receber o próximo remote.</p>
+          </section>
+        );
     }
   }
 
@@ -206,7 +419,19 @@ export default function App() {
       <a className="skip-link" href="#module-content">
         Ir para o conteúdo
       </a>
-      <aside className="host-sidebar">
+      {navigationOpen && (
+        <button
+          aria-label="Fechar navegação"
+          className="navigation-backdrop"
+          onClick={() => setNavigationOpen(false)}
+          type="button"
+        />
+      )}
+      <aside
+        aria-label="Navegação principal"
+        className={navigationOpen ? "host-sidebar navigation-open" : "host-sidebar"}
+        id="module-navigation"
+      >
         <div className="brand">
           <span>SE</span>
           <div>
@@ -216,78 +441,89 @@ export default function App() {
           </div>
         </div>
         <p className="sidebar-label">Módulos</p>
-        <nav aria-label="Módulos da secretaria">
-          {modules.map((module) => (
-            <button
-              className={activeModule === module.id ? "nav-item active" : "nav-item"}
-              key={module.id}
-              onClick={() => navigate(module.id)}
-              aria-current={activeModule === module.id ? "page" : undefined}
-            >
-              <span className="nav-mark">
-                {module.id === "student"
-                  ? "01"
-                  : module.id === "institution"
-                    ? "02"
-                    : module.id === "activity"
-                      ? "03"
-                      : module.id === "dashboard"
-                        ? "04"
-                        : "05"}
-              </span>
-              <span>
-                <b>{module.label}</b>
-                <small>{module.detail}</small>
-              </span>
-            </button>
-          ))}
-        </nav>
-        <div className="sidebar-footer">
-          <span className="online-dot" /> Ambiente local
-          <br />
-          <small>API + WebSocket</small>
+        <div className="host-nav-wrap">
+          <nav aria-label="Módulos da secretaria">
+            {modules.map((module, index) => (
+              <a
+                className={activeModule === module.id ? "nav-item active" : "nav-item"}
+                key={module.id}
+                href={module.path}
+                onClick={(event) => handleNavigationClick(event, module.id, module.path)}
+                aria-current={activeModule === module.id ? "page" : undefined}
+                ref={index === 0 ? firstNavigationLinkRef : undefined}
+              >
+                <span className="nav-copy">
+                  <b>{module.label}</b>
+                  <small>{module.detail}</small>
+                </span>
+              </a>
+            ))}
+          </nav>
         </div>
+        {import.meta.env.DEV && (
+          <div className="sidebar-footer">
+            <span className="online-dot" /> Ambiente local
+            <br />
+            <small>API + WebSocket</small>
+          </div>
+        )}
       </aside>
-      <main className="host-main" id="module-content" tabIndex={-1}>
+      <main className="host-main" id="module-content" ref={mainRef} tabIndex={-1}>
         <header className="topbar">
-          <span>Workspace / {moduleLabel(activeModule)}</span>
-          {authError && <span role="alert">{authError}</span>}
-          <button className="user-chip" type="button" onClick={() => void signOut()}>
-            Sair
-          </button>
+          <div className="topbar-start">
+            <button
+              aria-controls="module-navigation"
+              aria-expanded={navigationOpen}
+              className="mobile-nav-toggle"
+              onClick={() => setNavigationOpen((open) => !open)}
+              ref={navigationToggleRef}
+              type="button"
+            >
+              {navigationOpen ? "Fechar menu" : "Menu"}
+            </button>
+            <nav aria-label="Breadcrumb" className="breadcrumb">
+              <ol>
+                <li>
+                  <a
+                    href="/dashboard"
+                    onClick={(event) => handleNavigationClick(event, "dashboard", "/dashboard")}
+                  >
+                    Início
+                  </a>
+                </li>
+                <li aria-current="page">{moduleLabel(activeModule)}</li>
+              </ol>
+            </nav>
+          </div>
+          <div className="topbar-end">
+            {authError && <span role="alert">{authError}</span>}
+            <div className="account-menu">
+              <button
+                aria-controls="account-actions"
+                aria-expanded={accountMenuOpen}
+                className="user-chip"
+                onClick={() => setAccountMenuOpen((open) => !open)}
+                ref={accountToggleRef}
+                type="button"
+              >
+                Conta
+              </button>
+              <div
+                aria-label="Ações da conta"
+                className="account-popup"
+                hidden={!accountMenuOpen}
+                id="account-actions"
+                role="group"
+              >
+                <button onClick={() => void signOut()} type="button">
+                  Sair
+                </button>
+              </div>
+            </div>
+          </div>
         </header>
         <RemoteBoundary key={activeModule} moduleName={moduleLabel(activeModule)}>
-          {activeModule === "student" ? (
-            <Suspense
-              fallback={<div className="remote-state">Carregando módulo de estudantes...</div>}
-            >
-              <StudentApp />
-            </Suspense>
-          ) : activeModule === "activity" ? (
-            <Suspense fallback={<div className="remote-state">Carregando atividade...</div>}>
-              <ActivityApp />
-            </Suspense>
-          ) : activeModule === "institution" ? (
-            <Suspense
-              fallback={<div className="remote-state">Carregando módulo de instituições...</div>}
-            >
-              <InstitutionApp />
-            </Suspense>
-          ) : activeModule === "dashboard" ? (
-            <Suspense fallback={<div className="remote-state">Carregando dashboard...</div>}>
-              <DashboardApp />
-            </Suspense>
-          ) : activeModule === "admin" ? (
-            <Suspense fallback={<div className="remote-state">Carregando administração...</div>}>
-              <AdminApp />
-            </Suspense>
-          ) : (
-            <section className="remote-state">
-              <p className="eyebrow">Módulo em preparação</p>
-              <h1>{moduleLabel(activeModule)}</h1>
-              <p>A estrutura está pronta para receber o próximo remote.</p>
-            </section>
-          )}
+          {renderActiveModule()}
         </RemoteBoundary>
       </main>
     </div>
