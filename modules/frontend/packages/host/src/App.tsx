@@ -13,6 +13,7 @@ import {
 } from "react";
 import {
   type EventPayloadMap,
+  captureHostError,
   initializeAuth,
   login,
   logout,
@@ -79,6 +80,10 @@ class RemoteBoundary extends Component<RemoteBoundaryProps, RemoteBoundaryState>
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error("Remote failed to load", { error, componentStack: info.componentStack });
+    captureHostError(error, {
+      moduleName: this.props.moduleName,
+      componentStack: info.componentStack ?? undefined,
+    });
   }
 
   retry = () => {
