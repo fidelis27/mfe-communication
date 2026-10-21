@@ -8,7 +8,7 @@ export default defineConfig({
     federation({
       name: "mfe_admin",
       filename: "remoteEntry.js",
-      exposes: { "./App": "./src/App.tsx" },
+      exposes: { "./App": "./src/Root.tsx" },
       shared: {
         react: { singleton: true },
         "react-dom": { singleton: true },
