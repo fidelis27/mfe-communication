@@ -94,10 +94,10 @@ flowchart LR
     api -- "domain events" --> hostws
 ```
 
-| Layer | Scope | Channels | Use |
-| --- | --- | --- | --- |
-| Backend domain events over WebSocket | Server to every connected client | event `type` (for example `STUDENT_CREATED`) | State changes that other screens must react to |
-| In-page bus | Same page only | `cmd:*` host to MFE, `evt:*` MFE to host, `domain:*` re-dispatched backend events | Navigation, modal close, connection status |
+| Layer                                | Scope                            | Channels                                                                          | Use                                            |
+| ------------------------------------ | -------------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------- |
+| Backend domain events over WebSocket | Server to every connected client | event `type` (for example `STUDENT_CREATED`)                                      | State changes that other screens must react to |
+| In-page bus                          | Same page only                   | `cmd:*` host to MFE, `evt:*` MFE to host, `domain:*` re-dispatched backend events | Navigation, modal close, connection status     |
 
 Bus delivery rules: no listener means a per-channel queue (100 items, TTL 10 s by default); once a listener exists, delivery is fan-out. Details in [`event-bus.md`](event-bus.md).
 
@@ -105,7 +105,7 @@ Bus delivery rules: no listener means a per-channel queue (100 items, TTL 10 s b
 
 ## 4. Main flow: create a student
 
-The flow the architecture exists to prove: *write, react*. The backend is shown as one box; its internals are in the backend docs.
+The flow the architecture exists to prove: _write, react_. The backend is shown as one box; its internals are in the backend docs.
 
 ```mermaid
 sequenceDiagram
@@ -147,19 +147,19 @@ The student list depends on the event, not on the `201`. The backend publishes t
 
 What `@mfe/shared` declares, compared with what the backend emits today.
 
-| Event type | Declared in `@mfe/shared` | Emitted by backend | Consumed by |
-| --- | --- | --- | --- |
-| `STUDENT_CREATED` | yes | yes | Activity, Dashboard |
-| `STUDENT_TRANSFERRED` | yes | yes | Activity, Dashboard |
-| `ENROLLMENT_SUSPENDED` | yes | yes | Activity, Dashboard |
-| `ENROLLMENT_REOPENED` | yes | yes | Activity, Dashboard |
-| `INSTITUTION_CREATED` | yes | **no** | Dashboard |
-| `INSTITUTION_UPDATED` | yes | **no** | Dashboard |
-| `INSTITUTION_INACTIVATED` | yes | **no** | Dashboard |
-| `STUDENT_UPDATED` | yes | **no** | Dashboard |
-| `ENROLLMENT_CREATED` | no | yes | nobody |
-| `USER_UPDATED` | no | yes | nobody |
-| `GROUP_MEMBERSHIP_UPDATED`, `GROUP_MEMBERSHIP_REMOVED` | no | yes | nobody |
+| Event type                                             | Declared in `@mfe/shared` | Emitted by backend | Consumed by         |
+| ------------------------------------------------------ | ------------------------- | ------------------ | ------------------- |
+| `STUDENT_CREATED`                                      | yes                       | yes                | Activity, Dashboard |
+| `STUDENT_TRANSFERRED`                                  | yes                       | yes                | Activity, Dashboard |
+| `ENROLLMENT_SUSPENDED`                                 | yes                       | yes                | Activity, Dashboard |
+| `ENROLLMENT_REOPENED`                                  | yes                       | yes                | Activity, Dashboard |
+| `INSTITUTION_CREATED`                                  | yes                       | **no**             | Dashboard           |
+| `INSTITUTION_UPDATED`                                  | yes                       | **no**             | Dashboard           |
+| `INSTITUTION_INACTIVATED`                              | yes                       | **no**             | Dashboard           |
+| `STUDENT_UPDATED`                                      | yes                       | **no**             | Dashboard           |
+| `ENROLLMENT_CREATED`                                   | no                        | yes                | nobody              |
+| `USER_UPDATED`                                         | no                        | yes                | nobody              |
+| `GROUP_MEMBERSHIP_UPDATED`, `GROUP_MEMBERSHIP_REMOVED` | no                        | yes                | nobody              |
 
 Payload mismatch: the contract types `ENROLLMENT_SUSPENDED` and `ENROLLMENT_REOPENED` with an `institutionId`, but the backend payloads carry only `studentId`, `enrollmentId` (and `reason`, `date` for suspension). The backend side of this contract is in its [`openapi.yaml`](https://github.com/fidelis27/secretaria-backend/blob/main/docs/openapi.yaml).
 
