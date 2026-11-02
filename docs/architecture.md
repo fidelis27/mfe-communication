@@ -1,14 +1,12 @@
 # Architecture
 
-Diagrams for the School Secretariat platform. Frontend lives in this repository (`mfe-communication`); the API lives in [`secretaria-backend`](https://github.com/fidelis27/secretaria-backend). All diagrams are Mermaid and render on GitHub.
+Diagrams for the micro-frontend platform in this repository. The Go API, its data model and its API contract are documented in [`secretaria-backend`](https://github.com/fidelis27/secretaria-backend/blob/main/docs/architecture.md); this page treats it as an external system.
 
-Contents: [1. System context](#1-system-context) · [2. Runtime composition](#2-runtime-composition-in-the-browser) · [3. Communication layers](#3-communication-layers) · [4. Main flow](#4-main-flow-create-a-student) · [5. Backend layers](#5-backend-layers-hexagonal) · [6. Deployment](#6-deployment-topology) · [7. Data model](#7-data-model) · [8. Known gaps](#8-known-gaps-reflected-in-the-diagrams)
+Contents: [1. System context](#1-system-context) · [2. Runtime composition](#2-runtime-composition-in-the-browser) · [3. Communication layers](#3-communication-layers) · [4. Main flow](#4-main-flow-create-a-student) · [5. Event contract](#5-event-contract-frontend-vs-backend) · [6. Deployment](#6-deployment-topology) · [7. Known gaps](#7-known-gaps)
 
 ---
 
 ## 1. System context
-
-Who talks to whom, at the highest level.
 
 ```mermaid
 flowchart LR
@@ -20,9 +18,8 @@ flowchart LR
         host -- "loads at runtime<br/>(Module Federation)" --> remotes
     end
 
-    api["secretaria-backend<br/>Go API + WebSocket"]
-    db[("MariaDB")]
-    auth["Supabase Auth<br/>OIDC / JWKS"]
+    api["secretaria-backend<br/>(external, own repository)"]
+    auth["Supabase Auth"]
     sentry["Sentry<br/>error tracking"]
 
     user --> host
@@ -30,8 +27,6 @@ flowchart LR
     auth -- "access token (JWT)" --> host
     remotes -- "HTTPS + Bearer token" --> api
     host -- "WSS /events<br/>token in subprotocol" --> api
-    api -- "verifies signature<br/>via JWKS" --> auth
-    api --> db
     host -. "host errors" .-> sentry
 ```
 
@@ -81,11 +76,7 @@ Two layers, each with one job.
 
 ```mermaid
 flowchart LR
-    subgraph backend["Backend"]
-        svc["Event service"]
-        gobus["In-process Bus"]
-        svc --> gobus
-    end
+    api["Backend<br/>WSS /events"]
 
     subgraph page["Browser page"]
         hostws["Host WebSocket"]
@@ -100,7 +91,7 @@ flowchart LR
         pagebus -- "cmd:navigate / evt:navigate" --> hostws
     end
 
-    gobus -- "WSS: domain events<br/>backend to clients" --> hostws
+    api -- "domain events" --> hostws
 ```
 
 | Layer | Scope | Channels | Use |
@@ -114,89 +105,63 @@ Bus delivery rules: no listener means a per-channel queue (100 items, TTL 10 s b
 
 ## 4. Main flow: create a student
 
-The flow that the whole architecture exists to prove: *write, persist, publish, react*.
+The flow the architecture exists to prove: *write, react*. The backend is shown as one box; its internals are in the backend docs.
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor U as Agent
     participant S as mfe-student
-    participant API as Backend (Go)
-    participant POL as Authorization policy
-    participant DB as MariaDB
-    participant BUS as Backend bus
-    participant H as Host WebSocket
+    participant API as Backend
+    participant H as Host
+    participant BUS as In-page bus
     participant A as mfe-activity
     participant D as mfe-dashboard
 
     U->>S: fill form, submit
-    S->>API: POST /students (Bearer JWT, x-correlation-id)
-    API->>API: verify JWT, map sub to active local user
-    API->>POL: CanEditInstitution(user, institutionId)
-    alt not allowed
-        POL-->>API: false
-        API-->>S: 403 forbidden
-    else allowed
-        API->>DB: INSERT student
+    S->>API: POST /students (Bearer JWT)
+    alt rejected (401, 403, 4xx)
+        API-->>S: error
+        S->>S: show error message
+    else created
         API-->>S: 201 Created
-        Note over API,DB: Event is saved AFTER the write, in a separate operation (ADR 0001)
-        API->>DB: INSERT audit_events (STUDENT_CREATED)
-        API->>BUS: Publish(event)
-        BUS-->>H: event for allowed institutions only
-        H->>A: dispatch domain:STUDENT_CREATED
-        H->>D: dispatch domain:STUDENT_CREATED
+        S->>S: show "Estudante cadastrado."
+        Note over API,S: The new row is NOT added from the 201 response
+        API-->>S: STUDENT_CREATED on mfe-student's own WebSocket
+        S->>S: insert student into its list
+        API-->>H: STUDENT_CREATED on the host WebSocket
+        H->>BUS: dispatch domain:STUDENT_CREATED
+        BUS-->>A: payload
         A->>A: append to feed
-        D->>API: GET refresh KPIs
+        BUS-->>D: payload
+        D->>API: GET /institutions, /students, /enrollments
+        D->>D: update KPIs
     end
 ```
 
-Failure behavior: if saving or publishing the event fails, the error is logged and the client still gets `201`. The write is not rolled back and the event can be lost. This is the documented trade-off until the transactional outbox exists.
+The student list depends on the event, not on the `201`. The backend publishes the event on a best-effort basis, so if it is lost the new student only shows up after the list is reloaded (on mount or with the reload button). Activity loads `/events/history` on mount for the same reason.
 
 ---
 
-## 5. Backend layers (hexagonal)
+## 5. Event contract: frontend vs backend
 
-Dependencies point inward. The domain knows nothing about HTTP or SQL.
+What `@mfe/shared` declares, compared with what the backend emits today.
 
-```mermaid
-flowchart TB
-    subgraph cmd["cmd/ (composition roots)"]
-        server["server"]
-        migrate["migrate"]
-        seed["seed (non-production only)"]
-    end
+| Event type | Declared in `@mfe/shared` | Emitted by backend | Consumed by |
+| --- | --- | --- | --- |
+| `STUDENT_CREATED` | yes | yes | Activity, Dashboard |
+| `STUDENT_TRANSFERRED` | yes | yes | Activity, Dashboard |
+| `ENROLLMENT_SUSPENDED` | yes | yes | Activity, Dashboard |
+| `ENROLLMENT_REOPENED` | yes | yes | Activity, Dashboard |
+| `INSTITUTION_CREATED` | yes | **no** | Dashboard |
+| `INSTITUTION_UPDATED` | yes | **no** | Dashboard |
+| `INSTITUTION_INACTIVATED` | yes | **no** | Dashboard |
+| `STUDENT_UPDATED` | yes | **no** | Dashboard |
+| `ENROLLMENT_CREATED` | no | yes | nobody |
+| `USER_UPDATED` | no | yes | nobody |
+| `GROUP_MEMBERSHIP_UPDATED`, `GROUP_MEMBERSHIP_REMOVED` | no | yes | nobody |
 
-    subgraph adapters["internal/adapters"]
-        http["httpserver<br/>handlers, identity, rate limit,<br/>security headers, WebSocket"]
-        maria["mariadb<br/>repositories"]
-        oidc["oidc<br/>JWT verifier"]
-    end
-
-    subgraph app["internal/application"]
-        usecases["use cases<br/>institution, student, enrollment,<br/>group, user, bootstrap, health"]
-        evsvc["event service + in-process bus"]
-    end
-
-    subgraph domain["internal/domain"]
-        entities["entities and rules"]
-        policy["authorization policy"]
-        ports["repository interfaces (ports)"]
-    end
-
-    server --> http
-    server --> maria
-    server --> oidc
-    http --> usecases
-    http --> policy
-    http --> evsvc
-    usecases --> entities
-    usecases --> ports
-    evsvc --> ports
-    policy --> ports
-    maria -. "implements" .-> ports
-```
-
-Request pipeline in front of every handler (outermost first): security headers, CORS, identity (JWT to local user), rate limit, then the mux. Observability wraps all of it.
+Payload mismatch: the contract types `ENROLLMENT_SUSPENDED` and `ENROLLMENT_REOPENED` with an `institutionId`, but the backend payloads carry only `studentId`, `enrollmentId` (and `reason`, `date` for suspension). The backend side of this contract is in its [`openapi.yaml`](https://github.com/fidelis27/secretaria-backend/blob/main/docs/openapi.yaml).
 
 ---
 
@@ -215,54 +180,30 @@ flowchart LR
         v5["mfe-dashboard"]
     end
 
-    subgraph render["Render"]
-        rb["secretaria-backend<br/>GET /health"]
-    end
-
-    subgraph ext["External services"]
-        maria[("MariaDB<br/>TLS")]
-        supa["Supabase Auth"]
-    end
+    api["secretaria-backend<br/>(external)"]
+    supa["Supabase Auth"]
 
     gh --> vercel
-    gh --> render
     vh -- "VITE_MFE_*_URL" --> v1
     vh -- "VITE_MFE_*_URL" --> v2
     vh -- "VITE_MFE_*_URL" --> v3
     vh -- "VITE_MFE_*_URL" --> v4
     vh -- "VITE_MFE_*_URL" --> v5
-    vh -- "VITE_API_URL" --> rb
-    rb --> maria
-    rb --> supa
-    vh --> supa
+    vh -- "VITE_API_URL" --> api
+    vh -- "VITE_SUPABASE_URL" --> supa
 ```
 
 Each package builds and deploys on its own. The host only knows remote origins through build-time variables.
 
 ---
 
-## 7. Data model
+## 7. Known gaps
 
-```mermaid
-erDiagram
-    INSTITUTION ||--o{ CAMPUS : has
-    INSTITUTION ||--o{ COURSE : offers
-    STUDENT ||--o{ ENROLLMENT : has
-    INSTITUTION ||--o{ ENROLLMENT : receives
-    USER ||--o{ GROUP_MEMBER : joins
-    GROUP ||--o{ GROUP_MEMBER : has
-    INSTITUTION ||--o{ GROUP : scopes
-    INSTITUTION ||--o{ AUDIT_EVENT : scopes
-    USER ||--o{ AUDIT_EVENT : causes
-```
-
-A student has one civil record and many enrollments over time; only one can be `active`. A transfer closes the origin enrollment and opens the destination in a single database transaction. The full column-level model is in [`diagramas.md`](diagramas.md).
-
----
-
-## 8. Known gaps reflected in the diagrams
-
-- **Event delivery is best effort** (diagram 4): the event is saved after the write, not in the same transaction. Fix: transactional outbox (backend ADR 0001).
-- **Authorization is applied per handler** (diagram 5), not by a declarative route table (backend ADR 0003).
-- **Single-instance bus:** the backend bus is in-process, so horizontal scaling needs a broker.
-- **`mfe-student` opens its own WebSocket** even when hosted, unlike `mfe-activity` and `mfe-dashboard`, which only do so when the host is not ready. This contradicts diagram 3; either fix the code or change the diagram.
+- **Event contract drift** (section 5): four declared types are never emitted, and four emitted types are not declared.
+- **`mfe-student` opens its own WebSocket** even when hosted, unlike `mfe-activity` and `mfe-dashboard`, which only do so when the host is not ready. It needs it because its list is updated from `STUDENT_CREATED`, not from the `201`. This contradicts section 3 and the "one socket" rule; the fix is to add the created student from the response (or listen on the in-page bus) and drop the extra socket.
+- **A lost event leaves the student list stale** (section 4), since the list is not refreshed after a successful create.
+- **The frontend never sends `x-correlation-id`.** The backend generates one per event, so the correlation between "operation started" and "operation succeeded" described in `context.md` (decision 17) is not implemented.
+- **Activity re-wraps live events** with a locally generated `eventId`, `source: "host-bus"` and `correlationId: "local-bus"`, so the real ids are lost and the same event loaded from history and received live can show twice.
+- **Dashboard refetches three endpoints on every event** and ignores the payload. Fine for a prototype; see `performance-improvement-plan.md` before changing it.
+- **Docs disagree on who can create students.** `context.md` says members may create students; the backend only allows admins of the institution (and superadmins).
+- **Event delivery is best effort end to end.** There is no replay on reconnect other than the history call Activity makes on mount.
