@@ -157,11 +157,19 @@ What `@mfe/shared` declares, compared with what the backend emits today.
 | `INSTITUTION_UPDATED` | yes | **no** | Dashboard |
 | `INSTITUTION_INACTIVATED` | yes | **no** | Dashboard |
 | `STUDENT_UPDATED` | yes | **no** | Dashboard |
-| `ENROLLMENT_CREATED` | no | yes | nobody |
-| `USER_UPDATED` | no | yes | nobody |
-| `GROUP_MEMBERSHIP_UPDATED`, `GROUP_MEMBERSHIP_REMOVED` | no | yes | nobody |
+| `ENROLLMENT_CREATED` | yes | yes | nobody |
+| `USER_UPDATED` | yes | yes | nobody |
+| `GROUP_MEMBERSHIP_UPDATED`, `GROUP_MEMBERSHIP_REMOVED` | yes | yes | nobody |
 
-Payload mismatch: the contract types `ENROLLMENT_SUSPENDED` and `ENROLLMENT_REOPENED` with an `institutionId`, but the backend payloads carry only `studentId`, `enrollmentId` (and `reason`, `date` for suspension). The backend side of this contract is in its [`openapi.yaml`](https://github.com/fidelis27/secretaria-backend/blob/main/docs/openapi.yaml).
+The frontend schemas match the backend envelope and payloads: institution
+scope is carried by the optional `institutionIds` envelope field, while
+`ENROLLMENT_SUSPENDED` and `ENROLLMENT_REOPENED` carry only their student and
+enrollment identifiers (plus `reason` and `date` for suspension). The backend
+emits these payloads in its
+[enrollment handlers](https://github.com/fidelis27/secretaria-backend/blob/main/internal/adapters/httpserver/server.go),
+[user handler](https://github.com/fidelis27/secretaria-backend/blob/main/internal/adapters/httpserver/user_handler.go)
+and
+[group handler](https://github.com/fidelis27/secretaria-backend/blob/main/internal/adapters/httpserver/group_handler.go).
 
 ---
 

@@ -1,20 +1,6 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { authenticatedFetch, useDomainEvents } from "@mfe/shared";
+import { authenticatedFetch, type Institution, type Student, useDomainEvents } from "@mfe/shared";
 import "./App.css";
-
-type Student = {
-  id: string;
-  name: string;
-  institutionId: string;
-  status: string;
-};
-
-type Institution = {
-  id: string;
-  name: string;
-  cnpj?: string | null;
-  status?: string;
-};
 
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
 

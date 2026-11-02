@@ -20,8 +20,8 @@ Interface MFE
 - **MFE:** tela, estado visual e interacao do seu bounded context.
 - **Backend Go:** validacao de JWT Supabase/OIDC, autorizacao, casos de uso,
   persistencia autoritativa em MariaDB/MySQL e publicacao de eventos.
-- **Shared:** tipos e esquemas de contratos; nao deve conter regra de negocio
-  de outro dominio.
+- **Shared:** schemas Zod e tipos inferidos dos contratos, validados nas
+  fronteiras de entrada; nao deve conter regra de negocio de outro dominio.
 - **Activity/Dashboard:** consumidores e projecoes; nao alteram a fonte
   autoritativa de Instituicao ou Estudante.
 
