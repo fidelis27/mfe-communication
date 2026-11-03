@@ -28,6 +28,7 @@ export default defineConfig({
         react: { singleton: true },
         "react-dom": { singleton: true },
         "@mfe/shared": { singleton: true },
+        "@tanstack/react-query": { singleton: true },
       },
     }),
     ...sentryPlugins,
