@@ -2,6 +2,7 @@ import React from "react";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { StrictMode } from "react";
 import { vi } from "vitest";
+import { REMOTE_LOAD_EVENT, type RemoteLoadEvent } from "./remoteLoadingMetrics";
 
 const authMocks = vi.hoisted(() => ({
   initializeAuth: vi.fn(),
@@ -51,6 +52,33 @@ describe("Host navigation", () => {
       "/instituicoes",
     );
     expect(screen.getByRole("link", { name: /admin/i })).toHaveAttribute("aria-current", "page");
+  });
+
+  it.each([
+    ["student", "/estudantes"],
+    ["institution", "/instituicoes"],
+    ["activity", "/atividade"],
+    ["dashboard", "/dashboard"],
+    ["admin", "/admin"],
+  ])("records load timing for the %s remote", async (remoteName, path) => {
+    const events: RemoteLoadEvent[] = [];
+    const listener = (event: Event) => {
+      events.push((event as CustomEvent<RemoteLoadEvent>).detail);
+    };
+    window.addEventListener(REMOTE_LOAD_EVENT, listener);
+
+    try {
+      await renderHost({ authenticated: true, path });
+
+      await waitFor(() =>
+        expect(
+          events.some((event) => event.remoteName === remoteName && event.phase === "success"),
+        ).toBe(true),
+      );
+      expect(events[0]).toMatchObject({ remoteName, phase: "start" });
+    } finally {
+      window.removeEventListener(REMOTE_LOAD_EVENT, listener);
+    }
   });
 
   it("updates history with client-side navigation on plain clicks", async () => {

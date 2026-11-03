@@ -22,13 +22,14 @@ import {
   useDomainEvents,
   useListen,
 } from "@mfe/shared";
+import { loadRemote } from "./remoteLoadingMetrics";
 import "./App.css";
 
-const StudentApp = lazy(() => import("mfe_student/App"));
-const ActivityApp = lazy(() => import("mfe_activity/App"));
-const InstitutionApp = lazy(() => import("mfe_institution/App"));
-const DashboardApp = lazy(() => import("mfe_dashboard/App"));
-const AdminApp = lazy(() => import("mfe_admin/App"));
+const StudentApp = lazy(() => loadRemote("student", () => import("mfe_student/App")));
+const ActivityApp = lazy(() => loadRemote("activity", () => import("mfe_activity/App")));
+const InstitutionApp = lazy(() => loadRemote("institution", () => import("mfe_institution/App")));
+const DashboardApp = lazy(() => loadRemote("dashboard", () => import("mfe_dashboard/App")));
+const AdminApp = lazy(() => loadRemote("admin", () => import("mfe_admin/App")));
 
 const modules = [
   { id: "student", path: "/estudantes", label: "Estudantes", detail: "Cadastros e vínculos" },
