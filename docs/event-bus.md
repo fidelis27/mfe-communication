@@ -13,7 +13,8 @@ Exemplos:
 - `cmd:navigate`
 - `evt:navigate`
 - `domain:connection`
-- `INSTITUTION_CREATED` (publicado no módulo `domain`)
+- `domain:event` (envelope completo com `eventId`)
+- `STUDENT_CREATED` (payload tipado publicado no módulo `domain`)
 
 ## API
 
@@ -31,6 +32,10 @@ emit("evt:navigate", { path: "/instituicoes" });
 useListen("domain", "STUDENT_CREATED", (payload) => {
   console.log(payload);
 });
+
+useListen("domain", "domain:event", (event) => {
+  console.log(event.eventId, event.type, event.payload);
+});
 ```
 
 ## Fila e TTL
@@ -43,7 +48,12 @@ useListen("domain", "STUDENT_CREATED", (payload) => {
 
 ## Fluxo do host
 
-O host abre a conexão WebSocket única e reenvia a cada `DomainEvent` para o bus usando `dispatch("domain", event.type, event.payload)`. Também publica `dispatch("domain", "domain:connection", status)` para comunicar status de conexão.
+O host abre a conexão WebSocket única. Para cada evento validado, publica o
+envelope completo com `dispatch("domain", "domain:event", event)` e preserva o
+canal tipado existente com `dispatch("domain", event.type, event.payload)`.
+Também publica `dispatch("domain", "domain:connection", status)` para comunicar
+status de conexão. O envelope completo permite que consumidores dedupliquem
+eventos por `eventId` ao atualizar ou invalidar o cache local.
 
 ## Contrato de eventos de domínio
 
@@ -60,4 +70,7 @@ usuário e associação de grupo emitidos pelo backend.
 
 ## Fallback standalone
 
-Se o host não estiver pronto, cada MFE pode abrir sua própria conexão de fallback usando `useDomainEvents` apenas para o ambiente local isolado.
+Se o host não estiver pronto, os MFEs usam `useDomainEvents` para abrir uma
+conexão autenticada de fallback. O hook também consome os envelopes e o status
+de conexão publicados pelo host; a deduplicação por `eventId` vale para os dois
+fluxos.

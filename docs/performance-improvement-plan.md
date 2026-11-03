@@ -54,11 +54,13 @@ depois e sem agrupar melhorias de naturezas diferentes.
 
 ### PERF-004 - Cancelar requests dos MFEs
 
-- Branch: `perf/mfe-request-cancellation`
-- Escopo: Institution, Activity, Dashboard e Admin.
-- Problema: requests continuam apos unmount ou podem terminar fora de ordem.
-- Resultado esperado: `AbortController` e tratamento consistente de cancelamento.
-- Validacao: desmontagem durante request, navegacao rapida e testes de abort.
+- Status: concluido.
+- Escopo implementado: Student, Institution, Activity, Dashboard e Admin.
+- Os hooks de consulta propagam o `AbortSignal` do TanStack Query pelas APIs
+  das features ate o helper HTTP compartilhado.
+- O cache do TanStack Query cancela requests em voo quando um remote e
+  desmontado ou substituido; cada remote possui um `QueryClient` isolado.
+- Evidencia: testes de desmontagem e cancelamento em `docs/performance-tasks/PERF-004-mfe-request-cancellation.md`.
 
 ### PERF-005 - Medir e paginar listas
 

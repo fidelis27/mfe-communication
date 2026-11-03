@@ -6,7 +6,7 @@ The frontend is a monorepo of independently built Vite applications. The Go back
 
 - `host`: application shell, authentication, navigation, remote loading and the primary domain-event WebSocket.
 - `mfe-institution`: institution listing and registration.
-- `mfe-student`: student listing and registration, with updates from `STUDENT_CREATED`.
+- `mfe-student`: student listing and registration, with query-cache updates from create responses and domain events.
 - `mfe-admin`: people, groups and group-membership management.
 - `mfe-activity`: recent domain-event history and live activity feed.
 - `mfe-dashboard`: institution, student and enrollment indicators.
@@ -25,7 +25,11 @@ modules/frontend/packages/
   shared/
 ```
 
-Each MFE owns its UI and feature API modules under `src/features/<feature>/api/`. The host loads remote applications at runtime through Module Federation. React, React DOM and `@mfe/shared` are shared singletons.
+Each MFE owns its UI, feature API modules and TanStack Query hooks under
+`src/features/<feature>/`. The host loads remote applications at runtime through
+Module Federation. React, React DOM, `@mfe/shared`, and
+`@tanstack/react-query` are shared singletons. Every remote creates a separate
+`QueryClient`, keeping its cache isolated from the other MFEs.
 
 ## Communication
 
@@ -37,7 +41,15 @@ component -> feature API -> shared request helper -> authenticatedFetch -> backe
 
 Feature APIs validate JSON responses with Zod schemas and surface typed errors. Shared helpers preserve HTTP status and backend error text where appropriate, map common failures to user-friendly messages, and leave aborted requests distinguishable.
 
-Backend domain events reach the host over its WebSocket and are dispatched through the in-page bus to listening MFEs. `mfe-student` also opens its own WebSocket to receive `STUDENT_CREATED`; `mfe-activity` and `mfe-dashboard` use a fallback WebSocket only when the host is not ready. The in-page bus carries host commands, MFE events and re-dispatched domain events; it does not replace HTTP requests.
+Backend domain events reach the host over its WebSocket. The host dispatches
+both the complete event envelope, including `eventId`, and the existing typed
+payload channel through the in-page bus. Remotes deduplicate event envelopes
+and update or invalidate their own query cache. If the host is unavailable,
+remotes use the shared authenticated WebSocket fallback. Query functions pass
+their `AbortSignal` through feature APIs to the shared request helper, so
+in-flight requests are cancelled when their remote unmounts. The in-page bus
+carries host commands, MFE events and domain events; it does not replace HTTP
+requests.
 
 ## Deployment
 
