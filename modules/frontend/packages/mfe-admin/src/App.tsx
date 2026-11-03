@@ -4,10 +4,13 @@ import {
   type AuthIdentity,
   type GroupMembership,
   type MembershipRole,
+  PAGE_SIZE,
+  Pagination,
   readAuthIdentity,
   useDomainEventSync,
   useDomainEvents,
   useHostReady,
+  usePaginatedItems,
 } from "@mfe/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { adminQueryKeys } from "./features/admin/hooks";
@@ -46,7 +49,6 @@ type ConfirmDialogState = {
 
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
 const canGrantSuperAdmin = import.meta.env.VITE_DEMO_SUPER_ADMIN === "true";
-const PAGE_SIZE = 20;
 const EMPTY_LIST: never[] = [];
 
 function translateRole(role: MembershipRole) {
@@ -165,7 +167,6 @@ export default function App() {
   const [superAdmin, setSuperAdmin] = useState(false);
   const [userFormErrors, setUserFormErrors] = useState<UserFormErrors>({});
   const [peopleSearch, setPeopleSearch] = useState("");
-  const [visibleUsers, setVisibleUsers] = useState(PAGE_SIZE);
   const [pendingUserIds, setPendingUserIds] = useState<string[]>([]);
 
   const [groupInstitutionId, setGroupInstitutionId] = useState("");
@@ -198,6 +199,12 @@ export default function App() {
   const groups = groupsQuery.data ?? EMPTY_LIST;
   const memberships: GroupMembership[] = membershipsQuery.data ?? EMPTY_LIST;
   const candidates = candidatesQuery.data ?? EMPTY_LIST;
+  const {
+    pageItems: pageGroups,
+    setPage: setGroupsPage,
+    ...groupsPagination
+  } = usePaginatedItems(groups);
+  const membershipsPagination = usePaginatedItems(memberships);
   const userListState: ListState = usersQuery.isFetching
     ? "loading"
     : usersQuery.isError
@@ -232,8 +239,7 @@ export default function App() {
       );
     });
   }, [peopleSearch, users]);
-
-  const visibleUserList = filteredUsers.slice(0, visibleUsers);
+  const peoplePagination = usePaginatedItems(filteredUsers);
 
   function dismissNotice(id: number) {
     setNotices((current) => current.filter((notice) => notice.id !== id));
@@ -279,6 +285,13 @@ export default function App() {
   }, [groupsQuery.data]);
 
   useEffect(() => {
+    const selectedGroupIndex = groups.findIndex((group) => group.id === selectedGroupId);
+    if (selectedGroupIndex >= 0) {
+      setGroupsPage(Math.floor(selectedGroupIndex / PAGE_SIZE) + 1);
+    }
+  }, [groups, selectedGroupId, setGroupsPage]);
+
+  useEffect(() => {
     if (institutions.length) {
       setGroupInstitutionId((current) => current || institutions[0].id);
     }
@@ -311,16 +324,13 @@ export default function App() {
     }
   });
 
-  useEffect(() => {
-    setVisibleUsers(PAGE_SIZE);
-  }, [peopleSearch]);
-
   async function createUser(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setUserFormErrors({});
 
     try {
       await createUserMutation.mutateAsync({ name, email, superAdmin });
+      peoplePagination.setPage(1);
       setName("");
       setEmail("");
       setSuperAdmin(false);
@@ -571,7 +581,10 @@ export default function App() {
                     id="people-search"
                     type="search"
                     value={peopleSearch}
-                    onChange={(event) => setPeopleSearch(event.target.value)}
+                    onChange={(event) => {
+                      setPeopleSearch(event.target.value);
+                      peoplePagination.setPage(1);
+                    }}
                     placeholder="Ex.: ana@instituicao.edu.br"
                   />
                 </label>
@@ -589,7 +602,7 @@ export default function App() {
                   <p className="empty">Nenhum resultado para a busca atual.</p>
                 )}
 
-                {visibleUserList.map((user) => {
+                {peoplePagination.pageItems.map((user) => {
                   const userBusy = pendingUserIds.includes(user.id);
                   const nextAction =
                     user.status.toLowerCase() === "inactive" ? "Ativar" : "Desativar";
@@ -627,15 +640,13 @@ export default function App() {
                   );
                 })}
 
-                {filteredUsers.length > visibleUsers && (
-                  <button
-                    type="button"
-                    className="secondary-button load-more"
-                    onClick={() => setVisibleUsers((current) => current + PAGE_SIZE)}
-                  >
-                    Carregar mais
-                  </button>
-                )}
+                <Pagination
+                  label="pessoas"
+                  page={peoplePagination.page}
+                  pageCount={peoplePagination.pageCount}
+                  totalItems={filteredUsers.length}
+                  onPageChange={peoplePagination.setPage}
+                />
               </section>
             </div>
           </section>
@@ -724,22 +735,38 @@ export default function App() {
                   <h3>Gerenciar acessos</h3>
                 </div>
 
-                <label htmlFor="group-select">
-                  Grupo
-                  <select
-                    id="group-select"
-                    value={selectedGroupId}
-                    onChange={(event) => setSelectedGroupId(event.target.value)}
-                    disabled={!groups.length}
-                  >
-                    {!groups.length && <option value="">Nenhum grupo disponível</option>}
-                    {groups.map((group) => (
-                      <option key={group.id} value={group.id}>
-                        {group.name} — {group.institutionName}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <div className="group-picker">
+                  <p className="group-picker-label">Grupo</p>
+                  {groups.length ? (
+                    <div className="group-options" role="group" aria-label="Grupos disponíveis">
+                      {pageGroups.map((group) => (
+                        <button
+                          key={group.id}
+                          type="button"
+                          className="group-option"
+                          aria-label={`${group.name} — ${group.institutionName}`}
+                          aria-pressed={selectedGroupId === group.id}
+                          onClick={() => {
+                            setSelectedGroupId(group.id);
+                            membershipsPagination.setPage(1);
+                          }}
+                        >
+                          <span>{group.name}</span>
+                          <small>{group.institutionName}</small>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="empty">Nenhum grupo disponível.</p>
+                  )}
+                  <Pagination
+                    label="grupos"
+                    page={groupsPagination.page}
+                    pageCount={groupsPagination.pageCount}
+                    totalItems={groups.length}
+                    onPageChange={setGroupsPage}
+                  />
+                </div>
 
                 {selectedGroup && (
                   <div className="group-summary">
@@ -829,7 +856,7 @@ export default function App() {
                   <p className="empty">Nenhum membro vinculado.</p>
                 )}
 
-                {memberships.map((membership) => {
+                {membershipsPagination.pageItems.map((membership) => {
                   const memberBusy = pendingMembershipIds.includes(membership.userId);
 
                   return (
@@ -871,6 +898,13 @@ export default function App() {
                     </article>
                   );
                 })}
+                <Pagination
+                  label="membros"
+                  page={membershipsPagination.page}
+                  pageCount={membershipsPagination.pageCount}
+                  totalItems={memberships.length}
+                  onPageChange={membershipsPagination.setPage}
+                />
               </section>
             </div>
           </section>

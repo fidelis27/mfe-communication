@@ -125,3 +125,51 @@ a {
   outline: 3px solid var(--color-focus-ring);
   outline-offset: 3px;
 }
+
+.pagination {
+  align-items: center;
+  color: var(--color-text-secondary);
+  display: flex;
+  flex-wrap: wrap;
+  font: var(--font-size-2xs) var(--font-sans);
+  gap: var(--space-3);
+  justify-content: space-between;
+  margin-top: var(--space-4);
+}
+
+.pagination-controls {
+  align-items: center;
+  display: flex;
+  gap: var(--space-2);
+}
+
+.pagination-controls button {
+  background: transparent;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  font: 700 var(--font-size-2xs) var(--font-sans);
+  padding: var(--space-2) var(--space-3);
+}
+
+.pagination-controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.pagination-controls > span {
+  min-width: 90px;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .pagination {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pagination-controls {
+    justify-content: space-between;
+  }
+}

@@ -1,5 +1,12 @@
 import { FormEvent, useEffect, useState } from "react";
-import { type Student, useDomainEventSync, useDomainEvents, useHostReady } from "@mfe/shared";
+import {
+  Pagination,
+  type Student,
+  useDomainEventSync,
+  useDomainEvents,
+  useHostReady,
+  usePaginatedItems,
+} from "@mfe/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   studentQueryKeys,
@@ -23,6 +30,7 @@ export default function App() {
   const institutionsQuery = useInstitutions(apiUrl);
   const createStudentMutation = useCreateStudent(apiUrl);
   const students = studentsQuery.data ?? [];
+  const studentPagination = usePaginatedItems(students);
   const institutions = institutionsQuery.data ?? EMPTY_LIST;
   const state = studentsQuery.isFetching
     ? "loading"
@@ -40,6 +48,7 @@ export default function App() {
 
   useDomainEventSync(events, (event) => {
     if (event.type === "STUDENT_CREATED") {
+      studentPagination.setPage(1);
       const student = event.payload;
       const queryKey = studentQueryKeys.students(apiUrl);
       queryClient.setQueryData<Student[]>(queryKey, (current) => {
@@ -65,6 +74,7 @@ export default function App() {
 
     try {
       await createStudentMutation.mutateAsync({ name, institutionId });
+      studentPagination.setPage(1);
       setName("");
       if (institutions.length > 0) {
         setInstitutionId(institutions[0].id);
@@ -178,7 +188,7 @@ export default function App() {
             </div>
           )}
           {state === "empty" && <p className="empty-state">Nenhum estudante cadastrado ainda.</p>}
-          {students.map((student) => (
+          {studentPagination.pageItems.map((student) => (
             <article className="student-row" key={student.id}>
               <div className="avatar">{student.name.slice(0, 1).toUpperCase()}</div>
               <div>
@@ -188,6 +198,13 @@ export default function App() {
               <span className="status">{student.status}</span>
             </article>
           ))}
+          <Pagination
+            label="estudantes"
+            page={studentPagination.page}
+            pageCount={studentPagination.pageCount}
+            totalItems={students.length}
+            onPageChange={studentPagination.setPage}
+          />
         </section>
       </section>
     </main>

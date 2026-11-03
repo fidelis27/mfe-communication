@@ -299,8 +299,42 @@ button:disabled {
   color: var(--color-success);
 }
 
-.load-more {
-  margin-top: 20px;
+.group-picker {
+  margin-top: 18px;
+}
+
+.group-picker-label {
+  color: var(--color-text-secondary);
+  font: var(--font-size-2xs) var(--font-sans);
+  margin: 0 0 8px;
+}
+
+.group-options {
+  display: grid;
+  gap: 8px;
+}
+
+.group-option {
+  align-items: flex-start;
+  background: var(--color-surface-control);
+  border: 1px solid var(--color-border-default);
+  color: var(--color-text-primary);
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  width: 100%;
+}
+
+.group-option[aria-pressed="true"] {
+  background: var(--color-sidebar-active);
+  border-color: var(--color-sidebar-active);
+  color: var(--color-text-on-dark);
+}
+
+.group-option small {
+  color: inherit;
+  font: var(--font-size-2xs) var(--font-sans);
+  opacity: 0.8;
 }
 
 .group-form {

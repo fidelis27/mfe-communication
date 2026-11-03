@@ -87,7 +87,7 @@ describe("Admin UX", () => {
     expect(screen.queryByRole("tab", { name: "Pessoas" })).not.toBeInTheDocument();
     expect(screen.queryByText("Criar grupo")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("option", { name: "Grupo Verde — Instituição Demo" }),
+      screen.getByRole("button", { name: "Grupo Verde — Instituição Demo" }),
     ).toBeInTheDocument();
   });
 
@@ -138,7 +138,7 @@ describe("Admin UX", () => {
       expect(screen.getByRole("option", { name: "João Pessoa — joao@demo" })).toBeInTheDocument(),
     );
     expect(
-      screen.getByRole("option", { name: "Grupo Verde — Instituição Demo" }),
+      screen.getByRole("button", { name: "Grupo Verde — Instituição Demo" }),
     ).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Nome do grupo"), {
@@ -287,7 +287,7 @@ describe("Admin UX", () => {
     );
   });
 
-  it("filters people, loads more results, and confirms status changes", async () => {
+  it("filters people, paginates results, and confirms status changes", async () => {
     sharedMocks.readAuthIdentity.mockResolvedValue({
       userId: "viewer-1",
       email: "ana@demo",
@@ -327,8 +327,13 @@ describe("Admin UX", () => {
     await waitFor(() => expect(screen.getByText("Pessoa 20")).toBeInTheDocument());
     expect(screen.queryByText("Pessoa 21")).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Carregar mais" }));
+    fireEvent.click(
+      within(screen.getByRole("navigation", { name: "Paginação de pessoas" })).getByRole("button", {
+        name: "Próxima",
+      }),
+    );
     await waitFor(() => expect(screen.getByText("Pessoa 21")).toBeInTheDocument());
+    expect(screen.queryByText("Pessoa 1")).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Buscar por nome ou e-mail"), {
       target: { value: "pessoa21@demo" },
@@ -353,5 +358,63 @@ describe("Admin UX", () => {
         }),
       ),
     );
+  });
+
+  it("paginates groups and members without rendering items from other pages", async () => {
+    sharedMocks.readAuthIdentity.mockResolvedValue({
+      userId: "viewer-1",
+      email: "ana@demo",
+      name: "Ana Admin",
+      roles: ["super_admin"],
+    });
+    const manyGroups = Array.from({ length: 21 }, (_, index) => ({
+      id: `group-${index + 1}`,
+      institutionId: "inst-1",
+      institutionName: "Instituição Demo",
+      name: `Grupo ${index + 1}`,
+    }));
+    const manyMembers = Array.from({ length: 25 }, (_, index) => ({
+      userId: `user-${index + 1}`,
+      userName: `Membro ${index + 1}`,
+      userEmail: `membro${index + 1}@demo`,
+      role: "member" as const,
+    }));
+
+    setupAuthenticatedFetch((url) => {
+      if (url.endsWith("/institutions")) return jsonResponse(institutions);
+      if (url.endsWith("/groups")) return jsonResponse(manyGroups);
+      if (url.endsWith("/groups/group-1/members")) return jsonResponse(manyMembers);
+      if (url.endsWith("/groups/group-1/candidates")) return jsonResponse(candidates);
+      return jsonResponse([]);
+    });
+
+    render(<App />, { wrapper: createQueryWrapper() });
+    fireEvent.click(screen.getByRole("tab", { name: "Grupos e acessos" }));
+
+    await waitFor(() => expect(screen.getByText("Membro 20")).toBeInTheDocument());
+    expect(screen.queryByText("Membro 21")).not.toBeInTheDocument();
+
+    fireEvent.click(
+      within(screen.getByRole("navigation", { name: "Paginação de membros" })).getByRole("button", {
+        name: "Próxima",
+      }),
+    );
+    expect(await screen.findByText("Membro 21")).toBeInTheDocument();
+    expect(screen.queryByText("Membro 1")).not.toBeInTheDocument();
+
+    fireEvent.click(
+      within(screen.getByRole("navigation", { name: "Paginação de grupos" })).getByRole("button", {
+        name: "Próxima",
+      }),
+    );
+    const finalGroup = await screen.findByRole("button", {
+      name: "Grupo 21 — Instituição Demo",
+    });
+    expect(
+      screen.queryByRole("button", { name: "Grupo 1 — Instituição Demo" }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(finalGroup);
+    await waitFor(() => expect(finalGroup).toHaveAttribute("aria-pressed", "true"));
   });
 });

@@ -64,13 +64,13 @@ depois e sem agrupar melhorias de naturezas diferentes.
   desmontado ou substituido; cada remote possui um `QueryClient` isolado.
 - Evidencia: testes de desmontagem e cancelamento em `docs/performance-tasks/PERF-004-mfe-request-cancellation.md`.
 
-### PERF-005 - Medir e paginar listas
+### PERF-005 - Paginar listas de recursos
 
-- Branch: `perf/paginated-resource-lists`
-- Escopo: estudantes, instituicoes, pessoas, grupos e eventos.
-- Primeiro passo: medir comportamento com listas grandes.
-- Implementar paginacao apenas nos recursos que excederem o limite definido.
-- Nao introduzir virtualizacao sem evidencia de custo de DOM.
+- Status: concluido.
+- Escopo paginado: estudantes, instituicoes, pessoas, grupos, membros e eventos.
+- Limite de renderizacao: 20 itens por pagina, com navegacao anterior/proxima.
+- A paginacao reduz os elementos renderizados; as APIs ainda retornam as listas completas.
+- O historico de atividade continua limitado a 30 eventos pela consulta.
 
 ### PERF-006 - Instrumentar carregamento dos remotes
 
