@@ -30,37 +30,58 @@ const membershipMutationSchema = z.object({
   userEmail: z.string().optional(),
 });
 
-export function getUsers(apiUrl: string): Promise<AdminUser[]> {
-  return requestJson(`${apiUrl}/users`, usersSchema, {}, "Não foi possível carregar as pessoas.");
+export function getUsers(apiUrl: string, signal?: AbortSignal): Promise<AdminUser[]> {
+  return requestJson(
+    `${apiUrl}/users`,
+    usersSchema,
+    { signal },
+    "Não foi possível carregar as pessoas.",
+  );
 }
 
-export function getInstitutions(apiUrl: string): Promise<InstitutionSummary[]> {
+export function getInstitutions(
+  apiUrl: string,
+  signal?: AbortSignal,
+): Promise<InstitutionSummary[]> {
   return requestJson(
     `${apiUrl}/institutions`,
     institutionsSchema,
-    {},
+    { signal },
     "Não foi possível carregar as instituições.",
   );
 }
 
-export function getGroups(apiUrl: string): Promise<GroupSummary[]> {
-  return requestJson(`${apiUrl}/groups`, groupsSchema, {}, "Não foi possível carregar os grupos.");
+export function getGroups(apiUrl: string, signal?: AbortSignal): Promise<GroupSummary[]> {
+  return requestJson(
+    `${apiUrl}/groups`,
+    groupsSchema,
+    { signal },
+    "Não foi possível carregar os grupos.",
+  );
 }
 
-export function getGroupMembers(apiUrl: string, groupId: string): Promise<GroupMembership[]> {
+export function getGroupMembers(
+  apiUrl: string,
+  groupId: string,
+  signal?: AbortSignal,
+): Promise<GroupMembership[]> {
   return requestJson(
     `${apiUrl}/groups/${encodeURIComponent(groupId)}/members`,
     membershipsSchema,
-    {},
+    { signal },
     "Não foi possível carregar os membros.",
   );
 }
 
-export function getGroupCandidates(apiUrl: string, groupId: string): Promise<GroupCandidate[]> {
+export function getGroupCandidates(
+  apiUrl: string,
+  groupId: string,
+  signal?: AbortSignal,
+): Promise<GroupCandidate[]> {
   return requestJson(
     `${apiUrl}/groups/${encodeURIComponent(groupId)}/candidates`,
     candidatesSchema,
-    {},
+    { signal },
     "Não foi possível carregar as pessoas disponíveis.",
   );
 }

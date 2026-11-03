@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { axe, toHaveNoViolations } from "jest-axe";
 import { vi } from "vitest";
 import App from "./App";
+import { createQueryWrapper } from "./test-utils";
 
 expect.extend(toHaveNoViolations);
 
@@ -75,9 +76,13 @@ function setupAuthenticatedFetch() {
 }
 
 describe("Admin accessibility", () => {
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    Reflect.deleteProperty(globalThis, "__mfeHostReady");
+  });
 
   beforeEach(() => {
+    Reflect.set(globalThis, "__mfeHostReady", true);
     vi.clearAllMocks();
     sharedMocks.readAuthIdentity.mockResolvedValue({
       userId: "viewer-1",
@@ -89,7 +94,7 @@ describe("Admin accessibility", () => {
   });
 
   it("has no detectable axe violations on the people tab", async () => {
-    const { container } = render(<App />);
+    const { container } = render(<App />, { wrapper: createQueryWrapper() });
 
     await waitFor(() => expect(screen.getByText("Pessoa Existente")).toBeInTheDocument());
 
@@ -97,7 +102,7 @@ describe("Admin accessibility", () => {
   });
 
   it("has no detectable axe violations on the groups tab", async () => {
-    const { container } = render(<App />);
+    const { container } = render(<App />, { wrapper: createQueryWrapper() });
 
     fireEvent.click(screen.getByRole("tab", { name: "Grupos e acessos" }));
     await waitFor(() => expect(screen.getByText("Grupo Verde")).toBeInTheDocument());

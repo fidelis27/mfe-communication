@@ -2,6 +2,7 @@ import React from "react";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { vi } from "vitest";
 import App from "./App";
+import { createQueryWrapper } from "./test-utils";
 
 const sharedMocks = vi.hoisted(() => ({
   readAuthIdentity: vi.fn(),
@@ -54,10 +55,14 @@ function setupAuthenticatedFetch(handler: (url: string, init?: RequestInit) => P
 }
 
 describe("Admin UX", () => {
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    Reflect.deleteProperty(globalThis, "__mfeHostReady");
+  });
 
   beforeEach(() => {
     vi.clearAllMocks();
+    Reflect.set(globalThis, "__mfeHostReady", true);
   });
 
   it("hides people management for non-superadmins and shows the real scope", async () => {
@@ -74,7 +79,7 @@ describe("Admin UX", () => {
       return jsonResponse([]);
     });
 
-    render(<App />);
+    render(<App />, { wrapper: createQueryWrapper() });
 
     await waitFor(() =>
       expect(screen.getByText("Administrador do grupo Grupo Verde")).toBeInTheDocument(),
@@ -125,7 +130,7 @@ describe("Admin UX", () => {
       return jsonResponse([]);
     });
 
-    render(<App />);
+    render(<App />, { wrapper: createQueryWrapper() });
 
     fireEvent.click(screen.getByRole("tab", { name: "Grupos e acessos" }));
 
@@ -183,7 +188,7 @@ describe("Admin UX", () => {
       return jsonResponse([]);
     });
 
-    render(<App />);
+    render(<App />, { wrapper: createQueryWrapper() });
 
     await waitFor(() => expect(screen.getByText("Pessoa Existente")).toBeInTheDocument());
 
@@ -194,6 +199,26 @@ describe("Admin UX", () => {
     await waitFor(() => expect(screen.getAllByText("E-mail já cadastrado.")).toHaveLength(2));
     expect(screen.getByText("Pessoa Existente")).toBeInTheDocument();
     expect(screen.queryByText("Nenhuma pessoa cadastrada.")).not.toBeInTheDocument();
+  });
+
+  it("cancels active list requests when the remote unmounts", async () => {
+    sharedMocks.readAuthIdentity.mockResolvedValue({
+      userId: "viewer-1",
+      email: "ana@demo",
+      name: "Ana Admin",
+      roles: ["super_admin"],
+    });
+    const requestSignals: AbortSignal[] = [];
+    setupAuthenticatedFetch((_url, init) => {
+      if (init?.signal) requestSignals.push(init.signal);
+      return new Promise<Response>(() => {});
+    });
+
+    const { unmount } = render(<App />, { wrapper: createQueryWrapper() });
+    await waitFor(() => expect(requestSignals.length).toBeGreaterThanOrEqual(3));
+    unmount();
+
+    expect(requestSignals.every((signal) => signal.aborted)).toBe(true);
   });
 
   it("updates member roles and removes members with an alertdialog confirmation", async () => {
@@ -225,7 +250,7 @@ describe("Admin UX", () => {
       return jsonResponse([]);
     });
 
-    const { container } = render(<App />);
+    const { container } = render(<App />, { wrapper: createQueryWrapper() });
 
     fireEvent.click(screen.getByRole("tab", { name: "Grupos e acessos" }));
 
@@ -297,7 +322,7 @@ describe("Admin UX", () => {
       return jsonResponse([]);
     });
 
-    render(<App />);
+    render(<App />, { wrapper: createQueryWrapper() });
 
     await waitFor(() => expect(screen.getByText("Pessoa 20")).toBeInTheDocument());
     expect(screen.queryByText("Pessoa 21")).not.toBeInTheDocument();
