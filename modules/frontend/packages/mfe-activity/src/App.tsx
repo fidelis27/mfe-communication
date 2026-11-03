@@ -1,19 +1,11 @@
-import { useEffect, useState } from "react";
-import { type DomainEvent, useDomainEvents, useHostReady, useListen } from "@mfe/shared";
-import { getEventHistory } from "./features/activity/api";
+import { type DomainEvent, useDomainEventSync, useDomainEvents, useHostReady } from "@mfe/shared";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  activityQueryKeys,
+  mergeActivityEvents,
+  useActivityHistory,
+} from "./features/activity/hooks";
 import "./App.css";
-
-type LocalDomainEvent = {
-  eventId: string;
-  type: string;
-  version: number;
-  source: string;
-  correlationId: string;
-  occurredAt: string;
-  payload: Record<string, unknown>;
-};
-
-type ActivityEvent = DomainEvent | LocalDomainEvent;
 
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
 
@@ -25,95 +17,26 @@ const labels: Record<string, string> = {
 };
 
 export default function App() {
-  const [events, setEvents] = useState<ActivityEvent[]>([]);
-  const [historyState, setHistoryState] = useState<"loading" | "success" | "empty" | "error">(
-    "loading",
-  );
-  const [historyError, setHistoryError] = useState("");
   const hostReady = useHostReady();
   const fallback = useDomainEvents(hostReady ? "" : apiUrl);
-  const [connection, setConnection] = useState<"connecting" | "connected" | "offline">(
-    "connecting",
-  );
+  const queryClient = useQueryClient();
+  const historyQuery = useActivityHistory(apiUrl);
+  const events = historyQuery.data ?? [];
+  const historyState = historyQuery.isFetching
+    ? "loading"
+    : historyQuery.isError
+      ? "error"
+      : events.length
+        ? "success"
+        : "empty";
 
-  useListen("domain", "domain:connection", (status) => {
-    if (status === "connecting" || status === "connected" || status === "offline") {
-      setConnection(status);
-    }
+  useDomainEventSync(fallback.events, (event) => {
+    if (!labels[event.type]) return;
+    const queryKey = activityQueryKeys.history(apiUrl);
+    queryClient.setQueryData<DomainEvent[]>(queryKey, (current = []) =>
+      mergeActivityEvents(current, [event]),
+    );
   });
-
-  function appendEvent(type: string, payload: Record<string, unknown>): void {
-    const nextEvent: LocalDomainEvent = {
-      eventId: `${type}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-      type,
-      version: 1,
-      source: "host-bus",
-      correlationId: "local-bus",
-      occurredAt: new Date().toISOString(),
-      payload,
-    };
-    setEvents((current) => mergeEvent(current, nextEvent));
-    setHistoryState("success");
-  }
-
-  useListen("domain", "STUDENT_CREATED", (payload) => {
-    appendEvent("STUDENT_CREATED", payload as Record<string, unknown>);
-  });
-
-  useListen("domain", "STUDENT_TRANSFERRED", (payload) => {
-    appendEvent("STUDENT_TRANSFERRED", payload as Record<string, unknown>);
-  });
-
-  useListen("domain", "ENROLLMENT_SUSPENDED", (payload) => {
-    appendEvent("ENROLLMENT_SUSPENDED", payload as Record<string, unknown>);
-  });
-
-  useListen("domain", "ENROLLMENT_REOPENED", (payload) => {
-    appendEvent("ENROLLMENT_REOPENED", payload as Record<string, unknown>);
-  });
-
-  function mergeEvent(current: ActivityEvent[], source: ActivityEvent): ActivityEvent[] {
-    const next = [source, ...current];
-    return next
-      .filter(
-        (event, index, array) =>
-          index === array.findIndex((candidate) => candidate.eventId === event.eventId),
-      )
-      .slice(0, 30);
-  }
-
-  async function loadHistory() {
-    setHistoryState("loading");
-    setHistoryError("");
-    try {
-      const history = await getEventHistory(apiUrl);
-      setEvents(history);
-      setHistoryState(history.length ? "success" : "empty");
-    } catch (error) {
-      setHistoryError(error instanceof Error ? error.message : "Erro inesperado.");
-      setHistoryState("error");
-    }
-  }
-
-  useEffect(() => {
-    void loadHistory();
-  }, []);
-
-  useEffect(() => {
-    if (!hostReady && fallback.events.length === 0) return;
-    if (hostReady) return;
-    setEvents((current) => {
-      const next = [...fallback.events, ...current];
-      return next
-        .filter(
-          (event, index, array) =>
-            index === array.findIndex((candidate) => candidate.eventId === event.eventId),
-        )
-        .slice(0, 30);
-    });
-    setConnection(fallback.connection);
-    setHistoryState("success");
-  }, [fallback.connection, fallback.events, hostReady]);
 
   return (
     <main className="activity-shell">
@@ -123,11 +46,11 @@ export default function App() {
           <h1>Atividade do sistema.</h1>
           <p className="lede">Uma linha do tempo viva das alterações que chegam do backend.</p>
         </div>
-        <div className={`connection ${connection}`}>
+        <div className={`connection ${fallback.connection}`}>
           <i />{" "}
-          {connection === "connected"
+          {fallback.connection === "connected"
             ? "Conectado"
-            : connection === "connecting"
+            : fallback.connection === "connecting"
               ? "Conectando"
               : "Offline"}
         </div>
@@ -145,8 +68,12 @@ export default function App() {
         ) : historyState === "error" ? (
           <div className="empty error-state">
             <span>!</span>
-            <p>{historyError}</p>
-            <button type="button" onClick={() => void loadHistory()}>
+            <p>
+              {historyQuery.error instanceof Error
+                ? historyQuery.error.message
+                : "Erro inesperado."}
+            </p>
+            <button type="button" onClick={() => void historyQuery.refetch()}>
               Tentar novamente
             </button>
           </div>
