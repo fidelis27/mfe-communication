@@ -13,13 +13,13 @@ The remote-ready time is measured from navigation start until the remote's
 the browser Performance APIs. JavaScript sizes are decoded response-body bytes
 for the Host and route scripts; they are not compressed network-transfer sizes.
 
-| Route | TTFB (ms) | FCP (ms) | LCP (ms) | CLS | Remote ready (ms) | Requests | Decoded JS (bytes) | Largest JS (bytes) |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| Dashboard | 11 | 292 | 400 | 0.0003 | 429 | 22 | 800,237 | 486,433 |
-| Estudantes | 10 | 212 | 408 | 0.0474 | 429 | 22 | 801,254 | 486,433 |
-| Instituicoes | 10 | 292 | 416 | 0.0489 | 479 | 21 | 800,094 | 486,433 |
-| Atividade | 15 | 232 | 336 | 0.0003 | 353 | 21 | 799,288 | 486,433 |
-| Admin | 15 | 304 | 448 | 0.0200 | 526 | 21 | 815,216 | 486,433 |
+| Route        | TTFB (ms) | FCP (ms) | LCP (ms) |    CLS | Remote ready (ms) | Requests | Decoded JS (bytes) | Largest JS (bytes) |
+| ------------ | --------: | -------: | -------: | -----: | ----------------: | -------: | -----------------: | -----------------: |
+| Dashboard    |        11 |      292 |      400 | 0.0003 |               429 |       22 |            800,237 |            486,433 |
+| Estudantes   |        10 |      212 |      408 | 0.0474 |               429 |       22 |            801,254 |            486,433 |
+| Instituicoes |        10 |      292 |      416 | 0.0489 |               479 |       21 |            800,094 |            486,433 |
+| Atividade    |        15 |      232 |      336 | 0.0003 |               353 |       21 |            799,288 |            486,433 |
+| Admin        |        15 |      304 |      448 | 0.0200 |               526 |       21 |            815,216 |            486,433 |
 
 The largest JavaScript asset on each route was the Host's shared bundle
 (`shared-BqK99diX.js`, 486,433 decoded bytes). The largest remote asset was
