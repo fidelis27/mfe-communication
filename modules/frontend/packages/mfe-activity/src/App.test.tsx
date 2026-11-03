@@ -34,7 +34,9 @@ describe("Activity states", () => {
     mockFetch({}, false);
     render(<App />);
     await waitFor(() =>
-      expect(screen.getByText("Não foi possível carregar o histórico.")).toBeInTheDocument(),
+      expect(
+        screen.getByText("O serviço está temporariamente indisponível. Tente novamente."),
+      ).toBeInTheDocument(),
     );
     expect(screen.getByRole("button", { name: "Tentar novamente" })).toBeInTheDocument();
   });

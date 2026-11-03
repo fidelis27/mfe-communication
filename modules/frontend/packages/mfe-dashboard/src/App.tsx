@@ -1,15 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import { authenticatedFetch, useDomainEvents, useHostReady, useListen } from "@mfe/shared";
+import { useDomainEvents, useHostReady, useListen } from "@mfe/shared";
+import { getDashboardData, type DashboardData } from "./features/dashboard/api";
 import "./App.css";
-
-type Institution = { id: string; status: string };
-type Student = { id: string; status: string };
-type Enrollment = { id: string; status: string };
-type DashboardData = {
-  institutions: Institution[];
-  students: Student[];
-  enrollments: Enrollment[];
-};
 
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
 
@@ -63,18 +55,7 @@ export default function App() {
     setState("loading");
     setErrorMessage("");
     try {
-      const [institutions, students, enrollments] = await Promise.all([
-        authenticatedFetch(`${apiUrl}/institutions`),
-        authenticatedFetch(`${apiUrl}/students`),
-        authenticatedFetch(`${apiUrl}/enrollments`),
-      ]);
-      if (![institutions, students, enrollments].every((response) => response.ok))
-        throw new Error("Não foi possível atualizar os indicadores.");
-      setData({
-        institutions: await institutions.json(),
-        students: await students.json(),
-        enrollments: await enrollments.json(),
-      });
+      setData(await getDashboardData(apiUrl));
       setUpdatedAt(new Date());
       setState("success");
     } catch (error) {

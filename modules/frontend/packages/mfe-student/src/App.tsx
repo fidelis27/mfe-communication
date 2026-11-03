@@ -1,5 +1,10 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { authenticatedFetch, type Institution, type Student, useDomainEvents } from "@mfe/shared";
+import { type Institution, type Student, useDomainEvents } from "@mfe/shared";
+import {
+  createStudent as createStudentApi,
+  getInstitutions,
+  getStudents,
+} from "./features/student/api";
 import "./App.css";
 
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
@@ -15,11 +20,7 @@ export default function App() {
 
   const loadInstitutions = useCallback(async () => {
     try {
-      const response = await authenticatedFetch(`${apiUrl}/institutions`);
-      if (!response.ok) {
-        throw new Error("Não foi possível carregar as instituições.");
-      }
-      const result = (await response.json()) as Institution[];
+      const result = await getInstitutions(apiUrl);
       setInstitutions(result);
       if (result.length > 0) {
         setInstitutionId((current) => current || result[0].id);
@@ -34,9 +35,7 @@ export default function App() {
     setState("loading");
     setMessage("");
     try {
-      const response = await authenticatedFetch(`${apiUrl}/students`, { signal });
-      if (!response.ok) throw new Error("Não foi possível carregar os estudantes.");
-      const result = (await response.json()) as Student[];
+      const result = await getStudents(apiUrl, signal);
       setStudents(result);
       setState(result.length === 0 ? "empty" : "success");
     } catch (error) {
@@ -79,15 +78,7 @@ export default function App() {
     }
 
     try {
-      const response = await authenticatedFetch(`${apiUrl}/students`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, institutionId }),
-      });
-      if (!response.ok) {
-        const body = (await response.json()) as { error?: string };
-        throw new Error(body.error ?? "Não foi possível cadastrar o estudante.");
-      }
+      await createStudentApi(apiUrl, { name, institutionId });
       setName("");
       if (institutions.length > 0) {
         setInstitutionId(institutions[0].id);

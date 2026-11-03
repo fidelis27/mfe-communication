@@ -1,62 +1,46 @@
 # MFE Architecture
 
-Overview
+The frontend is a monorepo of independently built Vite applications. The Go backend owns the authoritative API and publishes domain events.
 
-- We split the frontend into independent Micro Frontends (MFEs), one per bounded context.
-- Each MFE is independently developed, tested and deployed. They communicate via domain events and shared contracts.
-- In this repository, the frontend is organized as a monorepo of Vite apps, one package per MFE plus a host shell.
+## MFEs
 
-Recommended MFEs
+- `host`: application shell, authentication, navigation, remote loading and the primary domain-event WebSocket.
+- `mfe-institution`: institution listing and registration.
+- `mfe-student`: student listing and registration, with updates from `STUDENT_CREATED`.
+- `mfe-admin`: people, groups and group-membership management.
+- `mfe-activity`: recent domain-event history and live activity feed.
+- `mfe-dashboard`: institution, student and enrollment indicators.
+- `shared`: authentication, validated API request helpers, domain-event contracts, the in-page bus and design tokens.
 
-- `mfe-institution`: Institution CRUD, CNPJ validation, quick-create modal for Student flow.
-- `mfe-student`: Student CRUD, paginated lists, filters by institution.
-- `mfe-admin`: People (CRM), groups, membership management.
-- `mfe-activity`: Activity feed (read-only projections), consumes write events from other domains.
-- `mfe-dashboard`: Aggregations and KPIs, subscribes to events for live updates.
+## Repository layout
 
-Monorepo layout (recommended)
+```text
+modules/frontend/packages/
+  host/
+  mfe-institution/
+  mfe-student/
+  mfe-admin/
+  mfe-activity/
+  mfe-dashboard/
+  shared/
+```
 
-- `modules/frontend/packages/host/`
-- `modules/frontend/packages/mfe-institution/`
-- `modules/frontend/packages/mfe-student/`
-- `modules/frontend/packages/mfe-admin/`
-- `modules/frontend/packages/mfe-activity/`
-- `modules/frontend/packages/mfe-dashboard/`
-- `modules/frontend/packages/shared/`
+Each MFE owns its UI and feature API modules under `src/features/<feature>/api/`. The host loads remote applications at runtime through Module Federation. React, React DOM and `@mfe/shared` are shared singletons.
 
-Communication
+## Communication
 
-- Backend services own authoritative APIs and publish domain events (event bus / message broker).
-- MFEs call backend APIs for writes and listen to events (WebSocket or pubsub) for realtime UI updates and revocation.
-- The host shell decides which module to render and loads remote modules at runtime via Module Federation.
+HTTP requests follow this path:
 
-Module Federation
+```text
+component -> feature API -> shared request helper -> authenticatedFetch -> backend
+```
 
-- Use Module Federation to load and compose MFEs at runtime when needed.
-- Shared libraries (React, UI kit) should be singletons and provided by the host shell.
-- Each MFE exposes a remote entry and the host declares the remote URLs through environment variables.
+Feature APIs validate JSON responses with Zod schemas and surface typed errors. Shared helpers preserve HTTP status and backend error text where appropriate, map common failures to user-friendly messages, and leave aborted requests distinguishable.
 
-Vercel + monorepo
+Backend domain events reach the host over its WebSocket and are dispatched through the in-page bus to listening MFEs. `mfe-student` also opens its own WebSocket to receive `STUDENT_CREATED`; `mfe-activity` and `mfe-dashboard` use a fallback WebSocket only when the host is not ready. The in-page bus carries host commands, MFE events and re-dispatched domain events; it does not replace HTTP requests.
 
-- Vercel supports monorepos by project, not by forcing a single app per repo.
-- Each Vite package can be imported as a separate project with its own root directory.
-- For this repo, the deploy model is:
-  - `host` -> one Vercel project
-  - `mfe-student` -> one Vercel project
-  - `mfe-institution` -> one Vercel project
-  - `mfe-activity` -> one Vercel project
-  - `mfe-dashboard` -> one Vercel project
-  - `mfe-admin` -> one Vercel project
-- Each deployed project builds from its own folder and publishes its own `dist` output.
-- The host receives the remote URLs via `VITE_MFE_*_URL` and loads each remote at runtime.
+## Deployment
 
-APIs & Contracts
+The host and each MFE are deployed as separate Vercel projects, each building from its package directory. The host resolves remote entry URLs from `VITE_MFE_*_URL`. Frontend API requests use `VITE_API_URL`; authentication uses `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
 
-- Define stable REST/gRPC endpoints for core operations (create/edit/inactivate), and an event schema for emitted events.
-- The backend remains the source of truth for writes; the frontends are consumers of the event stream and API responses.
-
-Next steps
-
-- Keep each MFE as a Vite project with independent build and deploy.
-- Connect CI/CD and deployment per MFE.
-- Validate remote URLs and CORS in production before enabling live event traffic.
+The backend API and its data model are maintained in the separate `secretaria-backend` repository.

@@ -22,7 +22,12 @@ function setupFetch(state: ViewState) {
                 source: "test",
                 correlationId: "test",
                 occurredAt: "2026-01-01T00:00:00.000Z",
-                payload: { id: "student-1", name: "Estudante Demo" },
+                payload: {
+                  id: "student-1",
+                  name: "Estudante Demo",
+                  institutionId: "institution-1",
+                  status: "active",
+                },
               },
             ]
           : [];
@@ -56,7 +61,9 @@ describe("Activity accessibility states", () => {
         );
       } else if (state === "error") {
         await waitFor(() =>
-          expect(screen.getByText("Não foi possível carregar o histórico.")).toBeInTheDocument(),
+          expect(
+            screen.getByText("O serviço está temporariamente indisponível. Tente novamente."),
+          ).toBeInTheDocument(),
         );
       } else {
         await waitFor(() => expect(screen.getByText("Estudante cadastrado")).toBeInTheDocument());

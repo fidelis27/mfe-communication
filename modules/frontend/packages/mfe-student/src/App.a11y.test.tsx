@@ -51,9 +51,9 @@ describe("Student accessibility states", () => {
         );
       } else if (state === "error") {
         await waitFor(() =>
-          expect(screen.getAllByText("Não foi possível carregar os estudantes.")).not.toHaveLength(
-            0,
-          ),
+          expect(
+            screen.getAllByText("O serviço está temporariamente indisponível. Tente novamente."),
+          ).not.toHaveLength(0),
         );
       } else {
         await waitFor(() => expect(screen.getByText("Estudante Demo")).toBeInTheDocument());
