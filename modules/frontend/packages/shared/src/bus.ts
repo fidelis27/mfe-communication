@@ -1,11 +1,12 @@
 import { useEffect, useRef } from "react";
-import type { DomainConnection } from "./events";
+import type { DomainConnection, DomainEvent } from "./events";
 import type { EventPayloadMap } from "./events";
 
 export type BusChannelMap = {
   "cmd:navigate": { path: string; moduleId?: string };
   "evt:navigate": { path: string; moduleId?: string };
   "domain:connection": DomainConnection;
+  "domain:event": DomainEvent;
   "host:ready": { ready: boolean };
 };
 
