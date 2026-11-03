@@ -7,13 +7,16 @@ import App from "./App";
 expect.extend(toHaveNoViolations);
 
 const sharedMocks = vi.hoisted(() => ({
-  authenticatedFetch: vi.fn(),
   readAuthIdentity: vi.fn(),
 }));
 
-vi.mock("@mfe/shared", () => sharedMocks);
+vi.mock("@mfe/shared", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@mfe/shared")>()),
+  ...sharedMocks,
+}));
 
 function jsonResponse(body: unknown, status = 200) {
+  if (status === 204) return Promise.resolve(new Response(null, { status }));
   return Promise.resolve(
     new Response(JSON.stringify(body), {
       status,
@@ -23,8 +26,9 @@ function jsonResponse(body: unknown, status = 200) {
 }
 
 function setupAuthenticatedFetch() {
-  sharedMocks.authenticatedFetch.mockImplementation(
-    (input: RequestInfo | URL, init?: RequestInit) => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
 
       if (!init?.method && url.endsWith("/users")) {
@@ -66,11 +70,13 @@ function setupAuthenticatedFetch() {
       }
 
       return jsonResponse([]);
-    },
+    }),
   );
 }
 
 describe("Admin accessibility", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
   beforeEach(() => {
     vi.clearAllMocks();
     sharedMocks.readAuthIdentity.mockResolvedValue({

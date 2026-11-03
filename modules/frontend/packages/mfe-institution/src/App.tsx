@@ -1,8 +1,11 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { authenticatedFetch } from "@mfe/shared";
+import { type Institution } from "@mfe/shared";
+import {
+  createInstitution as createInstitutionApi,
+  getInstitutions,
+} from "./features/institution/api";
 import "./App.css";
 
-type Institution = { id: string; name: string; cnpj?: string; status: string };
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
 
 export default function App() {
@@ -16,9 +19,7 @@ export default function App() {
     setState("loading");
     setMessage("");
     try {
-      const response = await authenticatedFetch(`${apiUrl}/institutions`);
-      if (!response.ok) throw new Error("Não foi possível carregar as instituições.");
-      const result = (await response.json()) as Institution[];
+      const result = await getInstitutions(apiUrl);
       setInstitutions(result);
       setState(result.length ? "success" : "empty");
     } catch (error) {
@@ -35,15 +36,7 @@ export default function App() {
     event.preventDefault();
     setMessage("");
     try {
-      const response = await authenticatedFetch(`${apiUrl}/institutions`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, cnpj }),
-      });
-      if (!response.ok) {
-        const body = (await response.json()) as { error?: string };
-        throw new Error(body.error ?? "Não foi possível cadastrar a instituição.");
-      }
+      await createInstitutionApi(apiUrl, { name, cnpj });
       setName("");
       setCnpj("");
       setMessage("Instituição cadastrada.");

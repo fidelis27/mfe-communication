@@ -43,7 +43,7 @@ describe("Institution accessibility states", () => {
       } else if (state === "error") {
         await waitFor(() =>
           expect(
-            screen.getAllByText("Não foi possível carregar as instituições."),
+            screen.getAllByText("O serviço está temporariamente indisponível. Tente novamente."),
           ).not.toHaveLength(0),
         );
       } else {

@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { authenticatedFetch, useDomainEvents, useHostReady, useListen } from "@mfe/shared";
+import { type DomainEvent, useDomainEvents, useHostReady, useListen } from "@mfe/shared";
+import { getEventHistory } from "./features/activity/api";
 import "./App.css";
 
-type DomainEvent = {
+type LocalDomainEvent = {
   eventId: string;
   type: string;
   version: number;
@@ -11,6 +12,8 @@ type DomainEvent = {
   occurredAt: string;
   payload: Record<string, unknown>;
 };
+
+type ActivityEvent = DomainEvent | LocalDomainEvent;
 
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
 
@@ -22,7 +25,7 @@ const labels: Record<string, string> = {
 };
 
 export default function App() {
-  const [events, setEvents] = useState<DomainEvent[]>([]);
+  const [events, setEvents] = useState<ActivityEvent[]>([]);
   const [historyState, setHistoryState] = useState<"loading" | "success" | "empty" | "error">(
     "loading",
   );
@@ -40,7 +43,7 @@ export default function App() {
   });
 
   function appendEvent(type: string, payload: Record<string, unknown>): void {
-    const nextEvent: DomainEvent = {
+    const nextEvent: LocalDomainEvent = {
       eventId: `${type}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
       type,
       version: 1,
@@ -69,7 +72,7 @@ export default function App() {
     appendEvent("ENROLLMENT_REOPENED", payload as Record<string, unknown>);
   });
 
-  function mergeEvent(current: DomainEvent[], source: DomainEvent): DomainEvent[] {
+  function mergeEvent(current: ActivityEvent[], source: ActivityEvent): ActivityEvent[] {
     const next = [source, ...current];
     return next
       .filter(
@@ -83,9 +86,7 @@ export default function App() {
     setHistoryState("loading");
     setHistoryError("");
     try {
-      const response = await authenticatedFetch(`${apiUrl}/events/history?limit=30`);
-      if (!response.ok) throw new Error("Não foi possível carregar o histórico.");
-      const history = (await response.json()) as DomainEvent[];
+      const history = await getEventHistory(apiUrl);
       setEvents(history);
       setHistoryState(history.length ? "success" : "empty");
     } catch (error) {

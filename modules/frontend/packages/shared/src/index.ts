@@ -9,5 +9,6 @@ export type StudentEvent = DomainEvent<"STUDENT_CREATED" | "STUDENT_UPDATED">;
 export * from "./events";
 export * from "./bus";
 export * from "./auth";
+export * from "./api";
 export * from "./types";
 export * from "./sentry";

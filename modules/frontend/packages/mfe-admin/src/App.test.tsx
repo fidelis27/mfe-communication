@@ -4,11 +4,13 @@ import { vi } from "vitest";
 import App from "./App";
 
 const sharedMocks = vi.hoisted(() => ({
-  authenticatedFetch: vi.fn(),
   readAuthIdentity: vi.fn(),
 }));
 
-vi.mock("@mfe/shared", () => sharedMocks);
+vi.mock("@mfe/shared", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@mfe/shared")>()),
+  ...sharedMocks,
+}));
 
 const institutions = [{ id: "inst-1", name: "Instituição Demo" }];
 const groups = [
@@ -34,8 +36,10 @@ const members = [
   },
 ];
 const candidates = [{ id: "cand-1", name: "João Pessoa", email: "joao@demo" }];
+let apiFetch: ReturnType<typeof vi.fn>;
 
 function jsonResponse(body: unknown, status = 200) {
+  if (status === 204) return Promise.resolve(new Response(null, { status }));
   return Promise.resolve(
     new Response(JSON.stringify(body), {
       status,
@@ -45,12 +49,13 @@ function jsonResponse(body: unknown, status = 200) {
 }
 
 function setupAuthenticatedFetch(handler: (url: string, init?: RequestInit) => Promise<Response>) {
-  sharedMocks.authenticatedFetch.mockImplementation(
-    (input: RequestInfo | URL, init?: RequestInit) => handler(String(input), init),
-  );
+  apiFetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => handler(String(input), init));
+  vi.stubGlobal("fetch", apiFetch);
 }
 
 describe("Admin UX", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -137,7 +142,7 @@ describe("Admin UX", () => {
     fireEvent.click(screen.getByRole("button", { name: "Criar grupo" }));
 
     await waitFor(() =>
-      expect(sharedMocks.authenticatedFetch).toHaveBeenCalledWith(
+      expect(apiFetch).toHaveBeenCalledWith(
         expect.stringContaining("/groups"),
         expect.objectContaining({
           method: "POST",
@@ -207,7 +212,12 @@ describe("Admin UX", () => {
       if (!init?.method && url.endsWith("/groups/group-1/candidates"))
         return jsonResponse(candidates);
       if (init?.method === "PATCH" && url.endsWith("/groups/group-1/members/user-2")) {
-        return jsonResponse({}, 200);
+        return jsonResponse({
+          userId: "user-2",
+          groupId: "group-1",
+          institutionId: "inst-1",
+          role: "admin",
+        });
       }
       if (init?.method === "DELETE" && url.endsWith("/groups/group-1/members/user-2")) {
         return jsonResponse({}, 204);
@@ -226,7 +236,7 @@ describe("Admin UX", () => {
     });
 
     await waitFor(() =>
-      expect(sharedMocks.authenticatedFetch).toHaveBeenCalledWith(
+      expect(apiFetch).toHaveBeenCalledWith(
         expect.stringContaining("/groups/group-1/members/user-2"),
         expect.objectContaining({
           method: "PATCH",
@@ -245,7 +255,7 @@ describe("Admin UX", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: "Remover" }));
 
     await waitFor(() =>
-      expect(sharedMocks.authenticatedFetch).toHaveBeenCalledWith(
+      expect(apiFetch).toHaveBeenCalledWith(
         expect.stringContaining("/groups/group-1/members/user-2"),
         expect.objectContaining({ method: "DELETE" }),
       ),
@@ -270,7 +280,15 @@ describe("Admin UX", () => {
 
     setupAuthenticatedFetch((url, init) => {
       if (!init?.method && url.endsWith("/users")) return jsonResponse(users);
-      if (init?.method === "PATCH" && url.endsWith("/users/user-1")) return jsonResponse({}, 200);
+      if (init?.method === "PATCH" && url.endsWith("/users/user-1")) {
+        return jsonResponse({
+          id: "user-1",
+          name: "Pessoa 1",
+          email: "pessoa1@demo",
+          status: "inactive",
+          superAdmin: false,
+        });
+      }
       if (!init?.method && url.endsWith("/institutions")) return jsonResponse(institutions);
       if (!init?.method && url.endsWith("/groups")) return jsonResponse(groups);
       if (!init?.method && url.endsWith("/groups/group-1/members")) return jsonResponse(members);
@@ -302,7 +320,7 @@ describe("Admin UX", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: "Desativar" }));
 
     await waitFor(() =>
-      expect(sharedMocks.authenticatedFetch).toHaveBeenCalledWith(
+      expect(apiFetch).toHaveBeenCalledWith(
         expect.stringContaining("/users/user-1"),
         expect.objectContaining({
           method: "PATCH",

@@ -1,7 +1,6 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   type AdminUser,
-  authenticatedFetch,
   type AuthIdentity,
   type GroupCandidate,
   type GroupMembership,
@@ -10,6 +9,19 @@ import {
   type MembershipRole,
   readAuthIdentity,
 } from "@mfe/shared";
+import {
+  addGroupMember,
+  createGroup as createGroupApi,
+  createUser as createUserApi,
+  getGroupCandidates,
+  getGroupMembers,
+  getGroups,
+  getInstitutions,
+  getUsers,
+  removeGroupMember,
+  updateGroupMemberRole,
+  updateUserStatus,
+} from "./features/admin/api";
 import "./App.css";
 
 type ListState = "loading" | "ready" | "empty" | "error";
@@ -42,10 +54,6 @@ function translateStatus(status: string) {
   return status.toLowerCase() === "inactive" ? "Inativo" : "Ativo";
 }
 
-function parseErrorMessage(body: { message?: string; error?: string } | null, fallback: string) {
-  return body?.message ?? body?.error ?? fallback;
-}
-
 function mapUserFormError(message: string): UserFormErrors {
   const normalized = message.toLowerCase();
   if (normalized.includes("e-mail") || normalized.includes("email")) return { email: message };
@@ -72,14 +80,6 @@ function mapMemberFormError(message: string): MemberFormErrors {
     return { userId: message };
   }
   return { form: message };
-}
-
-async function readErrorBody(response: Response) {
-  try {
-    return (await response.json()) as { message?: string; error?: string };
-  } catch {
-    return null;
-  }
 }
 
 function ToastRegion({
@@ -265,14 +265,7 @@ export default function App() {
     setUserListState("loading");
     setUserListError("");
     try {
-      const response = await authenticatedFetch(`${apiUrl}/users`);
-      if (!response.ok) {
-        throw new Error(
-          parseErrorMessage(await readErrorBody(response), "Não foi possível carregar as pessoas."),
-        );
-      }
-
-      const result = (await response.json()) as AdminUser[];
+      const result = await getUsers(apiUrl);
       setUsers(result);
       setUserListState(result.length ? "ready" : "empty");
     } catch (error) {
@@ -284,17 +277,7 @@ export default function App() {
   async function loadInstitutions() {
     setInstitutionsError("");
     try {
-      const response = await authenticatedFetch(`${apiUrl}/institutions`);
-      if (!response.ok) {
-        throw new Error(
-          parseErrorMessage(
-            await readErrorBody(response),
-            "Não foi possível carregar as instituições.",
-          ),
-        );
-      }
-
-      const result = (await response.json()) as InstitutionSummary[];
+      const result = await getInstitutions(apiUrl);
       setInstitutions(result);
       setGroupInstitutionId((current) => current || result[0]?.id || "");
     } catch (error) {
@@ -306,14 +289,7 @@ export default function App() {
     setGroupListState("loading");
     setGroupListError("");
     try {
-      const response = await authenticatedFetch(`${apiUrl}/groups`);
-      if (!response.ok) {
-        throw new Error(
-          parseErrorMessage(await readErrorBody(response), "Não foi possível carregar os grupos."),
-        );
-      }
-
-      const result = (await response.json()) as GroupSummary[];
+      const result = await getGroups(apiUrl);
       setGroups(result);
       setSelectedGroupId((current) =>
         result.some((group) => group.id === current) ? current : (result[0]?.id ?? ""),
@@ -329,14 +305,7 @@ export default function App() {
     setMembershipState("loading");
     setMembershipError("");
     try {
-      const response = await authenticatedFetch(`${apiUrl}/groups/${groupId}/members`);
-      if (!response.ok) {
-        throw new Error(
-          parseErrorMessage(await readErrorBody(response), "Não foi possível carregar os membros."),
-        );
-      }
-
-      const result = (await response.json()) as GroupMembership[];
+      const result = await getGroupMembers(apiUrl, groupId);
       setMemberships(result);
       setMembershipState(result.length ? "ready" : "empty");
     } catch (error) {
@@ -347,17 +316,7 @@ export default function App() {
 
   async function loadCandidates(groupId: string) {
     try {
-      const response = await authenticatedFetch(`${apiUrl}/groups/${groupId}/candidates`);
-      if (!response.ok) {
-        throw new Error(
-          parseErrorMessage(
-            await readErrorBody(response),
-            "Não foi possível carregar as pessoas disponíveis.",
-          ),
-        );
-      }
-
-      const result = (await response.json()) as GroupCandidate[];
+      const result = await getGroupCandidates(apiUrl, groupId);
       setCandidates(result);
       setMemberUserId((current) =>
         result.some((candidate) => candidate.id === current) ? current : (result[0]?.id ?? ""),
@@ -383,27 +342,17 @@ export default function App() {
     setCreatingUser(true);
 
     try {
-      const response = await authenticatedFetch(`${apiUrl}/users`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, superAdmin }),
-      });
-
-      if (!response.ok) {
-        const message = parseErrorMessage(
-          await readErrorBody(response),
-          "Não foi possível cadastrar a pessoa.",
-        );
-        setUserFormErrors(mapUserFormError(message));
-        addNotice(message, "error");
-        return;
-      }
-
+      await createUserApi(apiUrl, { name, email, superAdmin });
       setName("");
       setEmail("");
       setSuperAdmin(false);
       addNotice("Pessoa cadastrada.", "success");
       await loadUsers();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Não foi possível cadastrar a pessoa.";
+      setUserFormErrors(mapUserFormError(message));
+      addNotice(message, "error");
     } finally {
       setCreatingUser(false);
     }
@@ -415,27 +364,18 @@ export default function App() {
     setCreatingGroup(true);
 
     try {
-      const response = await authenticatedFetch(`${apiUrl}/groups`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ institutionId: groupInstitutionId, name: groupName }),
+      const created = await createGroupApi(apiUrl, {
+        institutionId: groupInstitutionId,
+        name: groupName,
       });
-
-      if (!response.ok) {
-        const message = parseErrorMessage(
-          await readErrorBody(response),
-          "Não foi possível criar o grupo.",
-        );
-        setGroupFormErrors(mapGroupFormError(message));
-        addNotice(message, "error");
-        return;
-      }
-
-      const created = (await response.json()) as GroupSummary;
       setGroupName("");
       setSelectedGroupId(created.id);
       addNotice("Grupo criado.", "success");
       await loadGroups();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Não foi possível criar o grupo.";
+      setGroupFormErrors(mapGroupFormError(message));
+      addNotice(message, "error");
     } finally {
       setCreatingGroup(false);
     }
@@ -449,24 +389,17 @@ export default function App() {
     setAddingMember(true);
 
     try {
-      const response = await authenticatedFetch(`${apiUrl}/groups/${selectedGroupId}/members`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: memberUserId, role: memberRole }),
+      await addGroupMember(apiUrl, selectedGroupId, {
+        userId: memberUserId,
+        role: memberRole,
       });
-
-      if (!response.ok) {
-        const message = parseErrorMessage(
-          await readErrorBody(response),
-          "Não foi possível adicionar o membro.",
-        );
-        setMemberFormErrors(mapMemberFormError(message));
-        addNotice(message, "error");
-        return;
-      }
-
       addNotice("Membro adicionado.", "success");
       await refreshGroupDetails(selectedGroupId);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Não foi possível adicionar o membro.";
+      setMemberFormErrors(mapMemberFormError(message));
+      addNotice(message, "error");
     } finally {
       setAddingMember(false);
     }
@@ -477,21 +410,7 @@ export default function App() {
 
     setPendingMembershipIds((current) => [...current, userId]);
     try {
-      const response = await authenticatedFetch(
-        `${apiUrl}/groups/${selectedGroupId}/members/${userId}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ role }),
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          parseErrorMessage(await readErrorBody(response), "Não foi possível atualizar o papel."),
-        );
-      }
-
+      await updateGroupMemberRole(apiUrl, selectedGroupId, userId, role);
       addNotice("Papel atualizado.", "success");
       await refreshGroupDetails(selectedGroupId);
     } catch (error) {
@@ -513,20 +432,7 @@ export default function App() {
         setConfirmBusy(true);
         setPendingMembershipIds((current) => [...current, membership.userId]);
         try {
-          const response = await authenticatedFetch(
-            `${apiUrl}/groups/${selectedGroupId}/members/${membership.userId}`,
-            { method: "DELETE" },
-          );
-
-          if (!response.ok) {
-            throw new Error(
-              parseErrorMessage(
-                await readErrorBody(response),
-                "Não foi possível remover o membro.",
-              ),
-            );
-          }
-
+          await removeGroupMember(apiUrl, selectedGroupId, membership.userId);
           addNotice("Membro removido.", "success");
           setConfirmDialog(null);
           await refreshGroupDetails(selectedGroupId);
@@ -553,21 +459,7 @@ export default function App() {
         setConfirmBusy(true);
         setPendingUserIds((current) => [...current, user.id]);
         try {
-          const response = await authenticatedFetch(`${apiUrl}/users/${user.id}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status: nextStatus }),
-          });
-
-          if (!response.ok) {
-            throw new Error(
-              parseErrorMessage(
-                await readErrorBody(response),
-                "Não foi possível atualizar o status.",
-              ),
-            );
-          }
-
+          await updateUserStatus(apiUrl, user.id, nextStatus);
           addNotice(`Status alterado para ${nextStatusLabel.toLowerCase()}.`, "success");
           setConfirmDialog(null);
           await loadUsers();

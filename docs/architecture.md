@@ -2,7 +2,7 @@
 
 Diagrams for the micro-frontend platform in this repository. The Go API, its data model and its API contract are documented in [`secretaria-backend`](https://github.com/fidelis27/secretaria-backend/blob/main/docs/architecture.md); this page treats it as an external system.
 
-Contents: [1. System context](#1-system-context) · [2. Runtime composition](#2-runtime-composition-in-the-browser) · [3. Communication layers](#3-communication-layers) · [4. Main flow](#4-main-flow-create-a-student) · [5. Event contract](#5-event-contract-frontend-vs-backend) · [6. Deployment](#6-deployment-topology) · [7. Known gaps](#7-known-gaps)
+Contents: [1. System context](#1-system-context) · [2. Runtime composition](#2-runtime-composition-in-the-browser) · [3. Communication layers](#3-communication-layers) · [4. Main flow](#4-main-flow-create-a-student) · [5. Event contract](#5-event-contract-frontend-vs-backend) · [6. Deployment](#6-deployment-topology) · [7. Current runtime behavior](#7-current-runtime-behavior)
 
 ---
 
@@ -54,16 +54,19 @@ flowchart TB
         dash["mfe-dashboard<br/>/dashboard"]
     end
 
+    featureApi["Per-MFE feature API modules<br/>Zod response validation"]
+
     subgraph shared["@mfe/shared (singleton)"]
         contract["Typed event contract"]
         bus["In-page bus<br/>globalThis.__mfeBus"]
+        requestApi["Typed request helpers"]
         authlib["Auth + authenticatedFetch"]
         tokens["Design tokens"]
     end
 
     boundary -- "remoteEntry.js<br/>URL from VITE_MFE_*_URL" --> remotes
     host --> shared
-    remotes --> shared
+    remotes --> featureApi --> requestApi --> authlib
 ```
 
 If one remote is down, only its `RemoteBoundary` shows "module unavailable"; the shell and the other remotes keep working.
@@ -72,7 +75,7 @@ If one remote is down, only its `RemoteBoundary` shows "module unavailable"; the
 
 ## 3. Communication layers
 
-Two layers, each with one job.
+Backend events use two communication layers, each with one job.
 
 ```mermaid
 flowchart LR
@@ -80,6 +83,7 @@ flowchart LR
 
     subgraph page["Browser page"]
         hostws["Host WebSocket"]
+        studentws["mfe-student WebSocket"]
         pagebus["__mfeBus (in-page)"]
         a["mfe-activity"]
         d["mfe-dashboard"]
@@ -87,11 +91,13 @@ flowchart LR
         hostws -- "dispatch('domain', type, payload)" --> pagebus
         pagebus -- "domain:* (fan-out)" --> a
         pagebus -- "domain:* (fan-out)" --> d
+        studentws -- "STUDENT_CREATED" --> s
         s -- "evt:navigate" --> pagebus
         pagebus -- "cmd:navigate / evt:navigate" --> hostws
     end
 
     api -- "domain events" --> hostws
+    api -- "STUDENT_CREATED" --> studentws
 ```
 
 | Layer                                | Scope                            | Channels                                                                          | Use                                            |
@@ -100,6 +106,8 @@ flowchart LR
 | In-page bus                          | Same page only                   | `cmd:*` host to MFE, `evt:*` MFE to host, `domain:*` re-dispatched backend events | Navigation, modal close, connection status     |
 
 Bus delivery rules: no listener means a per-channel queue (100 items, TTL 10 s by default); once a listener exists, delivery is fan-out. Details in [`event-bus.md`](event-bus.md).
+
+HTTP requests follow a separate path: component → feature API (`src/features/<feature>/api/`) → shared request helper → `authenticatedFetch` → backend. Feature APIs validate JSON responses with Zod schemas and report typed `ApiError`s containing the HTTP status and backend error when available. The shared helper maps common authorization, missing-resource, rate-limit and server failures to user-friendly messages; cancelled requests remain abort errors.
 
 ---
 
@@ -139,7 +147,7 @@ sequenceDiagram
     end
 ```
 
-The student list depends on the event, not on the `201`. The backend publishes the event on a best-effort basis, so if it is lost the new student only shows up after the list is reloaded (on mount or with the reload button). Activity loads `/events/history` on mount for the same reason.
+The student list depends on the event, not on the `201`. The backend publishes the event on a best-effort basis, so if it is lost the new student only shows up after the next page load. Activity loads `/events/history` on mount.
 
 ---
 
@@ -205,13 +213,12 @@ Each package builds and deploys on its own. The host only knows remote origins t
 
 ---
 
-## 7. Known gaps
+## 7. Current runtime behavior
 
-- **Event contract drift** (section 5): four declared types are never emitted, and four emitted types are not declared.
-- **`mfe-student` opens its own WebSocket** even when hosted, unlike `mfe-activity` and `mfe-dashboard`, which only do so when the host is not ready. It needs it because its list is updated from `STUDENT_CREATED`, not from the `201`. This contradicts section 3 and the "one socket" rule; the fix is to add the created student from the response (or listen on the in-page bus) and drop the extra socket.
-- **A lost event leaves the student list stale** (section 4), since the list is not refreshed after a successful create.
-- **The frontend never sends `x-correlation-id`.** The backend generates one per event, so the correlation between "operation started" and "operation succeeded" described in `context.md` (decision 17) is not implemented.
-- **Activity re-wraps live events** with a locally generated `eventId`, `source: "host-bus"` and `correlationId: "local-bus"`, so the real ids are lost and the same event loaded from history and received live can show twice.
-- **Dashboard refetches three endpoints on every event** and ignores the payload. Fine for a prototype; see `performance-improvement-plan.md` before changing it.
-- **Docs disagree on who can create students.** `context.md` says members may create students; the backend only allows admins of the institution (and superadmins).
-- **Event delivery is best effort end to end.** There is no replay on reconnect other than the history call Activity makes on mount.
+- The host maintains one WebSocket for domain events. `mfe-student` also opens a WebSocket and inserts `STUDENT_CREATED` events into its list. `mfe-activity` and `mfe-dashboard` open a fallback WebSocket only when the host is unavailable.
+- A successful student create does not add the row from the HTTP response or trigger a list refresh. The list updates when `STUDENT_CREATED` arrives; otherwise it updates on the next page load.
+- `mfe-activity` loads event history on mount. Live events received over the in-page bus are represented with local event metadata.
+- `mfe-dashboard` reloads institutions, students and enrollments after each supported domain event.
+- Event delivery is best effort; reconnecting does not replay missed events.
+- The frontend does not send `x-correlation-id` with HTTP requests.
+- Backend authorization and emitted event behavior are authoritative; the event contract comparison in section 5 shows the frontend declarations and current backend emissions.

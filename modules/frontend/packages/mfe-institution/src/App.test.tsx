@@ -27,7 +27,9 @@ describe("Institution states and accessibility", () => {
     mockFetch({}, false);
     render(<App />);
     await waitFor(() =>
-      expect(screen.getAllByText("Não foi possível carregar as instituições.")).not.toHaveLength(0),
+      expect(
+        screen.getAllByText("O serviço está temporariamente indisponível. Tente novamente."),
+      ).not.toHaveLength(0),
     );
     expect(screen.getByRole("button", { name: "Tentar novamente" })).toBeInTheDocument();
   });
