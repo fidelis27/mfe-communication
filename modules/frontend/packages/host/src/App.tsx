@@ -1,115 +1,20 @@
-import {
-  default as React,
-  Component,
-  ErrorInfo,
-  FormEvent,
-  lazy,
-  MouseEvent,
-  ReactNode,
-  Suspense,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-import {
-  type EventPayloadMap,
-  captureHostError,
-  initializeAuth,
-  login,
-  logout,
-  subscribeToAuthState,
-  useDispatch,
-  useDomainEvents,
-  useListen,
-} from "@mfe/shared";
-import { loadRemote } from "./remoteLoadingMetrics";
+import { default as React, FormEvent, MouseEvent, useEffect, useRef, useState } from "react";
+import { type EventPayloadMap, useDispatch, useDomainEvents, useListen } from "@mfe/shared";
+import { getUnpublishedEvents } from "./features/domain-events/publishedEvents";
+import { useHostAuth } from "./features/auth/hooks/useHostAuth";
+import { moduleFromPath, moduleLabel } from "./features/navigation/modules";
+import { ModuleNavigation } from "./features/navigation/components/ModuleNavigation";
+import { RemoteBoundary } from "./features/remotes/components/RemoteBoundary";
+import { RemoteContent } from "./features/remotes/components/RemoteContent";
 import "./App.css";
 
-const StudentApp = lazy(() => loadRemote("student", () => import("mfe_student/App")));
-const ActivityApp = lazy(() => loadRemote("activity", () => import("mfe_activity/App")));
-const InstitutionApp = lazy(() => loadRemote("institution", () => import("mfe_institution/App")));
-const DashboardApp = lazy(() => loadRemote("dashboard", () => import("mfe_dashboard/App")));
-const AdminApp = lazy(() => loadRemote("admin", () => import("mfe_admin/App")));
-
-const modules = [
-  { id: "student", path: "/estudantes", label: "Estudantes", detail: "Cadastros e vínculos" },
-  { id: "institution", path: "/instituicoes", label: "Instituições", detail: "Unidades e escopos" },
-  { id: "activity", path: "/atividade", label: "Atividade", detail: "Eventos do sistema" },
-  { id: "dashboard", path: "/dashboard", label: "Dashboard", detail: "Indicadores" },
-  { id: "admin", path: "/admin", label: "Admin", detail: "Pessoas e grupos" },
-];
-
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? "";
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? "";
 
 type HostDomainEvent = {
   [K in keyof EventPayloadMap]: { type: K; payload: EventPayloadMap[K]; eventId: string };
 }[keyof EventPayloadMap];
-
-function moduleFromPath(pathname: string) {
-  return modules.find((module) => module.path === pathname)?.id ?? "preparing";
-}
-
-function moduleLabel(moduleId: string) {
-  return modules.find((module) => module.id === moduleId)?.label ?? "Módulo em preparação";
-}
-
-type RemoteBoundaryProps = { moduleName: string; children: ReactNode };
-type RemoteBoundaryState = { hasError: boolean };
-
-function RemoteSkeleton({ label }: { label: string }) {
-  return (
-    <section className="remote-state remote-skeleton" aria-live="polite" aria-busy="true">
-      <p className="eyebrow">Carregando módulo</p>
-      <div className="skeleton-line skeleton-title" />
-      <div className="skeleton-line skeleton-copy" />
-      <div className="skeleton-line skeleton-copy short" />
-      <div className="skeleton-card-grid" aria-hidden="true">
-        <div className="skeleton-card" />
-        <div className="skeleton-card" />
-      </div>
-      <span className="sr-only">{label}</span>
-    </section>
-  );
-}
-
-class RemoteBoundary extends Component<RemoteBoundaryProps, RemoteBoundaryState> {
-  state: RemoteBoundaryState = { hasError: false };
-
-  static getDerivedStateFromError(): RemoteBoundaryState {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error("Remote failed to load", { error, componentStack: info.componentStack });
-    captureHostError(error, {
-      moduleName: this.props.moduleName,
-      componentStack: info.componentStack ?? undefined,
-    });
-  }
-
-  retry = () => {
-    this.setState({ hasError: false });
-  };
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <section className="remote-state remote-error" role="alert">
-          <p className="eyebrow">Módulo indisponível</p>
-          <h1>{this.props.moduleName}</h1>
-          <p>Não foi possível carregar este módulo agora.</p>
-          <button type="button" onClick={this.retry}>
-            Tentar novamente
-          </button>
-        </section>
-      );
-    }
-    return this.props.children;
-  }
-}
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? "";
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? "";
 
 export default function App() {
   const [activeModule, setActiveModule] = useState(() =>
@@ -117,12 +22,17 @@ export default function App() {
   );
   const [navigationOpen, setNavigationOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
-  const [authReady, setAuthReady] = useState(false);
-  const [authenticated, setAuthenticated] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [authError, setAuthError] = useState("");
-  const [signingIn, setSigningIn] = useState(false);
+  const {
+    configured,
+    authReady,
+    authenticated,
+    authError,
+    signingIn,
+    signIn: authenticate,
+    signOut: endSession,
+  } = useHostAuth(supabaseUrl, supabaseAnonKey);
   const dispatchDomain = useDispatch("domain");
   const dispatchHost = useDispatch("host");
   const { events: domainEvents, connection: domainConnection } = useDomainEvents(apiUrl);
@@ -148,9 +58,10 @@ export default function App() {
   }, [dispatchDomain, domainConnection]);
 
   useEffect(() => {
-    for (const event of domainEvents as HostDomainEvent[]) {
-      if (publishedEventIds.current.has(event.eventId)) continue;
-      publishedEventIds.current.add(event.eventId);
+    for (const event of getUnpublishedEvents(
+      domainEvents as HostDomainEvent[],
+      publishedEventIds.current,
+    )) {
       dispatchDomain("domain:event", event);
       dispatchDomain(event.type, event.payload);
     }
@@ -167,32 +78,6 @@ export default function App() {
   useListen("mfe_dashboard", "evt:navigate", ({ path }) => {
     if (path) navigateToPath(path);
   });
-
-  useEffect(() => {
-    if (!supabaseUrl || !supabaseAnonKey) {
-      setAuthReady(true);
-      return;
-    }
-
-    let active = true;
-    let unsubscribe = () => {};
-    void initializeAuth({ url: supabaseUrl, anonKey: supabaseAnonKey })
-      .then((hasSession) => {
-        if (!active) return;
-        setAuthenticated(hasSession);
-        setAuthReady(true);
-        unsubscribe = subscribeToAuthState(setAuthenticated);
-      })
-      .catch((error: unknown) => {
-        if (!active) return;
-        setAuthError(error instanceof Error ? error.message : "Não foi possível iniciar a sessão.");
-        setAuthReady(true);
-      });
-    return () => {
-      active = false;
-      unsubscribe();
-    };
-  }, []);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -298,72 +183,13 @@ export default function App() {
 
   async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setAuthError("");
-    setSigningIn(true);
-    try {
-      await login(email, password);
-      setAuthenticated(true);
-      setPassword("");
-    } catch (error) {
-      setAuthError(error instanceof Error ? error.message : "Não foi possível entrar.");
-    } finally {
-      setSigningIn(false);
-    }
+    if (await authenticate(email, password)) setPassword("");
   }
 
   async function signOut() {
     accountWasOpen.current = false;
     setAccountMenuOpen(false);
-    setAuthError("");
-    try {
-      await logout();
-      setAuthenticated(false);
-    } catch (error) {
-      setAuthError(error instanceof Error ? error.message : "Não foi possível encerrar a sessão.");
-    }
-  }
-
-  function renderActiveModule() {
-    switch (activeModule) {
-      case "student":
-        return (
-          <Suspense fallback={<RemoteSkeleton label="Carregando módulo de estudantes" />}>
-            <StudentApp />
-          </Suspense>
-        );
-      case "activity":
-        return (
-          <Suspense fallback={<RemoteSkeleton label="Carregando atividade" />}>
-            <ActivityApp />
-          </Suspense>
-        );
-      case "institution":
-        return (
-          <Suspense fallback={<RemoteSkeleton label="Carregando módulo de instituições" />}>
-            <InstitutionApp />
-          </Suspense>
-        );
-      case "dashboard":
-        return (
-          <Suspense fallback={<RemoteSkeleton label="Carregando dashboard" />}>
-            <DashboardApp />
-          </Suspense>
-        );
-      case "admin":
-        return (
-          <Suspense fallback={<RemoteSkeleton label="Carregando administração" />}>
-            <AdminApp />
-          </Suspense>
-        );
-      default:
-        return (
-          <section className="remote-state">
-            <p className="eyebrow">Módulo em preparação</p>
-            <h1>{moduleLabel(activeModule)}</h1>
-            <p>A estrutura está pronta para receber o próximo remote.</p>
-          </section>
-        );
-    }
+    await endSession();
   }
 
   if (!authReady) {
@@ -375,7 +201,7 @@ export default function App() {
     );
   }
 
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!configured) {
     return (
       <main className="remote-state" role="alert">
         <p className="eyebrow">Secretaria escolar</p>
@@ -426,55 +252,13 @@ export default function App() {
       <a className="skip-link" href="#module-content">
         Ir para o conteúdo
       </a>
-      {navigationOpen && (
-        <button
-          aria-label="Fechar navegação"
-          className="navigation-backdrop"
-          onClick={() => setNavigationOpen(false)}
-          type="button"
-        />
-      )}
-      <aside
-        aria-label="Navegação principal"
-        className={navigationOpen ? "host-sidebar navigation-open" : "host-sidebar"}
-        id="module-navigation"
-      >
-        <div className="brand">
-          <span>SE</span>
-          <div>
-            Secretaria
-            <br />
-            <b>Escolar</b>
-          </div>
-        </div>
-        <p className="sidebar-label">Módulos</p>
-        <div className="host-nav-wrap">
-          <nav aria-label="Módulos da secretaria">
-            {modules.map((module, index) => (
-              <a
-                className={activeModule === module.id ? "nav-item active" : "nav-item"}
-                key={module.id}
-                href={module.path}
-                onClick={(event) => handleNavigationClick(event, module.id, module.path)}
-                aria-current={activeModule === module.id ? "page" : undefined}
-                ref={index === 0 ? firstNavigationLinkRef : undefined}
-              >
-                <span className="nav-copy">
-                  <b>{module.label}</b>
-                  <small>{module.detail}</small>
-                </span>
-              </a>
-            ))}
-          </nav>
-        </div>
-        {import.meta.env.DEV && (
-          <div className="sidebar-footer">
-            <span className="online-dot" /> Ambiente local
-            <br />
-            <small>API + WebSocket</small>
-          </div>
-        )}
-      </aside>
+      <ModuleNavigation
+        activeModule={activeModule}
+        navigationOpen={navigationOpen}
+        onNavigate={handleNavigationClick}
+        onCloseNavigation={() => setNavigationOpen(false)}
+        firstLinkRef={firstNavigationLinkRef}
+      />
       <main className="host-main" id="module-content" ref={mainRef} tabIndex={-1}>
         <header className="topbar">
           <div className="topbar-start">
@@ -530,7 +314,7 @@ export default function App() {
           </div>
         </header>
         <RemoteBoundary key={activeModule} moduleName={moduleLabel(activeModule)}>
-          {renderActiveModule()}
+          <RemoteContent activeModule={activeModule} moduleLabel={moduleLabel} />
         </RemoteBoundary>
       </main>
     </div>
