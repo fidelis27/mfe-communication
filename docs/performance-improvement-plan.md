@@ -83,6 +83,9 @@ depois e sem agrupar melhorias de naturezas diferentes.
 
 ### PERF-007 - Confirmar duplicacao de runtime
 
+- Status: analise concluida; nao ha evidencia suficiente para alterar a
+  configuracao do Federation. Resultados em
+  [`PERF-007-federation-runtime-analysis.md`](./performance-tasks/PERF-007-federation-runtime-analysis.md).
 - Branch: `perf/federation-runtime-analysis`
 - Escopo: React, React DOM, runtime Federation e chunks comuns.
 - Primeiro passo: medir Network e Coverage em producao/Preview.
