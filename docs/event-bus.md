@@ -45,6 +45,19 @@ useListen("domain", "STUDENT_CREATED", (payload) => {
 
 O host abre a conexão WebSocket única e reenvia a cada `DomainEvent` para o bus usando `dispatch("domain", event.type, event.payload)`. Também publica `dispatch("domain", "domain:connection", status)` para comunicar status de conexão.
 
+## Contrato de eventos de domínio
+
+O pacote `@mfe/shared` mantém os schemas Zod e os tipos inferidos em
+`modules/frontend/packages/shared/src/events.ts`. A fronteira WebSocket valida
+envelope e payload antes de publicar o evento no bus; o envelope inclui
+`eventId`, `type`, `version`, `source`, `correlationId`, `occurredAt` e,
+quando aplicável, `institutionIds`.
+
+Eventos malformados, versões não suportadas e `eventId`s repetidos não são
+publicados. Um JSON malformado é reportado, mas não encerra a conexão
+WebSocket. Os schemas incluem os eventos de instituição, estudante, matrícula,
+usuário e associação de grupo emitidos pelo backend.
+
 ## Fallback standalone
 
 Se o host não estiver pronto, cada MFE pode abrir sua própria conexão de fallback usando `useDomainEvents` apenas para o ambiente local isolado.
