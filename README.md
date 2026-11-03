@@ -33,12 +33,12 @@ Browser
 - **Runtime composition.** Module Federation (`@originjs/vite-plugin-federation`). React, React DOM and `@mfe/shared` are singletons, so every remote shares one session and one event bus. Remote URLs come from `VITE_MFE_*_URL` variables, with local fallbacks for development.
 - **Independent builds and deploys.** Each package has its own Vite build and its own Vercel project.
 - **Two communication layers, each with one job.**
-  - *In-page bus* (`globalThis.__mfeBus`): local coordination between MFEs on the same page. Channels are namespaced `cmd:*` (host to MFE), `evt:*` (MFE to host) and `domain:*`. If nobody is listening, events wait in a per-channel queue (100 items, TTL, default 10 s); once a listener exists, delivery is fan-out.
-  - *Backend domain events over WebSocket*: the host owns a single connection and re-dispatches each event to the bus, so remotes never open their own sockets.
+  - _In-page bus_ (`globalThis.__mfeBus`): local coordination between MFEs on the same page. Channels are namespaced `cmd:*` (host to MFE), `evt:*` (MFE to host) and `domain:*`. If nobody is listening, events wait in a per-channel queue (100 items, TTL, default 10 s); once a listener exists, delivery is fan-out.
+  - _Backend domain events over WebSocket_: the host owns a single connection and re-dispatches each event to the bus, so remotes never open their own sockets.
 - **Versioned event contract.** Every event carries `eventId`, `type`, `version`, `source`, `correlationId`, `occurredAt` and `payload`. Types are a discriminated union in `@mfe/shared`, and the `useDomainEvents` hook handles authenticated connection, reconnect with backoff, cleanup and typed parsing.
 - **Failure isolation.** Remotes are loaded with `lazy` + `Suspense`, and the host wraps them in an error boundary, so one remote being down does not take the shell with it.
 - **Accessibility as a gate.** Skip link, labelled fields, `aria-live` / `aria-busy` on async regions, `jest-axe` tests per MFE, and a color-contrast check that runs in CI.
-- **Performance by evidence.** The plan in [`docs/performance-improvement-plan.md`](docs/performance-improvement-plan.md) follows one rule: measure, change the smallest thing, measure again. It also lists what *not* to optimize (no blanket memoization, no preloading every MFE).
+- **Performance by evidence.** The plan in [`docs/performance-improvement-plan.md`](docs/performance-improvement-plan.md) follows one rule: measure, change the smallest thing, measure again. It also lists what _not_ to optimize (no blanket memoization, no preloading every MFE).
 
 ## Repository layout
 
@@ -70,11 +70,11 @@ npm run dev:local     # PowerShell launcher (Windows): starts the host and the r
 
 Build-time variables:
 
-| Variable | Purpose |
-| --- | --- |
-| `VITE_API_URL` | Backend base URL (HTTP and WebSocket) |
+| Variable                                      | Purpose                                                   |
+| --------------------------------------------- | --------------------------------------------------------- |
+| `VITE_API_URL`                                | Backend base URL (HTTP and WebSocket)                     |
 | `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | Supabase Auth (anon key only; never the service role key) |
-| `VITE_MFE_*_URL` | Remote entry origins used by the host |
+| `VITE_MFE_*_URL`                              | Remote entry origins used by the host                     |
 
 Details: [`docs/local-development.md`](docs/local-development.md) and [`docs/deployment.md`](docs/deployment.md).
 
@@ -90,13 +90,13 @@ CI runs on every PR and a final **CI gate** job fails if any required job fails:
 
 ## Documentation
 
-| Doc | What it covers |
-| --- | --- |
-| [`mfe-architecture.md`](docs/mfe-architecture.md) | MFE boundaries, federation, deploy model |
-| [`event-bus.md`](docs/event-bus.md) | Channels, queue, TTL, host WebSocket flow |
-| [`spec-functional.md`](docs/spec-functional.md), [`spec-technical.md`](docs/spec-technical.md) | Product and technical specs |
-| [`performance-improvement-plan.md`](docs/performance-improvement-plan.md) | Evidence-first performance tasks |
-| [`project-zero-learnings.md`](docs/project-zero-learnings.md) | Checklist distilled from building this project |
+| Doc                                                                                            | What it covers                                 |
+| ---------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| [`mfe-architecture.md`](docs/mfe-architecture.md)                                              | MFE boundaries, federation, deploy model       |
+| [`event-bus.md`](docs/event-bus.md)                                                            | Channels, queue, TTL, host WebSocket flow      |
+| [`spec-functional.md`](docs/spec-functional.md), [`spec-technical.md`](docs/spec-technical.md) | Product and technical specs                    |
+| [`performance-improvement-plan.md`](docs/performance-improvement-plan.md)                      | Evidence-first performance tasks               |
+| [`project-zero-learnings.md`](docs/project-zero-learnings.md)                                  | Checklist distilled from building this project |
 
 ## How it was built
 
