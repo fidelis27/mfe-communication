@@ -1,79 +1,57 @@
-import { useCallback, useEffect, useState } from "react";
-import { useDomainEvents, useHostReady, useListen } from "@mfe/shared";
-import { getDashboardData, type DashboardData } from "./features/dashboard/api";
+import { useEffect, useRef } from "react";
+import { useDomainEventSync, useDomainEvents, useHostReady } from "@mfe/shared";
+import { useQueryClient } from "@tanstack/react-query";
+import { type DashboardData } from "./features/dashboard/api";
+import { dashboardQueryKeys, useDashboardData } from "./features/dashboard/hooks";
 import "./App.css";
 
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
 
 export default function App() {
-  const [data, setData] = useState<DashboardData>({
+  const emptyData: DashboardData = {
     institutions: [],
     students: [],
     enrollments: [],
-  });
-  const [state, setState] = useState<"loading" | "success" | "error">("loading");
-  const [errorMessage, setErrorMessage] = useState("");
-  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+  };
   const hostReady = useHostReady();
   const fallback = useDomainEvents(hostReady ? "" : apiUrl);
-  const [connection, setConnection] = useState<"connecting" | "connected" | "offline">(
-    "connecting",
-  );
+  const queryClient = useQueryClient();
+  const dashboardQuery = useDashboardData(apiUrl);
+  const data = dashboardQuery.data ?? emptyData;
+  const state = dashboardQuery.isFetching
+    ? "loading"
+    : dashboardQuery.isError
+      ? "error"
+      : "success";
+  const refreshTimer = useRef<number | undefined>(undefined);
 
-  useListen("domain", "domain:connection", (status) => {
-    if (status === "connecting" || status === "connected" || status === "offline") {
-      setConnection(status);
-    }
-  });
-
-  useListen("domain", "STUDENT_CREATED", () => {
-    void load();
-  });
-  useListen("domain", "STUDENT_UPDATED", () => {
-    void load();
-  });
-  useListen("domain", "INSTITUTION_CREATED", () => {
-    void load();
-  });
-  useListen("domain", "INSTITUTION_UPDATED", () => {
-    void load();
-  });
-  useListen("domain", "INSTITUTION_INACTIVATED", () => {
-    void load();
-  });
-  useListen("domain", "STUDENT_TRANSFERRED", () => {
-    void load();
-  });
-  useListen("domain", "ENROLLMENT_SUSPENDED", () => {
-    void load();
-  });
-  useListen("domain", "ENROLLMENT_REOPENED", () => {
-    void load();
-  });
-
-  const load = useCallback(async () => {
-    setState("loading");
-    setErrorMessage("");
-    try {
-      setData(await getDashboardData(apiUrl));
-      setUpdatedAt(new Date());
-      setState("success");
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Erro inesperado.");
-      setState("error");
-    }
+  useEffect(() => {
+    return () => {
+      if (refreshTimer.current !== undefined) window.clearTimeout(refreshTimer.current);
+    };
   }, []);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  useDomainEventSync(fallback.events, (event) => {
+    if (
+      event.type !== "STUDENT_CREATED" &&
+      event.type !== "STUDENT_UPDATED" &&
+      event.type !== "INSTITUTION_CREATED" &&
+      event.type !== "INSTITUTION_UPDATED" &&
+      event.type !== "INSTITUTION_INACTIVATED" &&
+      event.type !== "STUDENT_TRANSFERRED" &&
+      event.type !== "ENROLLMENT_SUSPENDED" &&
+      event.type !== "ENROLLMENT_REOPENED" &&
+      event.type !== "ENROLLMENT_CREATED"
+    ) {
+      return;
+    }
 
-  useEffect(() => {
-    if (hostReady) return;
-    if (fallback.events.length === 0) return;
-    setConnection(fallback.connection);
-    void load();
-  }, [fallback.connection, fallback.events.length, hostReady, load]);
+    if (refreshTimer.current !== undefined) window.clearTimeout(refreshTimer.current);
+    refreshTimer.current = window.setTimeout(() => {
+      void queryClient.invalidateQueries({ queryKey: dashboardQueryKeys.data(apiUrl) });
+      refreshTimer.current = undefined;
+    }, 100);
+  });
 
   const activeEnrollments = data.enrollments.filter(
     (enrollment) => enrollment.status === "active",
@@ -95,13 +73,13 @@ export default function App() {
         <span className={`sync ${state}`}>
           <i />{" "}
           {state === "success"
-            ? `${connection === "connected" ? "Tempo real" : "Reconectando"} · atualizado ${updatedAt?.toLocaleTimeString("pt-BR")}`
+            ? `${fallback.connection === "connected" ? "Tempo real" : "Reconectando"} · atualizado ${new Date(dashboardQuery.dataUpdatedAt).toLocaleTimeString("pt-BR")}`
             : state === "loading"
               ? "Carregando"
               : "Falha ao atualizar"}
         </span>
       </section>
-      <section className="metrics" aria-live="polite" aria-busy={state === "loading"}>
+      <section className="metrics" aria-live="polite" aria-busy={dashboardQuery.isFetching}>
         <article className="metric metric-large">
           <span>Instituições ativas</span>
           <strong>
@@ -129,11 +107,15 @@ export default function App() {
         <div className="note-mark">↗</div>
         <div>
           {state === "loading" && <p>Carregando indicadores autorizados...</p>}
-          {state === "error" && (
+          {dashboardQuery.isError && (
             <>
               <h2>Não foi possível atualizar</h2>
-              <p>{errorMessage}</p>
-              <button type="button" onClick={() => void load()}>
+              <p>
+                {dashboardQuery.error instanceof Error
+                  ? dashboardQuery.error.message
+                  : "Erro inesperado."}
+              </p>
+              <button type="button" onClick={() => void dashboardQuery.refetch()}>
                 Tentar novamente
               </button>
             </>
