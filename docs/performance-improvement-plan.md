@@ -74,6 +74,8 @@ depois e sem agrupar melhorias de naturezas diferentes.
 
 ### PERF-006 - Instrumentar carregamento dos remotes
 
+- Status: instrumentacao implementada e validada; detalhes em
+  [`PERF-006-remote-loading-metrics.md`](./performance-tasks/PERF-006-remote-loading-metrics.md).
 - Branch: `perf/remote-loading-metrics`
 - Escopo: Host e Module Federation.
 - Medir inicio, fim, erro e duracao do carregamento de cada remote.
