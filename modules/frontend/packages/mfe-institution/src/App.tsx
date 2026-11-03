@@ -1,49 +1,55 @@
-import { FormEvent, useCallback, useEffect, useState } from "react";
-import { type Institution } from "@mfe/shared";
+import { FormEvent, useState } from "react";
+import { useDomainEventSync, useDomainEvents, useHostReady } from "@mfe/shared";
+import { useQueryClient } from "@tanstack/react-query";
 import {
-  createInstitution as createInstitutionApi,
-  getInstitutions,
-} from "./features/institution/api";
+  institutionQueryKeys,
+  useCreateInstitution,
+  useInstitutions,
+} from "./features/institution/hooks";
 import "./App.css";
 
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
 
 export default function App() {
-  const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [name, setName] = useState("");
   const [cnpj, setCnpj] = useState("");
-  const [state, setState] = useState<"loading" | "empty" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
+  const queryClient = useQueryClient();
+  const hostReady = useHostReady();
+  const { events } = useDomainEvents(hostReady ? "" : apiUrl);
+  const institutionsQuery = useInstitutions(apiUrl);
+  const createInstitutionMutation = useCreateInstitution(apiUrl);
+  const institutions = institutionsQuery.data ?? [];
+  const state = institutionsQuery.isFetching
+    ? "loading"
+    : institutionsQuery.isError
+      ? "error"
+      : institutions.length
+        ? "success"
+        : "empty";
 
-  const loadInstitutions = useCallback(async () => {
-    setState("loading");
-    setMessage("");
-    try {
-      const result = await getInstitutions(apiUrl);
-      setInstitutions(result);
-      setState(result.length ? "success" : "empty");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Erro inesperado.");
-      setState("error");
+  useDomainEventSync(events, (event) => {
+    if (
+      event.type === "INSTITUTION_CREATED" ||
+      event.type === "INSTITUTION_UPDATED" ||
+      event.type === "INSTITUTION_INACTIVATED"
+    ) {
+      void queryClient.invalidateQueries({
+        queryKey: institutionQueryKeys.institutions(apiUrl),
+      });
     }
-  }, []);
-
-  useEffect(() => {
-    void loadInstitutions();
-  }, [loadInstitutions]);
+  });
 
   async function createInstitution(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
     try {
-      await createInstitutionApi(apiUrl, { name, cnpj });
+      await createInstitutionMutation.mutateAsync({ name, cnpj });
       setName("");
       setCnpj("");
       setMessage("Instituição cadastrada.");
-      await loadInstitutions();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Erro inesperado.");
-      setState("error");
     }
   }
 
@@ -79,22 +85,34 @@ export default function App() {
               placeholder="00.000.000/0000-00"
             />
           </label>
-          <button type="submit">
-            Adicionar instituição <b>→</b>
+          <button type="submit" disabled={createInstitutionMutation.isPending}>
+            {createInstitutionMutation.isPending ? "Salvando..." : "Adicionar instituição"} <b>→</b>
           </button>
-          {message && <p className={state === "error" ? "message error" : "message"}>{message}</p>}
+          {message && (
+            <p className={createInstitutionMutation.isError ? "message error" : "message"}>
+              {message}
+            </p>
+          )}
         </form>
-        <section className="institution-list" aria-live="polite" aria-busy={state === "loading"}>
+        <section
+          className="institution-list"
+          aria-live="polite"
+          aria-busy={institutionsQuery.isFetching}
+        >
           <div className="section-heading">
             <span>02</span>
             <h2>Instituições ativas</h2>
             <strong>{institutions.length.toString().padStart(2, "0")}</strong>
           </div>
           {state === "loading" && <p className="empty">Carregando instituições...</p>}
-          {state === "error" && (
+          {institutionsQuery.isError && (
             <div className="empty error-state">
-              <p>{message}</p>
-              <button type="button" onClick={() => void loadInstitutions()}>
+              <p>
+                {institutionsQuery.error instanceof Error
+                  ? institutionsQuery.error.message
+                  : "Erro inesperado."}
+              </p>
+              <button type="button" onClick={() => void institutionsQuery.refetch()}>
                 Tentar novamente
               </button>
             </div>
