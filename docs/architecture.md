@@ -34,7 +34,10 @@ flowchart LR
 
 ## 2. Runtime composition in the browser
 
-The host owns the shell. Remotes are separate builds, loaded lazily. React, React DOM and `@mfe/shared` are **singletons**, so every remote shares one session and one event bus.
+The host owns the shell. Remotes are separate builds, loaded lazily. React,
+React DOM, `@mfe/shared`, and `@tanstack/react-query` are federation
+**singletons**. Each remote owns a separate `QueryClient` and cache; query data
+is not shared across MFEs.
 
 ```mermaid
 flowchart TB
@@ -54,6 +57,10 @@ flowchart TB
         dash["mfe-dashboard<br/>/dashboard"]
     end
 
+    subgraph queryClients["Remote-local query state"]
+            queries["One isolated QueryClient per remote"]
+    end
+
     featureApi["Per-MFE feature API modules<br/>Zod response validation"]
 
     subgraph shared["@mfe/shared (singleton)"]
@@ -67,9 +74,11 @@ flowchart TB
     boundary -- "remoteEntry.js<br/>URL from VITE_MFE_*_URL" --> remotes
     host --> shared
     remotes --> featureApi --> requestApi --> authlib
+    remotes --> queries
 ```
 
 If one remote is down, only its `RemoteBoundary` shows "module unavailable"; the shell and the other remotes keep working.
+The per-remote cache decision is documented in [ADR-0001](./adr/0001-query-client-per-remote.md).
 
 ---
 
@@ -83,21 +92,16 @@ flowchart LR
 
     subgraph page["Browser page"]
         hostws["Host WebSocket"]
-        studentws["mfe-student WebSocket"]
         pagebus["__mfeBus (in-page)"]
-        a["mfe-activity"]
-        d["mfe-dashboard"]
-        s["mfe-student"]
-        hostws -- "dispatch('domain', type, payload)" --> pagebus
-        pagebus -- "domain:* (fan-out)" --> a
-        pagebus -- "domain:* (fan-out)" --> d
-        studentws -- "STUDENT_CREATED" --> s
-        s -- "evt:navigate" --> pagebus
+        remotes["All five remotes"]
+        hostws -- "domain:event envelope + domain:<type> payload" --> pagebus
+        pagebus -- "event envelope with eventId" --> remotes
+        remotes -- "update or invalidate cache" --> queryCache["Remote-local query caches"]
+        remotes -- "evt:navigate" --> pagebus
         pagebus -- "cmd:navigate / evt:navigate" --> hostws
     end
 
     api -- "domain events" --> hostws
-    api -- "STUDENT_CREATED" --> studentws
 ```
 
 | Layer                                | Scope                            | Channels                                                                          | Use                                            |
@@ -107,7 +111,12 @@ flowchart LR
 
 Bus delivery rules: no listener means a per-channel queue (100 items, TTL 10 s by default); once a listener exists, delivery is fan-out. Details in [`event-bus.md`](event-bus.md).
 
-HTTP requests follow a separate path: component → feature API (`src/features/<feature>/api/`) → shared request helper → `authenticatedFetch` → backend. Feature APIs validate JSON responses with Zod schemas and report typed `ApiError`s containing the HTTP status and backend error when available. The shared helper maps common authorization, missing-resource, rate-limit and server failures to user-friendly messages; cancelled requests remain abort errors.
+HTTP requests follow this path: component → feature query hook → feature API
+(`src/features/<feature>/api/`) → shared request helper →
+`authenticatedFetch` → backend. Query functions pass their `AbortSignal` to the
+API helper. Feature APIs validate JSON responses with Zod schemas and report
+typed `ApiError`s containing the HTTP status and backend error when available;
+cancelled requests remain abort errors.
 
 ---
 
@@ -132,22 +141,25 @@ sequenceDiagram
         API-->>S: error
         S->>S: show error message
     else created
-        API-->>S: 201 Created
+        API-->>S: 201 Created with student
         S->>S: show "Estudante cadastrado."
-        Note over API,S: The new row is NOT added from the 201 response
-        API-->>S: STUDENT_CREATED on mfe-student's own WebSocket
-        S->>S: insert student into its list
+        S->>S: Insert student into its query cache
         API-->>H: STUDENT_CREATED on the host WebSocket
-        H->>BUS: dispatch domain:STUDENT_CREATED
-        BUS-->>A: payload
-        A->>A: append to feed
-        BUS-->>D: payload
-        D->>API: GET /institutions, /students, /enrollments
-        D->>D: update KPIs
+        H->>BUS: dispatch domain:event envelope and domain:STUDENT_CREATED
+        BUS-->>S: envelope with eventId
+        S->>S: deduplicate and reconcile student cache
+        BUS-->>A: envelope with eventId
+        A->>A: merge event into bounded history cache
+        BUS-->>D: envelope with eventId
+        D->>D: coalesce event invalidations for 100 ms
+        D->>API: GET /institutions, /students, /enrollments in parallel
+        D->>D: update dashboard query cache and KPIs
     end
 ```
 
-The student list depends on the event, not on the `201`. The backend publishes the event on a best-effort basis, so if it is lost the new student only shows up after the next page load. Activity loads `/events/history` on mount.
+The student list is updated from the create response and reconciled with the
+domain event. Event delivery is best effort; Activity seeds its bounded cache
+from `/events/history` on mount and adds supported live events.
 
 ---
 
@@ -155,19 +167,19 @@ The student list depends on the event, not on the `201`. The backend publishes t
 
 What `@mfe/shared` declares, compared with what the backend emits today.
 
-| Event type                                             | Declared in `@mfe/shared` | Emitted by backend | Consumed by         |
-| ------------------------------------------------------ | ------------------------- | ------------------ | ------------------- |
-| `STUDENT_CREATED`                                      | yes                       | yes                | Activity, Dashboard |
-| `STUDENT_TRANSFERRED`                                  | yes                       | yes                | Activity, Dashboard |
-| `ENROLLMENT_SUSPENDED`                                 | yes                       | yes                | Activity, Dashboard |
-| `ENROLLMENT_REOPENED`                                  | yes                       | yes                | Activity, Dashboard |
-| `INSTITUTION_CREATED`                                  | yes                       | **no**             | Dashboard           |
-| `INSTITUTION_UPDATED`                                  | yes                       | **no**             | Dashboard           |
-| `INSTITUTION_INACTIVATED`                              | yes                       | **no**             | Dashboard           |
-| `STUDENT_UPDATED`                                      | yes                       | **no**             | Dashboard           |
-| `ENROLLMENT_CREATED`                                   | yes                       | yes                | nobody              |
-| `USER_UPDATED`                                         | yes                       | yes                | nobody              |
-| `GROUP_MEMBERSHIP_UPDATED`, `GROUP_MEMBERSHIP_REMOVED` | yes                       | yes                | nobody              |
+| Event type                                             | Declared in `@mfe/shared` | Emitted by backend | Consumed by                   |
+| ------------------------------------------------------ | ------------------------- | ------------------ | ----------------------------- |
+| `STUDENT_CREATED`                                      | yes                       | yes                | Student, Activity, Dashboard  |
+| `STUDENT_TRANSFERRED`                                  | yes                       | yes                | Activity, Dashboard           |
+| `ENROLLMENT_SUSPENDED`                                 | yes                       | yes                | Activity, Dashboard           |
+| `ENROLLMENT_REOPENED`                                  | yes                       | yes                | Activity, Dashboard           |
+| `INSTITUTION_CREATED`                                  | yes                       | **no**             | Institution, Admin, Dashboard |
+| `INSTITUTION_UPDATED`                                  | yes                       | **no**             | Institution, Admin, Dashboard |
+| `INSTITUTION_INACTIVATED`                              | yes                       | **no**             | Institution, Admin, Dashboard |
+| `STUDENT_UPDATED`                                      | yes                       | **no**             | Student, Dashboard            |
+| `ENROLLMENT_CREATED`                                   | yes                       | yes                | Dashboard                     |
+| `USER_UPDATED`                                         | yes                       | yes                | Admin                         |
+| `GROUP_MEMBERSHIP_UPDATED`, `GROUP_MEMBERSHIP_REMOVED` | yes                       | yes                | Admin                         |
 
 The frontend schemas match the backend envelope and payloads: institution
 scope is carried by the optional `institutionIds` envelope field, while
@@ -215,10 +227,19 @@ Each package builds and deploys on its own. The host only knows remote origins t
 
 ## 7. Current runtime behavior
 
-- The host maintains one WebSocket for domain events. `mfe-student` also opens a WebSocket and inserts `STUDENT_CREATED` events into its list. `mfe-activity` and `mfe-dashboard` open a fallback WebSocket only when the host is unavailable.
-- A successful student create does not add the row from the HTTP response or trigger a list refresh. The list updates when `STUDENT_CREATED` arrives; otherwise it updates on the next page load.
-- `mfe-activity` loads event history on mount. Live events received over the in-page bus are represented with local event metadata.
-- `mfe-dashboard` reloads institutions, students and enrollments after each supported domain event.
+- The host maintains one WebSocket while active. Any remote uses the shared
+  authenticated WebSocket fallback only when the host is unavailable.
+- Each remote provides its own TanStack `QueryClient`. Cache keys and data are
+  isolated by remote; the query library itself is a federation singleton.
+- Query functions pass TanStack Query's `AbortSignal` through feature APIs to
+  the shared request helper. Unmounting a remote cancels its in-flight queries.
+- Student creation inserts the returned resource into the Student cache.
+  Validated domain events carry `eventId` through the bus so remotes can
+  deduplicate cache updates and invalidations.
+- Activity loads the latest 30 events on mount and merges supported live events
+  into its bounded cache.
+- Dashboard coalesces relevant domain events for 100 ms before refreshing its
+  three data sources in parallel.
 - Event delivery is best effort; reconnecting does not replay missed events.
 - The frontend does not send `x-correlation-id` with HTTP requests.
 - Backend authorization and emitted event behavior are authoritative; the event contract comparison in section 5 shows the frontend declarations and current backend emissions.

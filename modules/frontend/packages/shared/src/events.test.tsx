@@ -1,7 +1,14 @@
-import { renderHook, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as auth from "./auth";
-import { safeParseDomainEvent, type DomainEventType, useDomainEvents } from "./events";
+import { dispatch } from "./bus";
+import {
+  safeParseDomainEvent,
+  type DomainEvent,
+  type DomainEventType,
+  useDomainEventSync,
+  useDomainEvents,
+} from "./events";
 
 describe("domain event validation", () => {
   it("accepts valid version 1 events and rejects malformed payloads", () => {
@@ -139,8 +146,48 @@ describe("domain event validation", () => {
 });
 
 describe("useDomainEvents", () => {
+  beforeEach(() => {
+    Reflect.deleteProperty(globalThis, "__mfeBus");
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
+    Reflect.deleteProperty(globalThis, "__mfeBus");
+  });
+
+  it("receives host bus envelopes and deduplicates events by eventId", async () => {
+    const event: DomainEvent<"STUDENT_CREATED"> = {
+      eventId: "evt-bus-1",
+      type: "STUDENT_CREATED",
+      version: 1,
+      source: "backend",
+      correlationId: "correlation-1",
+      occurredAt: "2026-01-01T00:00:00.000Z",
+      payload: {
+        id: "student-1",
+        name: "Ana",
+        institutionId: "institution-1",
+        status: "active",
+      },
+    };
+    const sync = vi.fn();
+    const { result } = renderHook(() => {
+      const domainEvents = useDomainEvents("");
+      useDomainEventSync(domainEvents.events, sync);
+      return domainEvents;
+    });
+
+    act(() => {
+      dispatch("domain", "domain:connection", "connected");
+      dispatch("domain", "domain:event", event);
+      dispatch("domain", "domain:event", event);
+    });
+
+    await waitFor(() => expect(result.current.events).toHaveLength(1));
+    expect(result.current.events[0]).toEqual(event);
+    expect(result.current.connection).toBe("connected");
+    expect(sync).toHaveBeenCalledTimes(1);
+    expect(sync).toHaveBeenCalledWith(event);
   });
 
   it("ignores malformed payloads and preserves deduplication", async () => {

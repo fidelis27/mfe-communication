@@ -2,6 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { axe, toHaveNoViolations } from "jest-axe";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
+import { createQueryWrapper } from "./test-utils";
 
 expect.extend(toHaveNoViolations);
 
@@ -41,7 +42,7 @@ describe("Student accessibility states", () => {
     "has no detectable axe violations in the %s state",
     async (state) => {
       setupFetch(state);
-      const { container } = render(<App />);
+      const { container } = render(<App />, { wrapper: createQueryWrapper() });
 
       if (state === "loading") {
         expect(screen.getByText("Carregando estudantes...")).toBeInTheDocument();

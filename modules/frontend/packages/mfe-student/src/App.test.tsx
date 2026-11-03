@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { vi } from "vitest";
 import App from "./App";
+import { createQueryWrapper } from "./test-utils";
 
 class MockWebSocket {
   onclose: (() => void) | null = null;
@@ -26,7 +27,7 @@ describe("Student", () => {
     );
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    const { unmount } = render(<App />);
+    const { unmount } = render(<App />, { wrapper: createQueryWrapper() });
     unmount();
 
     expect(requestSignal?.aborted).toBe(true);
@@ -46,7 +47,7 @@ describe("Student", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    render(<App />);
+    render(<App />, { wrapper: createQueryWrapper() });
 
     await waitFor(() => expect(screen.getByLabelText("Instituição")).toHaveValue("institution-1"));
     expect(

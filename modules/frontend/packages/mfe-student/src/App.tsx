@@ -1,71 +1,58 @@
-import { FormEvent, useCallback, useEffect, useState } from "react";
-import { type Institution, type Student, useDomainEvents } from "@mfe/shared";
+import { FormEvent, useEffect, useState } from "react";
+import { type Student, useDomainEventSync, useDomainEvents, useHostReady } from "@mfe/shared";
+import { useQueryClient } from "@tanstack/react-query";
 import {
-  createStudent as createStudentApi,
-  getInstitutions,
-  getStudents,
-} from "./features/student/api";
+  studentQueryKeys,
+  useCreateStudent,
+  useInstitutions,
+  useStudents,
+} from "./features/student/hooks";
 import "./App.css";
 
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
+const EMPTY_LIST: never[] = [];
 
 export default function App() {
-  const [students, setStudents] = useState<Student[]>([]);
-  const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [name, setName] = useState("");
   const [institutionId, setInstitutionId] = useState("");
-  const [state, setState] = useState<"loading" | "empty" | "success" | "error">("loading");
   const [message, setMessage] = useState("");
-  const { events, connection } = useDomainEvents(apiUrl);
-
-  const loadInstitutions = useCallback(async () => {
-    try {
-      const result = await getInstitutions(apiUrl);
-      setInstitutions(result);
-      if (result.length > 0) {
-        setInstitutionId((current) => current || result[0].id);
-      }
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Erro ao carregar instituições.");
-      setState("error");
-    }
-  }, []);
-
-  const loadStudents = useCallback(async (signal?: AbortSignal) => {
-    setState("loading");
-    setMessage("");
-    try {
-      const result = await getStudents(apiUrl, signal);
-      setStudents(result);
-      setState(result.length === 0 ? "empty" : "success");
-    } catch (error) {
-      if (signal?.aborted || (error instanceof DOMException && error.name === "AbortError")) {
-        return;
-      }
-      setMessage(error instanceof Error ? error.message : "Erro inesperado.");
-      setState("error");
-    }
-  }, []);
+  const queryClient = useQueryClient();
+  const hostReady = useHostReady();
+  const { events, connection } = useDomainEvents(hostReady ? "" : apiUrl);
+  const studentsQuery = useStudents(apiUrl);
+  const institutionsQuery = useInstitutions(apiUrl);
+  const createStudentMutation = useCreateStudent(apiUrl);
+  const students = studentsQuery.data ?? [];
+  const institutions = institutionsQuery.data ?? EMPTY_LIST;
+  const state = studentsQuery.isFetching
+    ? "loading"
+    : studentsQuery.isError
+      ? "error"
+      : students.length
+        ? "success"
+        : "empty";
 
   useEffect(() => {
-    const controller = new AbortController();
-    void loadInstitutions();
-    void loadStudents(controller.signal);
+    if (institutions.length > 0) {
+      setInstitutionId((current) => current || institutions[0].id);
+    }
+  }, [institutions]);
 
-    return () => {
-      controller.abort();
-    };
-  }, [loadInstitutions, loadStudents]);
-
-  useEffect(() => {
-    const event = events.find((item) => item.type === "STUDENT_CREATED");
-    if (!event) return;
-    const student = event.payload as unknown as Student;
-    setStudents((current) =>
-      current.some((item) => item.id === student.id) ? current : [student, ...current],
-    );
-    setState("success");
-  }, [events]);
+  useDomainEventSync(events, (event) => {
+    if (event.type === "STUDENT_CREATED") {
+      const student = event.payload;
+      const queryKey = studentQueryKeys.students(apiUrl);
+      queryClient.setQueryData<Student[]>(queryKey, (current) => {
+        if (!current) return current;
+        return current.some((item) => item.id === student.id) ? current : [student, ...current];
+      });
+      if (!queryClient.getQueryData<Student[]>(queryKey)) {
+        void queryClient.invalidateQueries({ queryKey });
+      }
+    } else if (event.type === "STUDENT_UPDATED") {
+      void queryClient.invalidateQueries({ queryKey: studentQueryKeys.students(apiUrl) });
+    }
+  });
 
   async function createStudent(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -73,21 +60,18 @@ export default function App() {
 
     if (!institutionId) {
       setMessage("Selecione uma instituição antes de cadastrar.");
-      setState("error");
       return;
     }
 
     try {
-      await createStudentApi(apiUrl, { name, institutionId });
+      await createStudentMutation.mutateAsync({ name, institutionId });
       setName("");
       if (institutions.length > 0) {
         setInstitutionId(institutions[0].id);
       }
       setMessage("Estudante cadastrado.");
-      setState("success");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Erro inesperado.");
-      setState("error");
     }
   }
 
@@ -133,10 +117,14 @@ export default function App() {
               value={institutionId}
               onChange={(event) => setInstitutionId(event.target.value)}
               required
-              disabled={institutions.length === 0}
+              disabled={institutions.length === 0 || institutionsQuery.isPending}
             >
               {institutions.length === 0 ? (
-                <option value="">Carregando instituições...</option>
+                <option value="">
+                  {institutionsQuery.isError
+                    ? "Instituições indisponíveis"
+                    : "Carregando instituições..."}
+                </option>
               ) : (
                 institutions.map((institution) => (
                   <option key={institution.id} value={institution.id}>
@@ -146,23 +134,45 @@ export default function App() {
               )}
             </select>
           </label>
-          <button type="submit">
-            Cadastrar estudante <span>→</span>
+          <button type="submit" disabled={createStudentMutation.isPending}>
+            {createStudentMutation.isPending ? "Salvando..." : "Cadastrar estudante"} <span>→</span>
           </button>
-          {message && <p className={`form-message ${state}`}>{message}</p>}
+          {institutionsQuery.isError && (
+            <p className="form-message error">
+              {institutionsQuery.error instanceof Error
+                ? institutionsQuery.error.message
+                : "Erro ao carregar instituições."}
+              <button type="button" onClick={() => void institutionsQuery.refetch()}>
+                Tentar novamente
+              </button>
+            </p>
+          )}
+          {message && (
+            <p
+              className={`form-message ${
+                createStudentMutation.isError || !institutionId ? "error" : "success"
+              }`}
+            >
+              {message}
+            </p>
+          )}
         </form>
 
-        <section className="student-list" aria-live="polite" aria-busy={state === "loading"}>
+        <section className="student-list" aria-live="polite" aria-busy={studentsQuery.isFetching}>
           <div className="section-heading">
             <span className="section-number">02</span>
             <h2>Estudantes recentes</h2>
             <strong>{students.length.toString().padStart(2, "0")}</strong>
           </div>
           {state === "loading" && <p className="empty-state">Carregando estudantes...</p>}
-          {state === "error" && (
+          {studentsQuery.isError && (
             <div className="empty-state error-state">
-              <p>{message}</p>
-              <button type="button" onClick={() => void loadStudents()}>
+              <p>
+                {studentsQuery.error instanceof Error
+                  ? studentsQuery.error.message
+                  : "Erro inesperado."}
+              </p>
+              <button type="button" onClick={() => void studentsQuery.refetch()}>
                 Tentar novamente
               </button>
             </div>

@@ -2,26 +2,28 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   type AdminUser,
   type AuthIdentity,
-  type GroupCandidate,
   type GroupMembership,
-  type GroupSummary,
-  type InstitutionSummary,
   type MembershipRole,
   readAuthIdentity,
+  useDomainEventSync,
+  useDomainEvents,
+  useHostReady,
 } from "@mfe/shared";
+import { useQueryClient } from "@tanstack/react-query";
+import { adminQueryKeys } from "./features/admin/hooks";
 import {
-  addGroupMember,
-  createGroup as createGroupApi,
-  createUser as createUserApi,
-  getGroupCandidates,
-  getGroupMembers,
-  getGroups,
-  getInstitutions,
-  getUsers,
-  removeGroupMember,
-  updateGroupMemberRole,
-  updateUserStatus,
-} from "./features/admin/api";
+  useAddGroupMember,
+  useCreateGroup,
+  useCreateUser,
+  useGroupCandidates,
+  useGroupMembers,
+  useGroups,
+  useInstitutions,
+  useRemoveGroupMember,
+  useUpdateGroupMemberRole,
+  useUpdateUserStatus,
+  useUsers,
+} from "./features/admin/hooks";
 import "./App.css";
 
 type ListState = "loading" | "ready" | "empty" | "error";
@@ -45,6 +47,7 @@ type ConfirmDialogState = {
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
 const canGrantSuperAdmin = import.meta.env.VITE_DEMO_SUPER_ADMIN === "true";
 const PAGE_SIZE = 20;
+const EMPTY_LIST: never[] = [];
 
 function translateRole(role: MembershipRole) {
   return role === "admin" ? "Administrador" : "Membro";
@@ -157,40 +160,65 @@ export default function App() {
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(null);
   const [confirmBusy, setConfirmBusy] = useState(false);
 
-  const [users, setUsers] = useState<AdminUser[]>([]);
-  const [userListState, setUserListState] = useState<ListState>("loading");
-  const [userListError, setUserListError] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [superAdmin, setSuperAdmin] = useState(false);
   const [userFormErrors, setUserFormErrors] = useState<UserFormErrors>({});
-  const [creatingUser, setCreatingUser] = useState(false);
   const [peopleSearch, setPeopleSearch] = useState("");
   const [visibleUsers, setVisibleUsers] = useState(PAGE_SIZE);
   const [pendingUserIds, setPendingUserIds] = useState<string[]>([]);
 
-  const [institutions, setInstitutions] = useState<InstitutionSummary[]>([]);
-  const [institutionsError, setInstitutionsError] = useState("");
-  const [groups, setGroups] = useState<GroupSummary[]>([]);
-  const [groupListState, setGroupListState] = useState<ListState>("loading");
-  const [groupListError, setGroupListError] = useState("");
   const [groupInstitutionId, setGroupInstitutionId] = useState("");
   const [groupName, setGroupName] = useState("");
   const [groupFormErrors, setGroupFormErrors] = useState<GroupFormErrors>({});
-  const [creatingGroup, setCreatingGroup] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState("");
 
-  const [memberships, setMemberships] = useState<GroupMembership[]>([]);
-  const [membershipState, setMembershipState] = useState<ListState>("loading");
-  const [membershipError, setMembershipError] = useState("");
-  const [candidates, setCandidates] = useState<GroupCandidate[]>([]);
   const [memberUserId, setMemberUserId] = useState("");
   const [memberRole, setMemberRole] = useState<MembershipRole>("member");
   const [memberFormErrors, setMemberFormErrors] = useState<MemberFormErrors>({});
-  const [addingMember, setAddingMember] = useState(false);
   const [pendingMembershipIds, setPendingMembershipIds] = useState<string[]>([]);
 
   const isSuperAdmin = scope?.roles.includes("super_admin") ?? false;
+  const queryClient = useQueryClient();
+  const hostReady = useHostReady();
+  const domainEvents = useDomainEvents(hostReady ? "" : apiUrl);
+  const usersQuery = useUsers(apiUrl, scopeLoaded && isSuperAdmin);
+  const institutionsQuery = useInstitutions(apiUrl, scopeLoaded && isSuperAdmin);
+  const groupsQuery = useGroups(apiUrl);
+  const membershipsQuery = useGroupMembers(apiUrl, selectedGroupId);
+  const candidatesQuery = useGroupCandidates(apiUrl, selectedGroupId);
+  const createUserMutation = useCreateUser(apiUrl);
+  const createGroupMutation = useCreateGroup(apiUrl);
+  const addGroupMemberMutation = useAddGroupMember(apiUrl);
+  const updateGroupMemberRoleMutation = useUpdateGroupMemberRole(apiUrl);
+  const removeGroupMemberMutation = useRemoveGroupMember(apiUrl);
+  const updateUserStatusMutation = useUpdateUserStatus(apiUrl);
+  const users = usersQuery.data ?? EMPTY_LIST;
+  const institutions = institutionsQuery.data ?? EMPTY_LIST;
+  const groups = groupsQuery.data ?? EMPTY_LIST;
+  const memberships: GroupMembership[] = membershipsQuery.data ?? EMPTY_LIST;
+  const candidates = candidatesQuery.data ?? EMPTY_LIST;
+  const userListState: ListState = usersQuery.isFetching
+    ? "loading"
+    : usersQuery.isError
+      ? "error"
+      : users.length
+        ? "ready"
+        : "empty";
+  const groupListState: ListState = groupsQuery.isFetching
+    ? "loading"
+    : groupsQuery.isError
+      ? "error"
+      : groups.length
+        ? "ready"
+        : "empty";
+  const membershipState: ListState = membershipsQuery.isFetching
+    ? "loading"
+    : membershipsQuery.isError
+      ? "error"
+      : memberships.length
+        ? "ready"
+        : "empty";
   const selectedGroup = groups.find((group) => group.id === selectedGroupId) ?? null;
   const selfMembership = memberships.find((membership) => membership.userId === scope?.userId);
 
@@ -231,7 +259,6 @@ export default function App() {
     void readAuthIdentity()
       .then((identity) => setScope(identity))
       .finally(() => setScopeLoaded(true));
-    void loadGroups();
   }, []);
 
   useEffect(() => {
@@ -240,144 +267,88 @@ export default function App() {
       setActiveTab("groups");
       return;
     }
-
-    void loadUsers();
-    void loadInstitutions();
   }, [isSuperAdmin, scopeLoaded]);
 
   useEffect(() => {
-    if (!selectedGroupId) {
-      setMemberships([]);
-      setCandidates([]);
-      setMembershipState("empty");
-      return;
-    }
+    if (!groupsQuery.data) return;
+    setSelectedGroupId((current) =>
+      groupsQuery.data.some((group) => group.id === current)
+        ? current
+        : (groupsQuery.data[0]?.id ?? ""),
+    );
+  }, [groupsQuery.data]);
 
-    void Promise.all([loadMemberships(selectedGroupId), loadCandidates(selectedGroupId)]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedGroupId]);
+  useEffect(() => {
+    if (institutions.length) {
+      setGroupInstitutionId((current) => current || institutions[0].id);
+    }
+  }, [institutions]);
+
+  useEffect(() => {
+    if (candidates.length) {
+      setMemberUserId((current) =>
+        candidates.some((candidate) => candidate.id === current) ? current : candidates[0].id,
+      );
+    }
+  }, [candidates]);
+
+  useDomainEventSync(domainEvents.events, (event) => {
+    if (event.type === "USER_UPDATED") {
+      void queryClient.invalidateQueries({ queryKey: adminQueryKeys.users(apiUrl) });
+    } else if (
+      event.type === "GROUP_MEMBERSHIP_UPDATED" ||
+      event.type === "GROUP_MEMBERSHIP_REMOVED"
+    ) {
+      void queryClient.invalidateQueries({ queryKey: ["admin", "members", apiUrl] });
+      void queryClient.invalidateQueries({ queryKey: ["admin", "candidates", apiUrl] });
+    } else if (
+      event.type === "INSTITUTION_CREATED" ||
+      event.type === "INSTITUTION_UPDATED" ||
+      event.type === "INSTITUTION_INACTIVATED"
+    ) {
+      void queryClient.invalidateQueries({ queryKey: adminQueryKeys.institutions(apiUrl) });
+      void queryClient.invalidateQueries({ queryKey: adminQueryKeys.groups(apiUrl) });
+    }
+  });
 
   useEffect(() => {
     setVisibleUsers(PAGE_SIZE);
   }, [peopleSearch]);
 
-  async function loadUsers() {
-    setUserListState("loading");
-    setUserListError("");
-    try {
-      const result = await getUsers(apiUrl);
-      setUsers(result);
-      setUserListState(result.length ? "ready" : "empty");
-    } catch (error) {
-      setUserListError(error instanceof Error ? error.message : "Erro inesperado.");
-      setUserListState("error");
-    }
-  }
-
-  async function loadInstitutions() {
-    setInstitutionsError("");
-    try {
-      const result = await getInstitutions(apiUrl);
-      setInstitutions(result);
-      setGroupInstitutionId((current) => current || result[0]?.id || "");
-    } catch (error) {
-      setInstitutionsError(error instanceof Error ? error.message : "Erro inesperado.");
-    }
-  }
-
-  async function loadGroups() {
-    setGroupListState("loading");
-    setGroupListError("");
-    try {
-      const result = await getGroups(apiUrl);
-      setGroups(result);
-      setSelectedGroupId((current) =>
-        result.some((group) => group.id === current) ? current : (result[0]?.id ?? ""),
-      );
-      setGroupListState(result.length ? "ready" : "empty");
-    } catch (error) {
-      setGroupListError(error instanceof Error ? error.message : "Erro inesperado.");
-      setGroupListState("error");
-    }
-  }
-
-  async function loadMemberships(groupId: string) {
-    setMembershipState("loading");
-    setMembershipError("");
-    try {
-      const result = await getGroupMembers(apiUrl, groupId);
-      setMemberships(result);
-      setMembershipState(result.length ? "ready" : "empty");
-    } catch (error) {
-      setMembershipError(error instanceof Error ? error.message : "Erro inesperado.");
-      setMembershipState("error");
-    }
-  }
-
-  async function loadCandidates(groupId: string) {
-    try {
-      const result = await getGroupCandidates(apiUrl, groupId);
-      setCandidates(result);
-      setMemberUserId((current) =>
-        result.some((candidate) => candidate.id === current) ? current : (result[0]?.id ?? ""),
-      );
-    } catch (error) {
-      setCandidates([]);
-      addNotice(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível carregar as pessoas disponíveis.",
-        "error",
-      );
-    }
-  }
-
-  async function refreshGroupDetails(groupId: string) {
-    await Promise.all([loadMemberships(groupId), loadCandidates(groupId)]);
-  }
-
   async function createUser(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setUserFormErrors({});
-    setCreatingUser(true);
 
     try {
-      await createUserApi(apiUrl, { name, email, superAdmin });
+      await createUserMutation.mutateAsync({ name, email, superAdmin });
       setName("");
       setEmail("");
       setSuperAdmin(false);
       addNotice("Pessoa cadastrada.", "success");
-      await loadUsers();
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Não foi possível cadastrar a pessoa.";
       setUserFormErrors(mapUserFormError(message));
       addNotice(message, "error");
-    } finally {
-      setCreatingUser(false);
     }
   }
 
   async function createGroup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setGroupFormErrors({});
-    setCreatingGroup(true);
 
     try {
-      const created = await createGroupApi(apiUrl, {
+      const created = await createGroupMutation.mutateAsync({
         institutionId: groupInstitutionId,
         name: groupName,
       });
       setGroupName("");
       setSelectedGroupId(created.id);
       addNotice("Grupo criado.", "success");
-      await loadGroups();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Não foi possível criar o grupo.";
       setGroupFormErrors(mapGroupFormError(message));
       addNotice(message, "error");
-    } finally {
-      setCreatingGroup(false);
     }
   }
 
@@ -386,22 +357,18 @@ export default function App() {
     if (!selectedGroupId) return;
 
     setMemberFormErrors({});
-    setAddingMember(true);
 
     try {
-      await addGroupMember(apiUrl, selectedGroupId, {
-        userId: memberUserId,
-        role: memberRole,
+      await addGroupMemberMutation.mutateAsync({
+        groupId: selectedGroupId,
+        input: { userId: memberUserId, role: memberRole },
       });
       addNotice("Membro adicionado.", "success");
-      await refreshGroupDetails(selectedGroupId);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Não foi possível adicionar o membro.";
       setMemberFormErrors(mapMemberFormError(message));
       addNotice(message, "error");
-    } finally {
-      setAddingMember(false);
     }
   }
 
@@ -410,9 +377,12 @@ export default function App() {
 
     setPendingMembershipIds((current) => [...current, userId]);
     try {
-      await updateGroupMemberRole(apiUrl, selectedGroupId, userId, role);
+      await updateGroupMemberRoleMutation.mutateAsync({
+        groupId: selectedGroupId,
+        userId,
+        role,
+      });
       addNotice("Papel atualizado.", "success");
-      await refreshGroupDetails(selectedGroupId);
     } catch (error) {
       addNotice(error instanceof Error ? error.message : "Erro inesperado.", "error");
     } finally {
@@ -432,10 +402,12 @@ export default function App() {
         setConfirmBusy(true);
         setPendingMembershipIds((current) => [...current, membership.userId]);
         try {
-          await removeGroupMember(apiUrl, selectedGroupId, membership.userId);
+          await removeGroupMemberMutation.mutateAsync({
+            groupId: selectedGroupId,
+            userId: membership.userId,
+          });
           addNotice("Membro removido.", "success");
           setConfirmDialog(null);
-          await refreshGroupDetails(selectedGroupId);
         } catch (error) {
           addNotice(error instanceof Error ? error.message : "Erro inesperado.", "error");
         } finally {
@@ -459,10 +431,9 @@ export default function App() {
         setConfirmBusy(true);
         setPendingUserIds((current) => [...current, user.id]);
         try {
-          await updateUserStatus(apiUrl, user.id, nextStatus);
+          await updateUserStatusMutation.mutateAsync({ userId: user.id, status: nextStatus });
           addNotice(`Status alterado para ${nextStatusLabel.toLowerCase()}.`, "success");
           setConfirmDialog(null);
-          await loadUsers();
         } catch (error) {
           addNotice(error instanceof Error ? error.message : "Erro inesperado.", "error");
         } finally {
@@ -575,8 +546,8 @@ export default function App() {
                   </label>
                 )}
 
-                <button type="submit" disabled={creatingUser}>
-                  {creatingUser ? "Salvando..." : "Adicionar pessoa"}
+                <button type="submit" disabled={createUserMutation.isPending}>
+                  {createUserMutation.isPending ? "Salvando..." : "Adicionar pessoa"}
                 </button>
                 {userFormErrors.form && <p className="field-error">{userFormErrors.form}</p>}
               </form>
@@ -606,7 +577,13 @@ export default function App() {
                 </label>
 
                 {userListState === "loading" && <p className="empty">Carregando pessoas...</p>}
-                {userListState === "error" && <p className="empty error">{userListError}</p>}
+                {userListState === "error" && (
+                  <p className="empty error">
+                    {usersQuery.error instanceof Error
+                      ? usersQuery.error.message
+                      : "Não foi possível carregar as pessoas."}
+                  </p>
+                )}
                 {userListState === "empty" && <p className="empty">Nenhuma pessoa cadastrada.</p>}
                 {userListState === "ready" && !filteredUsers.length && (
                   <p className="empty">Nenhum resultado para a busca atual.</p>
@@ -674,7 +651,13 @@ export default function App() {
               <strong>{groups.length.toString().padStart(2, "0")}</strong>
             </div>
 
-            {groupListState === "error" && <p className="empty error">{groupListError}</p>}
+            {groupListState === "error" && (
+              <p className="empty error">
+                {groupsQuery.error instanceof Error
+                  ? groupsQuery.error.message
+                  : "Não foi possível carregar os grupos."}
+              </p>
+            )}
             {groupListState === "empty" && <p className="empty">Nenhum grupo cadastrado.</p>}
 
             <div className={isSuperAdmin ? "groups-grid" : "groups-grid single-column"}>
@@ -717,10 +700,19 @@ export default function App() {
                     />
                   </label>
                   {groupFormErrors.name && <p className="field-error">{groupFormErrors.name}</p>}
-                  {institutionsError && <p className="field-error">{institutionsError}</p>}
+                  {institutionsQuery.isError && (
+                    <p className="field-error">
+                      {institutionsQuery.error instanceof Error
+                        ? institutionsQuery.error.message
+                        : "Não foi possível carregar as instituições."}
+                    </p>
+                  )}
 
-                  <button type="submit" disabled={creatingGroup || !institutions.length}>
-                    {creatingGroup ? "Salvando..." : "Criar grupo"}
+                  <button
+                    type="submit"
+                    disabled={createGroupMutation.isPending || !institutions.length}
+                  >
+                    {createGroupMutation.isPending ? "Salvando..." : "Criar grupo"}
                   </button>
                   {groupFormErrors.form && <p className="field-error">{groupFormErrors.form}</p>}
                 </form>
@@ -766,7 +758,7 @@ export default function App() {
                           value={memberUserId}
                           onChange={(event) => setMemberUserId(event.target.value)}
                           required
-                          disabled={!candidates.length || addingMember}
+                          disabled={!candidates.length || addGroupMemberMutation.isPending}
                         >
                           {!candidates.length && (
                             <option value="">Nenhuma pessoa disponível</option>
@@ -791,8 +783,11 @@ export default function App() {
                         </select>
                       </label>
 
-                      <button type="submit" disabled={addingMember || !candidates.length}>
-                        {addingMember ? "Salvando..." : "Adicionar"}
+                      <button
+                        type="submit"
+                        disabled={addGroupMemberMutation.isPending || !candidates.length}
+                      >
+                        {addGroupMemberMutation.isPending ? "Salvando..." : "Adicionar"}
                       </button>
                     </form>
                     {(memberFormErrors.userId ||
@@ -816,7 +811,20 @@ export default function App() {
                 {membershipState === "loading" && selectedGroupId && (
                   <p className="empty">Carregando membros...</p>
                 )}
-                {membershipState === "error" && <p className="empty error">{membershipError}</p>}
+                {membershipState === "error" && (
+                  <p className="empty error">
+                    {membershipsQuery.error instanceof Error
+                      ? membershipsQuery.error.message
+                      : "Não foi possível carregar os membros."}
+                  </p>
+                )}
+                {candidatesQuery.isError && (
+                  <p className="field-error">
+                    {candidatesQuery.error instanceof Error
+                      ? candidatesQuery.error.message
+                      : "Não foi possível carregar as pessoas disponíveis."}
+                  </p>
+                )}
                 {membershipState === "empty" && selectedGroupId && (
                   <p className="empty">Nenhum membro vinculado.</p>
                 )}

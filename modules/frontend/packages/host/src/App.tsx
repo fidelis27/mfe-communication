@@ -150,6 +150,7 @@ export default function App() {
     for (const event of domainEvents as HostDomainEvent[]) {
       if (publishedEventIds.current.has(event.eventId)) continue;
       publishedEventIds.current.add(event.eventId);
+      dispatchDomain("domain:event", event);
       dispatchDomain(event.type, event.payload);
     }
   }, [dispatchDomain, domainEvents]);

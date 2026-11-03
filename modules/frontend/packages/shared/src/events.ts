@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { authenticatedWebSocket } from "./auth";
 import { listen } from "./bus";
@@ -239,10 +239,20 @@ export function useDomainEvents(apiUrl: string) {
   const [connection, setConnection] = useState<DomainConnection>(apiUrl ? "connecting" : "offline");
 
   useEffect(() => {
+    const unsubscribeEvent = listen("domain", "domain:event", (event) => {
+      setEvents((current: DomainEvent[]) =>
+        current.some((item) => item.eventId === event.eventId) ? current : [event, ...current],
+      );
+    });
+    const unsubscribeConnection = listen("domain", "domain:connection", (status) => {
+      setConnection(status);
+    });
+
     if (!apiUrl) {
-      setEvents([]);
-      setConnection("offline");
-      return;
+      return () => {
+        unsubscribeEvent();
+        unsubscribeConnection();
+      };
     }
 
     let stopped = false;
@@ -308,8 +318,28 @@ export function useDomainEvents(apiUrl: string) {
       stopped = true;
       if (retryTimer !== undefined) window.clearTimeout(retryTimer);
       socket?.close();
+      unsubscribeEvent();
+      unsubscribeConnection();
     };
   }, [apiUrl]);
 
   return { events, connection };
+}
+
+export function useDomainEventSync(
+  events: readonly DomainEvent[],
+  handler: (event: DomainEvent) => void,
+) {
+  const handlerRef = useRef(handler);
+  const lastProcessedEventId = useRef<string | undefined>();
+  handlerRef.current = handler;
+
+  useEffect(() => {
+    for (const event of events) {
+      if (event.eventId === lastProcessedEventId.current) break;
+      handlerRef.current(event);
+    }
+
+    if (events.length) lastProcessedEventId.current = events[0].eventId;
+  }, [events]);
 }

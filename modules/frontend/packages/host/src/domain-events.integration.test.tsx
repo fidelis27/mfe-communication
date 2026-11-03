@@ -3,6 +3,7 @@ import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { StrictMode } from "react";
 import type { DomainEvent } from "@mfe/shared";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ActivityApp from "../../mfe-activity/src/App";
 import DashboardApp from "../../mfe-dashboard/src/App";
 
@@ -42,11 +43,21 @@ describe("domain event delivery across MFEs", () => {
 
   it("refreshes Dashboard once and adds one Activity row for one student event", async () => {
     const { default: HostApp } = await import("./App");
+    const dashboardQueryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false, gcTime: 0 } },
+    });
+    const activityQueryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false, gcTime: 0 } },
+    });
     const appTree = () => (
       <StrictMode>
         <HostApp />
-        <DashboardApp />
-        <ActivityApp />
+        <QueryClientProvider client={dashboardQueryClient}>
+          <DashboardApp />
+        </QueryClientProvider>
+        <QueryClientProvider client={activityQueryClient}>
+          <ActivityApp />
+        </QueryClientProvider>
       </StrictMode>
     );
     const { rerender } = render(appTree());

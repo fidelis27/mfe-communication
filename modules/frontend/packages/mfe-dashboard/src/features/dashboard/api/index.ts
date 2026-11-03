@@ -13,24 +13,27 @@ const dashboardDataSchema = z.object({
 
 export type DashboardData = z.infer<typeof dashboardDataSchema>;
 
-export async function getDashboardData(apiUrl: string): Promise<DashboardData> {
+export async function getDashboardData(
+  apiUrl: string,
+  signal?: AbortSignal,
+): Promise<DashboardData> {
   const [institutions, students, enrollments] = await Promise.all([
     requestJson(
       `${apiUrl}/institutions`,
       z.array(institutionSchema),
-      {},
+      { signal },
       "Não foi possível atualizar os indicadores.",
     ),
     requestJson(
       `${apiUrl}/students`,
       z.array(studentSchema),
-      {},
+      { signal },
       "Não foi possível atualizar os indicadores.",
     ),
     requestJson(
       `${apiUrl}/enrollments`,
       z.array(enrollmentSchema),
-      {},
+      { signal },
       "Não foi possível atualizar os indicadores.",
     ),
   ]);
