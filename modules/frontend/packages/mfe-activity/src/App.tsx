@@ -1,4 +1,11 @@
-import { type DomainEvent, useDomainEventSync, useDomainEvents, useHostReady } from "@mfe/shared";
+import {
+  Pagination,
+  type DomainEvent,
+  useDomainEventSync,
+  useDomainEvents,
+  useHostReady,
+  usePaginatedItems,
+} from "@mfe/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   activityQueryKeys,
@@ -22,6 +29,7 @@ export default function App() {
   const queryClient = useQueryClient();
   const historyQuery = useActivityHistory(apiUrl);
   const events = historyQuery.data ?? [];
+  const eventPagination = usePaginatedItems(events);
   const historyState = historyQuery.isFetching
     ? "loading"
     : historyQuery.isError
@@ -32,6 +40,7 @@ export default function App() {
 
   useDomainEventSync(fallback.events, (event) => {
     if (!labels[event.type]) return;
+    eventPagination.setPage(1);
     const queryKey = activityQueryKeys.history(apiUrl);
     queryClient.setQueryData<DomainEvent[]>(queryKey, (current = []) =>
       mergeActivityEvents(current, [event]),
@@ -83,21 +92,30 @@ export default function App() {
             <p>Aguardando uma alteração no sistema.</p>
           </div>
         ) : (
-          events.map((event) => (
-            <article className="event-row" key={event.eventId}>
-              <div className="event-pin" />
-              <div className="event-content">
-                <h2>{labels[event.type] ?? event.type}</h2>
-                <p>
-                  {event.source} · versão {event.version}
-                </p>
-                <small>
-                  {new Date(event.occurredAt).toLocaleString("pt-BR")} · {event.correlationId}
-                </small>
-              </div>
-              <span className="event-type">{event.type}</span>
-            </article>
-          ))
+          <>
+            {eventPagination.pageItems.map((event) => (
+              <article className="event-row" key={event.eventId}>
+                <div className="event-pin" />
+                <div className="event-content">
+                  <h2>{labels[event.type] ?? event.type}</h2>
+                  <p>
+                    {event.source} · versão {event.version}
+                  </p>
+                  <small>
+                    {new Date(event.occurredAt).toLocaleString("pt-BR")} · {event.correlationId}
+                  </small>
+                </div>
+                <span className="event-type">{event.type}</span>
+              </article>
+            ))}
+            <Pagination
+              label="histórico de atividade"
+              page={eventPagination.page}
+              pageCount={eventPagination.pageCount}
+              totalItems={events.length}
+              onPageChange={eventPagination.setPage}
+            />
+          </>
         )}
       </section>
     </main>

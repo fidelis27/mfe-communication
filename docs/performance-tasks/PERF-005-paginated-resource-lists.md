@@ -1,23 +1,21 @@
-# PERF-005 - Medir e paginar listas
+# PERF-005 - Paginar listas de recursos
 
-## Objetivo
+## Status
 
-Evitar payloads e DOM crescentes quando listas de estudantes, instituicoes,
-pessoas, grupos ou eventos aumentarem.
+Concluido. As listas de estudantes, instituicoes, pessoas, grupos, membros e
+eventos exibem no maximo 20 itens por pagina, com navegacao anterior/proxima.
+Filtros, estados de carregamento, erro e vazio permanecem disponiveis.
 
-## Escopo
+## Limites atuais
 
-- Medir com volumes representativos antes de alterar a UI.
-- Adicionar paginacao somente aos recursos que excederem o limite observado.
-- Preservar estados vazio, loading, erro e filtros.
+A paginacao acontece no frontend e limita o DOM renderizado; ela nao reduz o
+payload recebido. As APIs ainda retornam as listas completas. O historico de
+atividade permanece limitado a 30 eventos pela consulta e exibe ate 20 por
+pagina.
 
-## Fora do escopo
+## Evidencia de renderizacao
 
-- Virtualizacao sem evidencia de custo.
-- Alterar ordenacao sem criterio funcional.
-
-## Validacao
-
-- Cenarios com 100, 1.000 e 10.000 registros.
-- Tamanho das respostas, tempo de scripting e heap.
-- Testes de paginacao e build dos pacotes afetados.
+No teste sintetico local do Student, foram observados 624 nos DOM com 100
+registros, 6.024 com 1.000 e 60.024 com 10.000. A medicao ocorreu em JSDOM e
+nao representa um benchmark de navegador em producao. Com a pagina de 20 itens,
+a interface mantem no maximo 20 linhas de cada lista visivel.

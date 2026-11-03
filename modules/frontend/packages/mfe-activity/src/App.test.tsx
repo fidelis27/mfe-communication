@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, vi } from "vitest";
 import { dispatch, type DomainEvent } from "@mfe/shared";
 import App from "./App";
@@ -95,5 +95,36 @@ describe("Activity states", () => {
     act(() => resolveHistory(new Response(JSON.stringify([]), { status: 200 })));
 
     expect(await screen.findByText("Estudante cadastrado")).toBeInTheDocument();
+  });
+
+  it("renders no more than 20 events and navigates to the next page", async () => {
+    const events = Array.from({ length: 25 }, (_, index) => ({
+      eventId: `event-${index + 1}`,
+      type: "STUDENT_CREATED",
+      version: 1,
+      source: "backend",
+      correlationId: `correlation-${index + 1}`,
+      occurredAt: "2026-01-01T00:00:00.000Z",
+      payload: {
+        id: `student-${index + 1}`,
+        name: `Estudante ${index + 1}`,
+        institutionId: "institution-1",
+        status: "active",
+      },
+    }));
+    mockFetch(events);
+    render(<App />, { wrapper: createQueryWrapper() });
+
+    await waitFor(() => expect(screen.getAllByRole("article")).toHaveLength(20));
+    expect(screen.queryByText(/correlation-21/)).not.toBeInTheDocument();
+
+    fireEvent.click(
+      within(
+        screen.getByRole("navigation", { name: "Paginação de histórico de atividade" }),
+      ).getByRole("button", { name: "Próxima" }),
+    );
+
+    expect(await screen.findByText(/correlation-21/)).toBeInTheDocument();
+    expect(screen.getAllByRole("article")).toHaveLength(5);
   });
 });

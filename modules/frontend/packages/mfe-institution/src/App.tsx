@@ -1,5 +1,11 @@
 import { FormEvent, useState } from "react";
-import { useDomainEventSync, useDomainEvents, useHostReady } from "@mfe/shared";
+import {
+  Pagination,
+  useDomainEventSync,
+  useDomainEvents,
+  useHostReady,
+  usePaginatedItems,
+} from "@mfe/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   institutionQueryKeys,
@@ -20,6 +26,7 @@ export default function App() {
   const institutionsQuery = useInstitutions(apiUrl);
   const createInstitutionMutation = useCreateInstitution(apiUrl);
   const institutions = institutionsQuery.data ?? [];
+  const institutionPagination = usePaginatedItems(institutions);
   const state = institutionsQuery.isFetching
     ? "loading"
     : institutionsQuery.isError
@@ -34,6 +41,7 @@ export default function App() {
       event.type === "INSTITUTION_UPDATED" ||
       event.type === "INSTITUTION_INACTIVATED"
     ) {
+      institutionPagination.setPage(1);
       void queryClient.invalidateQueries({
         queryKey: institutionQueryKeys.institutions(apiUrl),
       });
@@ -45,6 +53,7 @@ export default function App() {
     setMessage("");
     try {
       await createInstitutionMutation.mutateAsync({ name, cnpj });
+      institutionPagination.setPage(1);
       setName("");
       setCnpj("");
       setMessage("Instituição cadastrada.");
@@ -118,7 +127,7 @@ export default function App() {
             </div>
           )}
           {state === "empty" && <p className="empty">Nenhuma instituição cadastrada.</p>}
-          {institutions.map((institution) => (
+          {institutionPagination.pageItems.map((institution) => (
             <article className="institution-row" key={institution.id}>
               <span className="crest">{institution.name.slice(0, 1).toUpperCase()}</span>
               <div>
@@ -128,6 +137,13 @@ export default function App() {
               <em>{institution.status}</em>
             </article>
           ))}
+          <Pagination
+            label="instituições"
+            page={institutionPagination.page}
+            pageCount={institutionPagination.pageCount}
+            totalItems={institutions.length}
+            onPageChange={institutionPagination.setPage}
+          />
         </section>
       </section>
     </main>

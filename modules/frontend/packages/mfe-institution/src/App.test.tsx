@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, vi } from "vitest";
 import App from "./App";
 import { createQueryWrapper } from "./test-utils";
@@ -54,5 +54,28 @@ describe("Institution states and accessibility", () => {
     unmount();
 
     expect(requestSignal?.aborted).toBe(true);
+  });
+
+  it("renders no more than 20 institutions and navigates to the next page", async () => {
+    const institutions = Array.from({ length: 25 }, (_, index) => ({
+      id: `institution-${index + 1}`,
+      name: `Instituição ${index + 1}`,
+      status: "active",
+    }));
+    mockFetch(institutions);
+    render(<App />, { wrapper: createQueryWrapper() });
+
+    await waitFor(() => expect(screen.getAllByRole("article")).toHaveLength(20));
+    expect(screen.queryByText("Instituição 21")).not.toBeInTheDocument();
+
+    fireEvent.click(
+      within(screen.getByRole("navigation", { name: "Paginação de instituições" })).getByRole(
+        "button",
+        { name: "Próxima" },
+      ),
+    );
+
+    expect(await screen.findByText("Instituição 21")).toBeInTheDocument();
+    expect(screen.getAllByRole("article")).toHaveLength(5);
   });
 });
