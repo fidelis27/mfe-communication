@@ -54,6 +54,15 @@ describe("Host navigation", () => {
     expect(screen.getByRole("link", { name: /admin/i })).toHaveAttribute("aria-current", "page");
   });
 
+  it("starts the domain event connection after an authenticated session is ready", async () => {
+    await renderHost({ authenticated: true });
+
+    expect(authMocks.useDomainEvents).toHaveBeenNthCalledWith(1, "");
+    await waitFor(() =>
+      expect(authMocks.useDomainEvents).toHaveBeenLastCalledWith("http://localhost:3333"),
+    );
+  });
+
   it.each([
     ["student", "/estudantes"],
     ["institution", "/instituicoes"],

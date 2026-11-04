@@ -50,15 +50,38 @@ jobs:
       - run: npm ci --legacy-peer-deps
       - run: npm run build --workspace=${{ matrix.workspace }}
 
+  e2e:
+    name: E2E federation
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+          cache: npm
+      - run: npm ci --legacy-peer-deps
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - name: Upload Playwright report and traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+
   ci:
     name: CI gate
     if: always()
-    needs: [frontend-quality, frontend-build]
+    needs: [frontend-quality, frontend-build, e2e]
     runs-on: ubuntu-latest
     steps:
       - name: Require all CI jobs to pass
         run: |
-          if [[ "${{ needs.frontend-quality.result }}" != "success" || "${{ needs.frontend-build.result }}" != "success" ]]; then
+          if [[ "${{ needs.frontend-quality.result }}" != "success" || "${{ needs.frontend-build.result }}" != "success" || "${{ needs.e2e.result }}" != "success" ]]; then
             echo "One or more required CI jobs failed."
             exit 1
           fi

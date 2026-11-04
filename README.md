@@ -86,9 +86,11 @@ CI runs on every PR and a final **CI gate** job fails if any required job fails:
 
 - ESLint, TypeScript typecheck, Prettier check
 - Vitest unit, integration and accessibility tests
+- Playwright E2E tests against the built Host and five real federation remotes, with deterministic API and WebSocket mocks
 - Color-contrast check
 - `npm audit --audit-level=high`
 - Build matrix over all seven workspaces
+- Playwright report and traces uploaded as an artifact when E2E fails
 
 ## Documentation
 
@@ -109,5 +111,4 @@ Spec first, in small verified steps. Product decisions and acceptance criteria w
 
 - Prototype scope: it demonstrates the architecture and the main flow (institution → student → event → activity/dashboard), not a finished product.
 - Event delivery is best effort. A transactional outbox is still pending (see the backend ADR 0001).
-- No end-to-end browser tests in CI yet.
 - Runtime duplication of shared libraries across remotes is still to be measured before any change (PERF-007).

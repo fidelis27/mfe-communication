@@ -19,9 +19,11 @@ Os testes anteriores do bus exercitavam fila, fan-out e unsubscribe dentro do pr
 
 O teste anterior de drain verificava que o primeiro listener recebia a mensagem, mas não removia esse listener e registrava outro para confirmar que a fila havia sido consumida. Assim, a mensagem repetida continuava invisível. A regressão agora testa explicitamente o segundo registro, e a integração cobre host → bus → MFEs.
 
+| Não havia teste E2E que exercitasse Host e remotes construídos juntos; os testes de UI substituíam os remotes por mocks. | Regressões na resolução de `remoteEntry.js`, navegação federada e integração WebSocket poderiam chegar ao merge sem cobertura do navegador. | Job Playwright no CI serve os builds reais dos seis apps e cobre as rotas dos cinco remotes, cadastro de estudante, atualização Activity/Dashboard por WebSocket fake, remote indisponível e erro 401. API e WebSocket são interceptados para manter determinismo. | T6 — `test/e2e-playwright` | `npm run test:e2e`; relatório, screenshots e traces como artefato em falhas |
+
 ## Pendências
 
 - O seletor de instituição global ainda não existe. Há seletores locais em formulários, mas nenhum contrato compartilhado define como a seleção deve filtrar os dados e formulários dos MFEs; não foi criada uma seleção visual sem efeito funcional.
 - O padrão completo das páginas (busca, filtros/ordenação/paginação na URL, cartões mobile, drawers de criação/edição e detalhes com abas) ainda não está implementado em todos os MFEs.
 - O `tsc --noEmit -p .` não compila os `vite.config.ts`: o tipo de `shared` do plugin não declara a opção `singleton`, embora a configuração seja consumida pelo plugin no build. As aplicações e os testes TypeScript incluídos no escopo de raiz são verificados.
-- A integração testa o relay do host com os dois MFEs renderizados juntos em StrictMode; não substitui uma validação visual de produção nem testes contra uma conexão WebSocket real.
+- Os testes Playwright carregam os seis builds reais via federation, mas API e WebSocket são simulados pela rede. Isso não substitui testes contra o backend/WebSocket implantado nem a inspeção visual autenticada dos previews Vercel.
