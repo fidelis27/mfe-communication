@@ -1,6 +1,12 @@
 @import "@mfe/shared/tokens.css";
+.appRoot {
+  min-height: 100dvh;
+  background: var(--color-surface-page);
+  color: var(--color-text-primary);
+  height: 100dvh;
+}
 
-.skip-link {
+.appRoot :global(.skip-link) {
   background: var(--color-surface-page);
   color: var(--color-text-primary);
   left: 12px;
@@ -10,18 +16,18 @@
   z-index: 10;
 }
 
-.skip-link:focus {
+.appRoot :global(.skip-link:focus) {
   top: 12px;
 }
 
-.host-shell {
+.appRoot :global(.host-shell) {
   display: grid;
   grid-template-columns: 248px minmax(0, 1fr);
   height: 100dvh;
   overflow: hidden;
 }
 
-.host-sidebar {
+.appRoot :global(.host-sidebar) {
   background: var(--color-surface-dark);
   color: var(--color-text-on-dark);
   display: flex;
@@ -35,7 +41,7 @@
   z-index: 30;
 }
 
-.brand {
+.appRoot :global(.brand) {
   align-items: center;
   display: flex;
   font-size: var(--font-size-sm);
@@ -43,31 +49,31 @@
   line-height: 1.05;
 }
 
-.brand > span {
+.appRoot :global(.brand > span) {
   align-items: center;
   background: var(--color-sidebar-accent);
   border-radius: 50%;
   color: var(--color-avatar-text);
   display: flex;
-  font: 700 var(--font-size-2xs) var(--font-sans);
+  font: 700 var(--font-size-2xs) var(--font-body);
   height: 34px;
   justify-content: center;
   width: 34px;
 }
 
-.sidebar-label {
+.appRoot :global(.sidebar-label) {
   color: var(--color-sidebar-text-muted);
-  font: 700 var(--font-size-2xs) var(--font-sans);
+  font: 700 var(--font-size-2xs) var(--font-body);
   letter-spacing: 1.4px;
   margin: 58px 12px 12px;
   text-transform: uppercase;
 }
 
-.host-nav-wrap {
+.appRoot :global(.host-nav-wrap) {
   min-width: 0;
 }
 
-.nav-item {
+.appRoot :global(.nav-item) {
   align-items: center;
   background: transparent;
   border: 0;
@@ -82,44 +88,44 @@
   width: 100%;
 }
 
-.nav-copy {
+.appRoot :global(.nav-copy) {
   min-width: 0;
 }
 
-.nav-item.active {
+.appRoot :global(.nav-item.active) {
   background: var(--color-sidebar-active);
   color: var(--color-sidebar-text);
 }
 
-.nav-item b,
-.nav-item small {
+.appRoot :global(.nav-item b),
+.appRoot :global(.nav-item small) {
   display: block;
 }
 
-.nav-item b {
+.appRoot :global(.nav-item b) {
   font-size: var(--font-size-sm);
   font-weight: 400;
 }
 
-.nav-item small {
+.appRoot :global(.nav-item small) {
   color: var(--color-sidebar-text-subtle);
-  font: var(--font-size-2xs) / 1.35 var(--font-sans);
+  font: var(--font-size-2xs) / 1.35 var(--font-body);
   margin-top: 3px;
 }
 
-.sidebar-footer {
+.appRoot :global(.sidebar-footer) {
   color: var(--color-sidebar-text-muted);
-  font: var(--font-size-2xs) / 1.6 var(--font-sans);
+  font: var(--font-size-2xs) / 1.6 var(--font-body);
   margin-top: auto;
   padding: 16px 12px;
 }
 
-.sidebar-footer small {
+.appRoot :global(.sidebar-footer small) {
   color: var(--color-sidebar-text-subtle);
 }
 
-.online-dot {
-  background: var(--color-status-online);
+.appRoot :global(.online-dot) {
+  background: var(--color-status-success);
   border-radius: 50%;
   display: inline-block;
   height: 7px;
@@ -127,7 +133,7 @@
   width: 7px;
 }
 
-.host-main {
+.appRoot :global(.host-main) {
   height: 100dvh;
   min-width: 0;
   min-height: 0;
@@ -136,13 +142,13 @@
   scrollbar-gutter: stable;
 }
 
-.topbar {
+.appRoot :global(.topbar) {
   align-items: center;
   background: var(--color-surface-page);
   border-bottom: 1px solid var(--color-border-subtle);
   color: var(--color-text-secondary);
   display: flex;
-  font: var(--font-size-2xs) var(--font-sans);
+  font: var(--font-size-2xs) var(--font-body);
   gap: 16px;
   justify-content: space-between;
   padding: 22px clamp(22px, 5vw, 72px);
@@ -151,15 +157,15 @@
   z-index: 5;
 }
 
-.topbar-start,
-.topbar-end {
+.appRoot :global(.topbar-start),
+.appRoot :global(.topbar-end) {
   align-items: center;
   display: flex;
   gap: 16px;
   min-width: 0;
 }
 
-.breadcrumb ol {
+.appRoot :global(.breadcrumb ol) {
   align-items: center;
   display: flex;
   gap: 8px;
@@ -169,26 +175,26 @@
   padding: 0;
 }
 
-.breadcrumb li {
+.appRoot :global(.breadcrumb li) {
   min-width: 0;
 }
 
-.breadcrumb li + li::before {
+.appRoot :global(.breadcrumb li + li::before) {
   color: var(--color-text-muted);
   content: "/";
   margin-right: 8px;
 }
 
-.breadcrumb a {
+.appRoot :global(.breadcrumb a) {
   text-decoration: none;
 }
 
-.breadcrumb a:hover {
+.appRoot :global(.breadcrumb a:hover) {
   color: var(--color-text-primary);
   text-decoration: underline;
 }
 
-.breadcrumb li[aria-current="page"] {
+.appRoot :global(.breadcrumb li[aria-current="page"]) {
   color: var(--color-text-primary);
   max-width: 30ch;
   overflow: hidden;
@@ -196,7 +202,7 @@
   white-space: nowrap;
 }
 
-.mobile-nav-toggle {
+.appRoot :global(.mobile-nav-toggle) {
   align-items: center;
   background: var(--color-surface-control);
   border: 1px solid var(--color-control-border);
@@ -204,25 +210,25 @@
   color: var(--color-text-primary);
   cursor: pointer;
   display: none;
-  font: 700 var(--font-size-2xs) var(--font-sans);
+  font: 700 var(--font-size-2xs) var(--font-body);
   min-height: 40px;
   padding: 8px 12px;
 }
 
-.account-menu {
+.appRoot :global(.account-menu) {
   position: relative;
 }
 
-.user-chip {
+.appRoot :global(.user-chip) {
   background: transparent;
   border: 0;
   color: var(--color-success);
   cursor: pointer;
-  font: 700 var(--font-size-2xs) var(--font-sans);
+  font: 700 var(--font-size-2xs) var(--font-body);
   padding: 8px 12px;
 }
 
-.account-popup {
+.appRoot :global(.account-popup) {
   background: var(--color-surface-control);
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-sm);
@@ -235,7 +241,7 @@
   z-index: 20;
 }
 
-.account-popup button {
+.appRoot :global(.account-popup button) {
   background: transparent;
   border: 0;
   border-radius: 4px;
@@ -247,130 +253,131 @@
   width: 100%;
 }
 
-.account-popup button:hover {
+.appRoot :global(.account-popup button:hover) {
   background: var(--color-status-warning-soft);
 }
 
-.navigation-backdrop {
+.appRoot :global(.navigation-backdrop) {
   display: none;
 }
 
-.remote-state {
+.appRoot :global(.remote-state) {
   padding: 12vh clamp(22px, 7vw, 100px);
 }
 
-.remote-state h1 {
+.appRoot :global(.remote-state h1) {
   font-size: clamp(1.6rem, 2.6vw, 2.1rem);
   font-weight: 400;
   margin: 12px 0;
 }
 
-.remote-state p {
+.appRoot :global(.remote-state p) {
   color: var(--color-text-secondary);
-  font: var(--font-size-md) / 1.5 var(--font-sans);
+  font: var(--font-size-md) / 1.5 var(--font-body);
 }
 
-.remote-state form {
+.appRoot :global(.remote-state form) {
   display: grid;
   gap: 18px;
   margin-top: 28px;
   max-width: 380px;
 }
 
-.remote-state label {
+.appRoot :global(.remote-state label) {
   color: var(--color-text-secondary);
   display: grid;
-  font: 700 var(--font-size-2xs) var(--font-sans);
+  font: 700 var(--font-size-2xs) var(--font-body);
   gap: 8px;
   letter-spacing: 1.2px;
   text-transform: uppercase;
 }
 
-.remote-state input {
+.appRoot :global(.remote-state input) {
   background: var(--color-surface-control);
   border: 1px solid var(--color-control-border);
   color: var(--color-text-primary);
-  font: var(--font-size-md) var(--font-sans);
+  font: var(--font-size-md) var(--font-body);
   letter-spacing: normal;
   padding: 13px 14px;
   text-transform: none;
   width: 100%;
 }
 
-.remote-state input:focus-visible {
+.appRoot :global(.remote-state input:focus-visible) {
   border-color: var(--color-control-border-focus);
 }
 
-.remote-state form [role="alert"] {
+.appRoot :global(.remote-state form [role="alert"]) {
   color: var(--color-danger);
   font-size: var(--font-size-sm);
   margin: 0;
 }
 
-.remote-state form button,
-.remote-error button {
+.appRoot :global(.remote-state form button),
+.appRoot :global(.remote-error button) {
   background: var(--color-text-primary);
   border: 0;
   color: var(--color-text-on-dark);
   cursor: pointer;
-  font: 700 var(--font-size-xs) var(--font-sans);
+  font: 700 var(--font-size-xs) var(--font-body);
   padding: 15px 18px;
 }
 
-.remote-state form button:disabled {
+.appRoot :global(.remote-state form button:disabled) {
   cursor: progress;
   opacity: 0.7;
 }
 
-.remote-error button {
+.appRoot :global(.remote-error button) {
   margin-top: 18px;
 }
 
-.remote-skeleton .eyebrow {
+.appRoot :global(.remote-skeleton .eyebrow) {
   margin-bottom: 18px;
 }
 
-.skeleton-line,
-.skeleton-card {
+.appRoot :global(.skeleton-line),
+.appRoot :global(.skeleton-card) {
   animation: skeleton-pulse 1.2s ease-in-out infinite alternate;
   background: linear-gradient(90deg, rgba(24, 51, 47, 0.08), rgba(24, 51, 47, 0.16));
   border-radius: var(--radius-sm);
 }
 
-.skeleton-title {
+.appRoot :global(.skeleton-title) {
   height: 38px;
   max-width: 360px;
 }
 
-.skeleton-copy {
+.appRoot :global(.skeleton-copy) {
   height: 18px;
   margin-top: 16px;
   max-width: 520px;
 }
 
-.skeleton-copy.short {
+.appRoot :global(.skeleton-copy.short) {
   max-width: 320px;
 }
 
-.skeleton-card-grid {
+.appRoot :global(.skeleton-card-grid) {
   display: grid;
   gap: 18px;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   margin-top: 32px;
 }
 
-.skeleton-card {
+.appRoot :global(.skeleton-card) {
   min-height: 160px;
 }
 
-.eyebrow {
+.appRoot :global(.remote-state .eyebrow),
+.appRoot :global(.remote-skeleton .eyebrow) {
   color: var(--color-accent);
-  font: 700 var(--font-size-2xs) var(--font-sans);
+  font: 700 var(--font-size-2xs) var(--font-body);
   letter-spacing: 1.4px;
   text-transform: uppercase;
 }
 
-.sr-only {
+.appRoot :global(.sr-only) {
   border: 0;
   clip: rect(0, 0, 0, 0);
   height: 1px;
@@ -392,11 +399,11 @@
 }
 
 @media (max-width: 1023px) {
-  .host-shell {
+  .appRoot :global(.host-shell) {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .host-sidebar {
+  .appRoot :global(.host-sidebar) {
     bottom: 0;
     height: 100dvh;
     left: 0;
@@ -411,12 +418,12 @@
     width: 280px;
   }
 
-  .host-sidebar.navigation-open {
+  .appRoot :global(.host-sidebar.navigation-open) {
     transform: translateX(0);
     visibility: visible;
   }
 
-  .navigation-backdrop {
+  .appRoot :global(.navigation-backdrop) {
     background: color-mix(in srgb, var(--color-surface-dark), transparent 40%);
     border: 0;
     display: block;
@@ -425,57 +432,57 @@
     z-index: 20;
   }
 
-  .sidebar-label {
+  .appRoot :global(.sidebar-label) {
     margin: 32px 12px 12px;
   }
 
-  .mobile-nav-toggle {
+  .appRoot :global(.mobile-nav-toggle) {
     display: inline-flex;
   }
 
-  .host-sidebar nav {
+  .appRoot :global(.host-sidebar nav) {
     display: grid;
     gap: 4px;
     margin-top: 0;
   }
 
-  .nav-item {
+  .appRoot :global(.nav-item) {
     min-width: 0;
   }
 
-  .nav-item small {
+  .appRoot :global(.nav-item small) {
     display: block;
   }
 }
 
 @media (max-width: 520px) {
-  .topbar {
+  .appRoot :global(.topbar) {
     align-items: flex-start;
     padding: 12px 16px;
   }
 
-  .topbar-start,
-  .topbar-end {
+  .appRoot :global(.topbar-start),
+  .appRoot :global(.topbar-end) {
     gap: 10px;
   }
 
-  .topbar-start {
+  .appRoot :global(.topbar-start) {
     flex: 1;
   }
 
-  .breadcrumb ol {
+  .appRoot :global(.breadcrumb ol) {
     gap: 5px;
   }
 
-  .breadcrumb li + li::before {
+  .appRoot :global(.breadcrumb li + li::before) {
     margin-right: 5px;
   }
 
-  .breadcrumb li[aria-current="page"] {
+  .appRoot :global(.breadcrumb li[aria-current="page"]) {
     max-width: 16ch;
   }
 
-  .topbar-end {
+  .appRoot :global(.topbar-end) {
     flex-shrink: 0;
   }
 }

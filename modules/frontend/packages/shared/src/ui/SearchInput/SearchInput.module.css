@@ -1,0 +1,23 @@
+.search {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 34rem;
+  min-width: 0;
+}
+
+.label {
+  color: var(--color-text-secondary);
+  font: var(--font-weight-medium) var(--font-size-sm) / var(--line-height-normal) var(--font-body);
+}
+
+.input {
+  background: var(--color-surface-control);
+  border: 1px solid var(--color-control-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font: var(--font-size-md) / var(--line-height-normal) var(--font-body);
+  min-height: 44px;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  width: 100%;
+}

@@ -6,7 +6,7 @@ import { moduleFromPath, moduleLabel } from "./features/navigation/modules";
 import { ModuleNavigation } from "./features/navigation/components/ModuleNavigation";
 import { RemoteBoundary } from "./features/remotes/components/RemoteBoundary";
 import { RemoteContent } from "./features/remotes/components/RemoteContent";
-import "./App.css";
+import styles from "./App.module.css";
 
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? "";
@@ -16,7 +16,7 @@ type HostDomainEvent = {
   [K in keyof EventPayloadMap]: { type: K; payload: EventPayloadMap[K]; eventId: string };
 }[keyof EventPayloadMap];
 
-export default function App() {
+function HostApplication() {
   const [activeModule, setActiveModule] = useState(() =>
     moduleFromPath(typeof window === "undefined" ? "/estudantes" : window.location.pathname),
   );
@@ -317,6 +317,14 @@ export default function App() {
           <RemoteContent activeModule={activeModule} moduleLabel={moduleLabel} />
         </RemoteBoundary>
       </main>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <div className={styles.appRoot}>
+      <HostApplication />
     </div>
   );
 }

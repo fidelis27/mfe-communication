@@ -22,7 +22,7 @@ Browser
     ├── mfe-admin         users, groups, memberships
     ├── mfe-activity      read-only feed built from domain events
     └── mfe-dashboard     KPIs refreshed by domain events
-    @mfe/shared           event contract, bus, auth, design tokens (singleton)
+    @mfe/shared           event contract, bus, auth, design system (singleton)
             │  HTTPS + WSS, Supabase access token
             ▼
     secretaria-backend (Go) ── MariaDB
@@ -38,6 +38,7 @@ Browser
 - **Versioned event contract.** Every event carries `eventId`, `type`, `version`, `source`, `correlationId`, `occurredAt` and `payload`. Types are a discriminated union in `@mfe/shared`, and the `useDomainEvents` hook handles authenticated connection, reconnect with backoff, cleanup and typed parsing.
 - **Failure isolation.** Remotes are loaded with `lazy` + `Suspense`, and the host wraps them in an error boundary, so one remote being down does not take the shell with it.
 - **Accessibility as a gate.** Skip link, labelled fields, `aria-live` / `aria-busy` on async regions, `jest-axe` tests per MFE, and a color-contrast check that runs in CI.
+- **Shared visual language.** Semantic tokens and typed UI primitives live in `@mfe/shared`; each application's Vite CSS Module is scoped beneath its own root to prevent remote styles from leaking across the federated page. See [`docs/design-system.md`](docs/design-system.md).
 - **Performance by evidence.** The plan in [`docs/performance-improvement-plan.md`](docs/performance-improvement-plan.md) follows one rule: measure, change the smallest thing, measure again. It also lists what _not_ to optimize (no blanket memoization, no preloading every MFE).
 
 ## Repository layout
@@ -91,13 +92,14 @@ CI runs on every PR and a final **CI gate** job fails if any required job fails:
 
 ## Documentation
 
-| Doc                                                                                            | What it covers                                 |
-| ---------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| [`mfe-architecture.md`](docs/mfe-architecture.md)                                              | MFE boundaries, federation, deploy model       |
-| [`event-bus.md`](docs/event-bus.md)                                                            | Channels, queue, TTL, host WebSocket flow      |
-| [`spec-functional.md`](docs/spec-functional.md), [`spec-technical.md`](docs/spec-technical.md) | Product and technical specs                    |
-| [`performance-improvement-plan.md`](docs/performance-improvement-plan.md)                      | Evidence-first performance tasks               |
-| [`project-zero-learnings.md`](docs/project-zero-learnings.md)                                  | Checklist distilled from building this project |
+| Doc                                                                                            | What it covers                                  |
+| ---------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| [`mfe-architecture.md`](docs/mfe-architecture.md)                                              | MFE boundaries, federation, deploy model        |
+| [`design-system.md`](docs/design-system.md)                                                    | Shared tokens, UI primitives, and CSS isolation |
+| [`event-bus.md`](docs/event-bus.md)                                                            | Channels, queue, TTL, host WebSocket flow       |
+| [`spec-functional.md`](docs/spec-functional.md), [`spec-technical.md`](docs/spec-technical.md) | Product and technical specs                     |
+| [`performance-improvement-plan.md`](docs/performance-improvement-plan.md)                      | Evidence-first performance tasks                |
+| [`project-zero-learnings.md`](docs/project-zero-learnings.md)                                  | Checklist distilled from building this project  |
 
 ## How it was built
 
