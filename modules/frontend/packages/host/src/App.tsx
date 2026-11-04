@@ -35,7 +35,9 @@ function HostApplication() {
   } = useHostAuth(supabaseUrl, supabaseAnonKey);
   const dispatchDomain = useDispatch("domain");
   const dispatchHost = useDispatch("host");
-  const { events: domainEvents, connection: domainConnection } = useDomainEvents(apiUrl);
+  const { events: domainEvents, connection: domainConnection } = useDomainEvents(
+    authReady && authenticated ? apiUrl : "",
+  );
   const publishedEventIds = useRef(new Set<string>());
   const mainRef = useRef<HTMLElement>(null);
   const navigationToggleRef = useRef<HTMLButtonElement>(null);
