@@ -30,6 +30,10 @@ Each MFE owns its UI, feature API modules and TanStack Query hooks under
 Module Federation. React, React DOM, `@mfe/shared`, and
 `@tanstack/react-query` are shared singletons. Every remote creates a separate
 `QueryClient`, keeping its cache isolated from the other MFEs.
+The host and remotes use shared UI primitives and semantic design tokens from
+`@mfe/shared`. Each application stylesheet is a Vite CSS Module beneath its
+own generated root class; federated remotes must not add global element or
+class selectors. The shared UI exports the `@mfe/shared/ui` subpath.
 
 The host groups authentication, navigation, remote rendering, and domain-event
 publishing under `packages/host/src/features/`. The Admin remote keeps its
@@ -62,3 +66,6 @@ requests.
 The host and each MFE are deployed as separate Vercel projects, each building from its package directory. The host resolves remote entry URLs from `VITE_MFE_*_URL`. Frontend API requests use `VITE_API_URL`; authentication uses `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
 
 The backend API and its data model are maintained in the separate `secretaria-backend` repository.
+
+See [the design-system guide](./design-system.md) for token, component, and
+responsive CSS conventions.

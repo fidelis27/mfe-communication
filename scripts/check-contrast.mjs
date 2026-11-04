@@ -23,12 +23,15 @@ const textPairs = [
   ["color-sidebar-text-subtle", "color-sidebar-active"],
   ["color-avatar-text", "color-avatar-bg"],
   ["color-status-warning-text", "color-status-warning-soft"],
+  ["color-status-success-text", "color-status-success-soft"],
+  ["color-status-danger-text", "color-status-danger-soft"],
+  ["color-text-secondary", "color-status-neutral-soft"],
 ];
 const controlPairs = [
   ["color-control-border", "color-surface-control"],
   ["color-control-border-focus", "color-surface-control"],
   ["color-status-warning-border", "color-status-warning-soft"],
-  ["color-event-pin-border", "color-status-active"],
+  ["color-event-pin-border", "color-status-success"],
 ];
 let hasErrors = false;
 
@@ -65,14 +68,14 @@ function checkPairs(pairs, minimum, kind) {
   }
 }
 
-async function appCssFiles(directory) {
+async function cssModuleFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
   const files = [];
   for (const entry of entries) {
     const path = join(directory, entry.name);
     if (entry.isDirectory()) {
-      files.push(...(await appCssFiles(path)));
-    } else if (entry.name === "App.css") {
+      files.push(...(await cssModuleFiles(path)));
+    } else if (entry.name.endsWith(".module.css")) {
       files.push(path);
     }
   }
@@ -83,7 +86,7 @@ checkPairs(textPairs, 4.5, "Text/background");
 checkPairs(controlPairs, 3, "Control/border");
 
 const cssRoot = join(root, "modules", "frontend", "packages");
-for (const file of await appCssFiles(cssRoot)) {
+for (const file of await cssModuleFiles(cssRoot)) {
   const source = await readFile(file, "utf8");
   if (/#(?:[0-9a-f]{3,8})\b/i.test(source)) {
     process.stderr.write(

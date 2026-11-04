@@ -1,12 +1,15 @@
 import { FormEvent, useEffect, useState } from "react";
 import {
   Pagination,
+  Field,
+  PageHeader,
   type Student,
   useDomainEventSync,
   useDomainEvents,
   useHostReady,
   usePaginatedItems,
 } from "@mfe/shared";
+import { Field, PageHeader } from "@mfe/shared/ui";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   studentQueryKeys,
@@ -14,7 +17,7 @@ import {
   useInstitutions,
   useStudents,
 } from "./features/student/hooks";
-import "./App.css";
+import styles from "./App.module.css";
 
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
 const EMPTY_LIST: never[] = [];
@@ -86,44 +89,49 @@ export default function App() {
   }
 
   return (
-    <main className="student-shell">
-      <section className="student-hero">
-        <p className="eyebrow">Secretaria escolar · estudantes</p>
-        <h1>Vínculos que acompanham cada trajetória.</h1>
-        <p className="lede">
-          Cadastre estudantes e acompanhe as alterações persistidas em tempo real.
-        </p>
-        <span className="connection">
-          <i />{" "}
-          {connection === "connected"
-            ? "Eventos conectados"
-            : connection === "connecting"
-              ? "Conectando eventos"
-              : "Eventos offline"}{" "}
-          · {apiUrl}
-        </span>
-      </section>
+    <div className={styles.appRoot}>
+      <main className="student-shell">
+        <section className="student-hero">
+          <PageHeader
+            description={
+              <p className="lede">
+                Cadastre estudantes e acompanhe as alterações persistidas em tempo real.
+              </p>
+            }
+            eyebrow="Secretaria escolar · estudantes"
+            title="Vínculos que acompanham cada trajetória."
+            actions={
+              <span className="connection">
+                <i />{" "}
+                {connection === "connected"
+                  ? "Eventos conectados"
+                  : connection === "connecting"
+                    ? "Conectando eventos"
+                    : "Eventos offline"}{" "}
+                · {apiUrl}
+              </span>
+            }
+          />
+        </section>
 
-      <section className="student-grid">
-        <form className="student-form" onSubmit={createStudent}>
-          <div className="section-heading">
-            <span className="section-number">01</span>
-            <h2>Novo estudante</h2>
-          </div>
-          <label htmlFor="student-name">
-            Nome completo
-            <input
+        <section className="student-grid">
+          <form className="student-form" onSubmit={createStudent}>
+            <div className="section-heading">
+              <span className="section-number">01</span>
+              <h2>Novo estudante</h2>
+            </div>
+            <Field
               id="student-name"
+              label="Nome completo"
               value={name}
               onChange={(event) => setName(event.target.value)}
               placeholder="Ex.: Ana Souza"
               required
             />
-          </label>
-          <label htmlFor="student-institution">
-            Instituição
-            <select
+            <Field
+              as="select"
               id="student-institution"
+              label="Instituição"
               value={institutionId}
               onChange={(event) => setInstitutionId(event.target.value)}
               required
@@ -142,71 +150,72 @@ export default function App() {
                   </option>
                 ))
               )}
-            </select>
-          </label>
-          <button type="submit" disabled={createStudentMutation.isPending}>
-            {createStudentMutation.isPending ? "Salvando..." : "Cadastrar estudante"} <span>→</span>
-          </button>
-          {institutionsQuery.isError && (
-            <p className="form-message error">
-              {institutionsQuery.error instanceof Error
-                ? institutionsQuery.error.message
-                : "Erro ao carregar instituições."}
-              <button type="button" onClick={() => void institutionsQuery.refetch()}>
-                Tentar novamente
-              </button>
-            </p>
-          )}
-          {message && (
-            <p
-              className={`form-message ${
-                createStudentMutation.isError || !institutionId ? "error" : "success"
-              }`}
-            >
-              {message}
-            </p>
-          )}
-        </form>
-
-        <section className="student-list" aria-live="polite" aria-busy={studentsQuery.isFetching}>
-          <div className="section-heading">
-            <span className="section-number">02</span>
-            <h2>Estudantes recentes</h2>
-            <strong>{students.length.toString().padStart(2, "0")}</strong>
-          </div>
-          {state === "loading" && <p className="empty-state">Carregando estudantes...</p>}
-          {studentsQuery.isError && (
-            <div className="empty-state error-state">
-              <p>
-                {studentsQuery.error instanceof Error
-                  ? studentsQuery.error.message
-                  : "Erro inesperado."}
+            </Field>
+            <button type="submit" disabled={createStudentMutation.isPending}>
+              {createStudentMutation.isPending ? "Salvando..." : "Cadastrar estudante"}{" "}
+              <span>→</span>
+            </button>
+            {institutionsQuery.isError && (
+              <p className="form-message error">
+                {institutionsQuery.error instanceof Error
+                  ? institutionsQuery.error.message
+                  : "Erro ao carregar instituições."}
+                <button type="button" onClick={() => void institutionsQuery.refetch()}>
+                  Tentar novamente
+                </button>
               </p>
-              <button type="button" onClick={() => void studentsQuery.refetch()}>
-                Tentar novamente
-              </button>
+            )}
+            {message && (
+              <p
+                className={`form-message ${
+                  createStudentMutation.isError || !institutionId ? "error" : "success"
+                }`}
+              >
+                {message}
+              </p>
+            )}
+          </form>
+
+          <section className="student-list" aria-live="polite" aria-busy={studentsQuery.isFetching}>
+            <div className="section-heading">
+              <span className="section-number">02</span>
+              <h2>Estudantes recentes</h2>
+              <strong>{students.length.toString().padStart(2, "0")}</strong>
             </div>
-          )}
-          {state === "empty" && <p className="empty-state">Nenhum estudante cadastrado ainda.</p>}
-          {studentPagination.pageItems.map((student) => (
-            <article className="student-row" key={student.id}>
-              <div className="avatar">{student.name.slice(0, 1).toUpperCase()}</div>
-              <div>
-                <h3>{student.name}</h3>
-                <p>{student.institutionId}</p>
+            {state === "loading" && <p className="empty-state">Carregando estudantes...</p>}
+            {studentsQuery.isError && (
+              <div className="empty-state error-state">
+                <p>
+                  {studentsQuery.error instanceof Error
+                    ? studentsQuery.error.message
+                    : "Erro inesperado."}
+                </p>
+                <button type="button" onClick={() => void studentsQuery.refetch()}>
+                  Tentar novamente
+                </button>
               </div>
-              <span className="status">{student.status}</span>
-            </article>
-          ))}
-          <Pagination
-            label="estudantes"
-            page={studentPagination.page}
-            pageCount={studentPagination.pageCount}
-            totalItems={students.length}
-            onPageChange={studentPagination.setPage}
-          />
+            )}
+            {state === "empty" && <p className="empty-state">Nenhum estudante cadastrado ainda.</p>}
+            {studentPagination.pageItems.map((student) => (
+              <article className="student-row" key={student.id}>
+                <div className="avatar">{student.name.slice(0, 1).toUpperCase()}</div>
+                <div>
+                  <h3>{student.name}</h3>
+                  <p>{student.institutionId}</p>
+                </div>
+                <span className="status">{student.status}</span>
+              </article>
+            ))}
+            <Pagination
+              label="estudantes"
+              page={studentPagination.page}
+              pageCount={studentPagination.pageCount}
+              totalItems={students.length}
+              onPageChange={studentPagination.setPage}
+            />
+          </section>
         </section>
-      </section>
-    </main>
+      </main>
+    </div>
   );
 }

@@ -1,66 +1,71 @@
 @import "@mfe/shared/tokens.css";
-
-.dashboard-shell {
-  padding: 32px clamp(20px, 5vw, 72px);
-  background: var(--gradient-page-dashboard);
+.appRoot {
+  min-height: 100dvh;
+  background: var(--color-surface-page);
+  color: var(--color-text-primary);
 }
 
-.dashboard-heading {
+.appRoot :global(.dashboard-shell) {
+  padding: 32px clamp(20px, 5vw, 72px);
+  background: var(--color-surface-page);
+}
+
+.appRoot :global(.dashboard-heading) {
   align-items: flex-end;
   display: flex;
   justify-content: space-between;
   max-width: 1050px;
 }
 
-.eyebrow {
+.appRoot :global(.eyebrow) {
   color: var(--color-accent);
-  font: 700 var(--font-size-2xs) var(--font-sans);
+  font: 700 var(--font-size-2xs) var(--font-body);
   letter-spacing: 1.8px;
   text-transform: uppercase;
 }
 
-.dashboard-heading h1 {
+.appRoot :global(.dashboard-heading h1) {
   font-size: clamp(1.6rem, 2.6vw, 2.1rem);
-  font-weight: 400;
+  font-weight: var(--font-weight-bold);
   line-height: 1.02;
   margin: 18px 0;
 }
 
-.lede {
+.appRoot :global(.lede) {
   color: var(--color-text-secondary);
-  font: var(--font-size-md) / 1.5 var(--font-sans);
+  font: var(--font-size-md) / 1.5 var(--font-body);
   max-width: 510px;
 }
 
-.sync {
+.appRoot :global(.sync) {
   align-items: center;
   color: var(--color-text-muted);
   display: flex;
-  font: var(--font-size-2xs) var(--font-sans);
+  font: var(--font-size-2xs) var(--font-body);
   gap: 8px;
   margin-bottom: 10px;
 }
 
-.sync i {
+.appRoot :global(.sync i) {
   background: var(--color-status-warning);
   border-radius: 50%;
   height: 8px;
   width: 8px;
 }
 
-.sync.success i {
-  background: var(--color-status-ok);
+.appRoot :global(.sync.success i) {
+  background: var(--color-status-success);
 }
 
-.sync.error {
+.appRoot :global(.sync.error) {
   color: var(--color-danger);
 }
 
-.sync.error i {
+.appRoot :global(.sync.error i) {
   background: var(--color-danger);
 }
 
-.metrics {
+.appRoot :global(.metrics) {
   display: grid;
   gap: 1px;
   grid-template-columns: 1.4fr 1fr 1fr 1fr;
@@ -68,21 +73,21 @@
   max-width: 1050px;
 }
 
-.metric {
+.appRoot :global(.metric) {
   background: var(--color-surface-card);
   border-top: 1px solid var(--color-border-default);
   min-height: 190px;
   padding: 22px 20px;
 }
 
-.metric span,
-.metric small {
+.appRoot :global(.metric span),
+.appRoot :global(.metric small) {
   color: var(--color-text-secondary);
   display: block;
-  font: var(--font-size-2xs) var(--font-sans);
+  font: var(--font-size-2xs) var(--font-body);
 }
 
-.metric strong {
+.appRoot :global(.metric strong) {
   display: block;
   font-size: clamp(2.2rem, 4vw, 3.6rem);
   font-weight: 400;
@@ -90,21 +95,21 @@
   margin: 38px 0 10px;
 }
 
-.metric small {
+.appRoot :global(.metric small) {
   color: var(--color-success);
   text-transform: uppercase;
 }
 
-.metric-accent {
+.appRoot :global(.metric-accent) {
   background: var(--color-status-warning-soft);
   border-color: var(--color-status-warning-border);
 }
 
-.metric-accent small {
+.appRoot :global(.metric-accent small) {
   color: var(--color-status-warning-text);
 }
 
-.dashboard-note {
+.appRoot :global(.dashboard-note) {
   align-items: center;
   border-top: 1px solid var(--color-border-default);
   display: flex;
@@ -114,57 +119,57 @@
   padding-top: 22px;
 }
 
-.note-mark {
+.appRoot :global(.note-mark) {
   color: var(--color-accent-muted);
   font-size: 36px;
 }
 
-.dashboard-note h2 {
+.appRoot :global(.dashboard-note h2) {
   font-size: 1.2rem;
   font-weight: 400;
   margin: 0 0 6px;
 }
 
-.dashboard-note p {
+.appRoot :global(.dashboard-note p) {
   color: var(--color-text-secondary);
-  font: var(--font-size-xs) var(--font-sans);
+  font: var(--font-size-xs) var(--font-body);
   margin: 0;
 }
 
-.dashboard-note button {
+.appRoot :global(.dashboard-note button) {
   background: var(--color-control-border-focus);
   border: 0;
   color: var(--color-text-on-dark);
   cursor: pointer;
-  font: 700 var(--font-size-2xs) var(--font-sans);
+  font: 700 var(--font-size-2xs) var(--font-body);
   margin-top: 16px;
   padding: 12px 16px;
 }
 
 @media (max-width: 760px) {
-  .dashboard-shell {
+  .appRoot :global(.dashboard-shell) {
     padding: 40px 22px;
   }
 
-  .dashboard-heading {
+  .appRoot :global(.dashboard-heading) {
     align-items: flex-start;
     display: block;
   }
 
-  .sync {
+  .appRoot :global(.sync) {
     margin-top: 24px;
   }
 
-  .metrics {
+  .appRoot :global(.metrics) {
     grid-template-columns: 1fr 1fr;
     margin-top: 48px;
   }
 
-  .metric-large {
+  .appRoot :global(.metric-large) {
     grid-column: span 2;
   }
 
-  .metric strong {
+  .appRoot :global(.metric strong) {
     font-size: 54px;
     margin-top: 28px;
   }

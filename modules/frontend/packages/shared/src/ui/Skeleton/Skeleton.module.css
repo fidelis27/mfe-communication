@@ -1,0 +1,45 @@
+.skeleton {
+  min-width: 0;
+}
+
+.text .shape {
+  border-radius: var(--radius-sm);
+  display: block;
+  height: 1rem;
+  max-width: 34rem;
+  width: 70%;
+}
+
+.card .shape {
+  border-radius: var(--radius-md);
+  display: block;
+  height: 9rem;
+  width: 100%;
+}
+
+.shape {
+  animation: pulse 1.2s ease-in-out infinite alternate;
+  background: var(--color-surface-muted);
+}
+
+.srOnly {
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
+@keyframes pulse {
+  to {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shape {
+    animation-duration: 2.4s;
+  }
+}

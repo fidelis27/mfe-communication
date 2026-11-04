@@ -1,0 +1,40 @@
+.eyebrow {
+  color: var(--color-accent);
+  font: var(--font-weight-bold) var(--font-size-2xs) / var(--line-height-normal) var(--font-body);
+  letter-spacing: var(--letter-spacing-label);
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.title {
+  color: var(--color-text-primary);
+  font: var(--font-weight-bold) var(--font-size-xl) / var(--line-height-tight) var(--font-heading);
+  margin: var(--space-3) 0;
+  overflow-wrap: anywhere;
+}
+
+.description {
+  color: var(--color-text-secondary);
+  font: var(--font-size-md) / var(--line-height-normal) var(--font-body);
+}
+
+.error {
+  background: var(--color-status-danger-soft);
+  border-radius: var(--radius-sm);
+  color: var(--color-status-danger-text);
+  padding: var(--space-3);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: flex-end;
+  margin-top: var(--space-6);
+}
+
+@media (max-width: 480px) {
+  .actions {
+    flex-direction: column-reverse;
+  }
+}

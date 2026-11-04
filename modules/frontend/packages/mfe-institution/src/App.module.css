@@ -1,35 +1,40 @@
 @import "@mfe/shared/tokens.css";
-
-.institution-shell {
-  padding: 32px clamp(20px, 5vw, 72px);
-  background: var(--gradient-page-institution);
+.appRoot {
+  min-height: 100dvh;
+  background: var(--color-surface-page);
+  color: var(--color-text-primary);
 }
 
-.institution-hero {
+.appRoot :global(.institution-shell) {
+  padding: 32px clamp(20px, 5vw, 72px);
+  background: var(--color-surface-page);
+}
+
+.appRoot :global(.institution-hero) {
   max-width: 760px;
 }
 
-.eyebrow {
+.appRoot :global(.eyebrow) {
   color: var(--color-accent);
-  font: 700 var(--font-size-2xs) var(--font-sans);
+  font: 700 var(--font-size-2xs) var(--font-body);
   letter-spacing: 1.8px;
   text-transform: uppercase;
 }
 
-.institution-hero h1 {
+.appRoot :global(.institution-hero h1) {
   font-size: clamp(1.6rem, 2.6vw, 2.1rem);
-  font-weight: 400;
+  font-weight: var(--font-weight-bold);
   line-height: 1.04;
   margin: 18px 0;
 }
 
-.lede {
+.appRoot :global(.lede) {
   color: var(--color-text-secondary);
-  font: var(--font-size-md) / 1.5 var(--font-sans);
+  font: var(--font-size-md) / 1.5 var(--font-body);
   max-width: 500px;
 }
 
-.institution-grid {
+.appRoot :global(.institution-grid) {
   display: grid;
   gap: 56px;
   grid-template-columns: minmax(260px, 340px) minmax(320px, 1fr);
@@ -37,113 +42,90 @@
   max-width: 1080px;
 }
 
-.institution-form,
-.institution-list {
+.appRoot :global(.institution-form),
+.appRoot :global(.institution-list) {
   border-top: 1px solid var(--color-border-default);
   padding-top: 20px;
 }
 
-.section-heading {
+.appRoot :global(.section-heading) {
   align-items: center;
   display: flex;
   gap: 12px;
   margin-bottom: 28px;
 }
 
-.section-heading > span {
+.appRoot :global(.section-heading > span) {
   color: var(--color-accent);
-  font: 700 var(--font-size-2xs) var(--font-sans);
+  font: 700 var(--font-size-2xs) var(--font-body);
 }
 
-.section-heading h2 {
+.appRoot :global(.section-heading h2) {
   font-size: 1.2rem;
   font-weight: 400;
   margin: 0;
 }
 
-.section-heading strong {
+.appRoot :global(.section-heading strong) {
   color: var(--color-accent);
-  font: 700 var(--font-size-xs) var(--font-sans);
+  font: 700 var(--font-size-xs) var(--font-body);
   margin-left: auto;
 }
 
-label {
-  color: var(--color-text-secondary);
-  display: grid;
-  font: var(--font-size-2xs) var(--font-sans);
-  gap: 8px;
+.appRoot :global(.institution-form > .field) {
   margin-top: 22px;
 }
 
-label small {
-  display: inline;
-  font-size: 12px;
-}
-
-input {
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid var(--color-control-border);
-  color: var(--color-text-primary);
-  font: 18px var(--font-serif);
-  padding: 10px 0;
-  width: 100%;
-}
-
-input:focus-visible {
-  border-color: var(--color-control-border-focus);
-}
-
-button {
+.appRoot :global(button) {
   background: var(--color-text-primary);
   border: 0;
   color: var(--color-text-on-dark);
   cursor: pointer;
-  font: 700 var(--font-size-xs) var(--font-sans);
+  font: 700 var(--font-size-xs) var(--font-body);
   margin-top: 32px;
   padding: 15px 18px;
   width: 100%;
 }
 
-button b {
+.appRoot :global(button b) {
   float: right;
   font-size: 20px;
   line-height: 11px;
 }
 
-.message {
+.appRoot :global(.message) {
   color: var(--color-success);
-  font: var(--font-size-2xs) var(--font-sans);
+  font: var(--font-size-2xs) var(--font-body);
 }
 
-.error {
+.appRoot :global(.error) {
   color: var(--color-danger);
 }
 
-.empty.error-state {
+.appRoot :global(.empty.error-state) {
   align-items: flex-start;
   display: grid;
   gap: 14px;
 }
 
-.empty.error-state p {
+.appRoot :global(.empty.error-state p) {
   margin: 0;
 }
 
-.empty.error-state button {
+.appRoot :global(.empty.error-state button) {
   background: var(--color-control-border-focus);
   margin-top: 0;
   max-width: 190px;
   padding: 12px 16px;
 }
 
-.empty {
+.appRoot :global(.empty) {
   color: var(--color-text-secondary);
-  font: 15px var(--font-sans);
+  font: var(--font-size-sm) var(--font-body);
   padding: 28px 0;
 }
 
-.institution-row {
+.appRoot :global(.institution-row) {
   align-items: center;
   border-bottom: 1px solid var(--color-border-subtle);
   display: flex;
@@ -151,53 +133,54 @@ button b {
   padding: 15px 0;
 }
 
-.crest {
+.appRoot :global(.institution-row > div) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.appRoot :global(.crest) {
   align-items: center;
   background: var(--color-avatar-bg);
   border-radius: var(--radius-sm);
   color: var(--color-avatar-text);
   display: flex;
   flex: 0 0 38px;
-  font: 18px var(--font-serif);
+  font: var(--font-size-lg) var(--font-body);
   height: 38px;
   justify-content: center;
 }
 
-.institution-row h3 {
+.appRoot :global(.institution-row h3) {
   font-size: 1rem;
   font-weight: 400;
   margin: 0 0 4px;
 }
 
-.institution-row p {
+.appRoot :global(.institution-row p) {
   color: var(--color-text-secondary);
-  font: var(--font-size-2xs) var(--font-sans);
+  font: var(--font-size-2xs) var(--font-body);
   margin: 0;
 }
 
-.institution-row em {
+.appRoot :global(.institution-row em) {
   color: var(--color-success);
-  font: var(--font-size-2xs) var(--font-sans);
+  font: var(--font-size-2xs) var(--font-body);
   font-style: normal;
   margin-left: auto;
   text-transform: uppercase;
 }
 
 @media (max-width: 720px) {
-  .institution-shell {
+  .appRoot :global(.institution-shell) {
     padding: 40px 22px;
   }
 
-  .institution-hero h1 {
-    font-size: 2.5rem;
-  }
-
-  .institution-grid {
+  .appRoot :global(.institution-grid) {
     display: block;
     margin-top: 48px;
   }
 
-  .institution-list {
+  .appRoot :global(.institution-list) {
     margin-top: 56px;
   }
 }

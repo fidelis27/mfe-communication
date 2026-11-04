@@ -12,12 +12,10 @@ import {
   useHostReady,
   usePaginatedItems,
 } from "@mfe/shared";
+import { PageHeader, ToastRegion as SharedToastRegion, useConfirm } from "@mfe/shared/ui";
 import { useQueryClient } from "@tanstack/react-query";
-import { ConfirmDialog } from "./components/ConfirmDialog";
-import { ToastRegion } from "./components/ToastRegion";
 import type {
   AdminTab,
-  ConfirmDialogState,
   GroupFormErrors,
   ListState,
   MemberFormErrors,
@@ -45,7 +43,6 @@ import {
   useUpdateUserStatus,
   useUsers,
 } from "./hooks";
-import "../../App.css";
 
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
 const canGrantSuperAdmin = import.meta.env.VITE_DEMO_SUPER_ADMIN === "true";
@@ -57,8 +54,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<AdminTab>("people");
   const [notices, setNotices] = useState<Notice[]>([]);
   const noticeTimers = useRef<number[]>([]);
-  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(null);
-  const [confirmBusy, setConfirmBusy] = useState(false);
+  const { confirm, dialog: confirmationDialog } = useConfirm();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -299,15 +295,16 @@ export default function App() {
   }
 
   function requestMembershipRemoval(membership: GroupMembership) {
-    setConfirmDialog({
-      title: "Remover acesso do grupo?",
-      description: `Confirme a remoção de ${membership.userName} do grupo ${selectedGroup?.name ?? "selecionado"}.`,
-      confirmLabel: "Remover",
-      tone: "danger",
-      onConfirm: async () => {
+    void confirm(
+      {
+        title: "Remover acesso do grupo?",
+        description: `Confirme a remoção de ${membership.userName} do grupo ${selectedGroup?.name ?? "selecionado"}.`,
+        confirmLabel: "Remover",
+        tone: "danger",
+      },
+      async () => {
         if (!selectedGroupId) return;
 
-        setConfirmBusy(true);
         setPendingMembershipIds((current) => [...current, membership.userId]);
         try {
           await removeGroupMemberMutation.mutateAsync({
@@ -315,41 +312,34 @@ export default function App() {
             userId: membership.userId,
           });
           addNotice("Membro removido.", "success");
-          setConfirmDialog(null);
-        } catch (error) {
-          addNotice(error instanceof Error ? error.message : "Erro inesperado.", "error");
         } finally {
           setPendingMembershipIds((current) => current.filter((id) => id !== membership.userId));
-          setConfirmBusy(false);
         }
       },
-    });
+    );
   }
 
   function requestStatusToggle(user: AdminUser) {
     const nextStatus = user.status.toLowerCase() === "inactive" ? "active" : "inactive";
     const nextStatusLabel = translateStatus(nextStatus);
 
-    setConfirmDialog({
-      title: `${nextStatus === "inactive" ? "Desativar" : "Ativar"} pessoa?`,
-      description: `Confirme a alteração de status de ${user.name} para ${nextStatusLabel.toLowerCase()}.`,
-      confirmLabel: nextStatus === "inactive" ? "Desativar" : "Ativar",
-      tone: nextStatus === "inactive" ? "danger" : "default",
-      onConfirm: async () => {
-        setConfirmBusy(true);
+    void confirm(
+      {
+        title: `${nextStatus === "inactive" ? "Desativar" : "Ativar"} pessoa?`,
+        description: `Confirme a alteração de status de ${user.name} para ${nextStatusLabel.toLowerCase()}.`,
+        confirmLabel: nextStatus === "inactive" ? "Desativar" : "Ativar",
+        tone: nextStatus === "inactive" ? "danger" : "default",
+      },
+      async () => {
         setPendingUserIds((current) => [...current, user.id]);
         try {
           await updateUserStatusMutation.mutateAsync({ userId: user.id, status: nextStatus });
           addNotice(`Status alterado para ${nextStatusLabel.toLowerCase()}.`, "success");
-          setConfirmDialog(null);
-        } catch (error) {
-          addNotice(error instanceof Error ? error.message : "Erro inesperado.", "error");
         } finally {
           setPendingUserIds((current) => current.filter((id) => id !== user.id));
-          setConfirmBusy(false);
         }
       },
-    });
+    );
   }
 
   const scopeLabel = isSuperAdmin
@@ -362,24 +352,29 @@ export default function App() {
 
   return (
     <main className="admin-shell">
-      <ToastRegion notices={notices} onDismiss={dismissNotice} />
-      {confirmDialog && (
-        <ConfirmDialog
-          dialog={confirmDialog}
-          busy={confirmBusy}
-          onCancel={() => !confirmBusy && setConfirmDialog(null)}
-        />
-      )}
+      <SharedToastRegion
+        notices={notices}
+        onDismiss={(id) => {
+          if (typeof id === "number") dismissNotice(id);
+        }}
+      />
+      {confirmationDialog}
 
       <section className="admin-heading">
-        <div>
-          <p className="eyebrow">Secretaria escolar · acesso</p>
-          <h1>Pessoas e permissões.</h1>
-          <p className="lede">Mantenha o mapa de acesso da secretaria claro, ativo e auditável.</p>
-        </div>
-        <span className="scope-chip">
-          {scopeLoaded ? scopeLabel : "Carregando escopo do usuário..."}
-        </span>
+        <PageHeader
+          eyebrow="Secretaria escolar · acesso"
+          title="Pessoas e permissões."
+          description={
+            <p className="lede">
+              Mantenha o mapa de acesso da secretaria claro, ativo e auditável.
+            </p>
+          }
+          actions={
+            <span className="scope-chip">
+              {scopeLoaded ? scopeLabel : "Carregando escopo do usuário..."}
+            </span>
+          }
+        />
       </section>
 
       <section className="tabs-shell">

@@ -1,52 +1,57 @@
 @import "@mfe/shared/tokens.css";
-
-.student-shell {
-  padding: 32px clamp(20px, 5vw, 72px);
-  background: var(--gradient-page-student);
+.appRoot {
+  min-height: 100dvh;
+  background: var(--color-surface-page);
+  color: var(--color-text-primary);
 }
 
-.student-hero {
+.appRoot :global(.student-shell) {
+  padding: 32px clamp(20px, 5vw, 72px);
+  background: var(--color-surface-page);
+}
+
+.appRoot :global(.student-hero) {
   max-width: 760px;
 }
 
-.eyebrow {
+.appRoot :global(.eyebrow) {
   color: var(--color-accent);
-  font: 700 12px / 1.2 var(--font-sans);
+  font: 700 12px / 1.2 var(--font-body);
   letter-spacing: 1.8px;
   text-transform: uppercase;
 }
 
-h1 {
+.appRoot :global(h1) {
   font-size: clamp(1.6rem, 2.6vw, 2.1rem);
-  font-weight: 400;
+  font-weight: var(--font-weight-bold);
   line-height: 1.02;
   margin: 18px 0;
   max-width: 760px;
 }
 
-.lede {
+.appRoot :global(.lede) {
   color: var(--color-text-muted);
-  font: var(--font-size-md) / 1.5 var(--font-sans);
+  font: var(--font-size-md) / 1.5 var(--font-body);
   max-width: 520px;
 }
 
-.connection {
+.appRoot :global(.connection) {
   align-items: center;
   color: var(--color-text-muted);
   display: inline-flex;
-  font: var(--font-size-2xs) var(--font-sans);
+  font: var(--font-size-2xs) var(--font-body);
   gap: 8px;
   margin-top: 18px;
 }
 
-.connection i {
-  background: var(--color-status-success-student);
+.appRoot :global(.connection i) {
+  background: var(--color-status-success);
   border-radius: 50%;
   height: 8px;
   width: 8px;
 }
 
-.student-grid {
+.appRoot :global(.student-grid) {
   display: grid;
   gap: 56px;
   grid-template-columns: minmax(260px, 340px) minmax(320px, 1fr);
@@ -54,121 +59,96 @@ h1 {
   max-width: 1080px;
 }
 
-.student-form,
-.student-list {
+.appRoot :global(.student-form),
+.appRoot :global(.student-list) {
   border-top: 1px solid var(--color-border-default);
   padding-top: 20px;
 }
 
-.section-heading {
+.appRoot :global(.section-heading) {
   align-items: center;
   display: flex;
   gap: 12px;
   margin-bottom: 28px;
 }
 
-.section-heading h2 {
+.appRoot :global(.section-heading h2) {
   font-size: 1.2rem;
   font-weight: 400;
   margin: 0;
 }
 
-.section-heading strong {
+.appRoot :global(.section-heading strong) {
   color: var(--color-accent);
-  font: 700 var(--font-size-xs) var(--font-sans);
+  font: 700 var(--font-size-xs) var(--font-body);
   margin-left: auto;
 }
 
-.section-number {
+.appRoot :global(.section-number) {
   color: var(--color-accent);
-  font: 700 var(--font-size-2xs) var(--font-sans);
+  font: 700 var(--font-size-2xs) var(--font-body);
 }
 
-label {
-  color: var(--color-text-muted);
-  display: grid;
-  font: var(--font-size-2xs) var(--font-sans);
-  gap: 8px;
+.appRoot :global(.student-form > .field) {
   margin-top: 22px;
 }
 
-input,
-select {
-  appearance: none;
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid var(--color-control-border);
-  color: var(--color-text-primary);
-  font: 18px var(--font-serif);
-  padding: 10px 0;
-  width: 100%;
-}
-
-select {
-  padding-right: 24px;
-}
-
-input:focus-visible,
-select:focus-visible {
-  border-color: var(--color-control-border-focus);
-}
-
-select:disabled {
+.appRoot :global(select:disabled) {
   color: var(--color-text-secondary);
   cursor: wait;
 }
 
-button {
+.appRoot :global(button) {
   background: var(--color-text-primary);
   border: 0;
   color: var(--color-text-on-dark);
   cursor: pointer;
-  font: 700 var(--font-size-xs) var(--font-sans);
+  font: 700 var(--font-size-xs) var(--font-body);
   margin-top: 32px;
   padding: 15px 18px;
   width: 100%;
 }
 
-button span {
+.appRoot :global(button span) {
   float: right;
   font-size: 20px;
   line-height: 11px;
 }
 
-.form-message {
-  font: var(--font-size-2xs) var(--font-sans);
+.appRoot :global(.form-message) {
+  font: var(--font-size-2xs) var(--font-body);
   margin-top: 14px;
 }
 
-.form-message.error,
-.error-state {
+.appRoot :global(.form-message.error),
+.appRoot :global(.error-state) {
   color: var(--color-danger);
 }
 
-.empty-state.error-state {
+.appRoot :global(.empty-state.error-state) {
   align-items: flex-start;
   display: grid;
   gap: 14px;
 }
 
-.empty-state.error-state p {
+.appRoot :global(.empty-state.error-state p) {
   margin: 0;
 }
 
-.empty-state.error-state button {
+.appRoot :global(.empty-state.error-state button) {
   background: var(--color-control-border-focus);
   margin-top: 0;
   max-width: 190px;
   padding: 12px 16px;
 }
 
-.empty-state {
+.appRoot :global(.empty-state) {
   color: var(--color-text-secondary);
-  font: 15px var(--font-sans);
+  font: var(--font-size-sm) var(--font-body);
   padding: 28px 0;
 }
 
-.student-row {
+.appRoot :global(.student-row) {
   align-items: center;
   border-bottom: 1px solid var(--color-border-subtle);
   display: flex;
@@ -176,41 +156,50 @@ button span {
   padding: 15px 0;
 }
 
-.avatar {
+.appRoot :global(.student-row > div) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.appRoot :global(.student-row > .status) {
+  flex: 0 0 auto;
+}
+
+.appRoot :global(.avatar) {
   align-items: center;
   background: var(--color-sidebar-accent);
   border-radius: 50%;
   color: var(--color-avatar-text);
   display: flex;
   flex: 0 0 38px;
-  font: 18px var(--font-serif);
+  font: var(--font-size-lg) var(--font-body);
   height: 38px;
   justify-content: center;
 }
 
-.student-row h3 {
+.appRoot :global(.student-row h3) {
   font-size: 1rem;
   font-weight: 400;
   margin: 0 0 4px;
 }
 
-.student-row p {
+.appRoot :global(.student-row p) {
   color: var(--color-text-secondary);
-  font: var(--font-size-2xs) var(--font-sans);
+  font: var(--font-size-2xs) var(--font-body);
   margin: 0;
 }
 
 @media (max-width: 720px) {
-  .student-shell {
+  .appRoot :global(.student-shell) {
     padding: 40px 22px;
   }
 
-  .student-grid {
+  .appRoot :global(.student-grid) {
     display: block;
     margin-top: 48px;
   }
 
-  .student-list {
+  .appRoot :global(.student-list) {
     margin-top: 56px;
   }
 }

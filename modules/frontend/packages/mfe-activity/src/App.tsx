@@ -1,18 +1,20 @@
 import {
   Pagination,
+  PageHeader,
   type DomainEvent,
   useDomainEventSync,
   useDomainEvents,
   useHostReady,
   usePaginatedItems,
 } from "@mfe/shared";
+import { PageHeader } from "@mfe/shared/ui";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   activityQueryKeys,
   mergeActivityEvents,
   useActivityHistory,
 } from "./features/activity/hooks";
-import "./App.css";
+import styles from "./App.module.css";
 
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3333";
 
@@ -48,76 +50,86 @@ export default function App() {
   });
 
   return (
-    <main className="activity-shell">
-      <section className="activity-hero">
-        <div>
-          <p className="eyebrow">Secretaria escolar · tempo real</p>
-          <h1>Atividade do sistema.</h1>
-          <p className="lede">Uma linha do tempo viva das alterações que chegam do backend.</p>
-        </div>
-        <div className={`connection ${fallback.connection}`}>
-          <i />{" "}
-          {fallback.connection === "connected"
-            ? "Conectado"
-            : fallback.connection === "connecting"
-              ? "Conectando"
-              : "Offline"}
-        </div>
-      </section>
-      <section className="activity-feed" aria-live="polite" aria-busy={historyState === "loading"}>
-        <header>
-          <span>Eventos recentes</span>
-          <strong>{events.length.toString().padStart(2, "0")}</strong>
-        </header>
-        {historyState === "loading" ? (
-          <div className="empty">
-            <span>...</span>
-            <p>Carregando histórico de atividade...</p>
-          </div>
-        ) : historyState === "error" ? (
-          <div className="empty error-state">
-            <span>!</span>
-            <p>
-              {historyQuery.error instanceof Error
-                ? historyQuery.error.message
-                : "Erro inesperado."}
-            </p>
-            <button type="button" onClick={() => void historyQuery.refetch()}>
-              Tentar novamente
-            </button>
-          </div>
-        ) : historyState === "empty" ? (
-          <div className="empty">
-            <span>--</span>
-            <p>Aguardando uma alteração no sistema.</p>
-          </div>
-        ) : (
-          <>
-            {eventPagination.pageItems.map((event) => (
-              <article className="event-row" key={event.eventId}>
-                <div className="event-pin" />
-                <div className="event-content">
-                  <h2>{labels[event.type] ?? event.type}</h2>
-                  <p>
-                    {event.source} · versão {event.version}
-                  </p>
-                  <small>
-                    {new Date(event.occurredAt).toLocaleString("pt-BR")} · {event.correlationId}
-                  </small>
-                </div>
-                <span className="event-type">{event.type}</span>
-              </article>
-            ))}
-            <Pagination
-              label="histórico de atividade"
-              page={eventPagination.page}
-              pageCount={eventPagination.pageCount}
-              totalItems={events.length}
-              onPageChange={eventPagination.setPage}
-            />
-          </>
-        )}
-      </section>
-    </main>
+    <div className={styles.appRoot}>
+      <main className="activity-shell">
+        <section className="activity-hero">
+          <PageHeader
+            description={
+              <p className="lede">Uma linha do tempo viva das alterações que chegam do backend.</p>
+            }
+            eyebrow="Secretaria escolar · tempo real"
+            title="Atividade do sistema."
+            actions={
+              <div className={`connection ${fallback.connection}`}>
+                <i />{" "}
+                {fallback.connection === "connected"
+                  ? "Conectado"
+                  : fallback.connection === "connecting"
+                    ? "Conectando"
+                    : "Offline"}
+              </div>
+            }
+          />
+        </section>
+        <section
+          className="activity-feed"
+          aria-live="polite"
+          aria-busy={historyState === "loading"}
+        >
+          <header>
+            <span>Eventos recentes</span>
+            <strong>{events.length.toString().padStart(2, "0")}</strong>
+          </header>
+          {historyState === "loading" ? (
+            <div className="empty">
+              <span>...</span>
+              <p>Carregando histórico de atividade...</p>
+            </div>
+          ) : historyState === "error" ? (
+            <div className="empty error-state">
+              <span>!</span>
+              <p>
+                {historyQuery.error instanceof Error
+                  ? historyQuery.error.message
+                  : "Erro inesperado."}
+              </p>
+              <button type="button" onClick={() => void historyQuery.refetch()}>
+                Tentar novamente
+              </button>
+            </div>
+          ) : historyState === "empty" ? (
+            <div className="empty">
+              <span>--</span>
+              <p>Aguardando uma alteração no sistema.</p>
+            </div>
+          ) : (
+            <>
+              {eventPagination.pageItems.map((event) => (
+                <article className="event-row" key={event.eventId}>
+                  <div className="event-pin" />
+                  <div className="event-content">
+                    <h2>{labels[event.type] ?? event.type}</h2>
+                    <p>
+                      {event.source} · versão {event.version}
+                    </p>
+                    <small>
+                      {new Date(event.occurredAt).toLocaleString("pt-BR")} · {event.correlationId}
+                    </small>
+                  </div>
+                  <span className="event-type">{event.type}</span>
+                </article>
+              ))}
+              <Pagination
+                label="histórico de atividade"
+                page={eventPagination.page}
+                pageCount={eventPagination.pageCount}
+                totalItems={events.length}
+                onPageChange={eventPagination.setPage}
+              />
+            </>
+          )}
+        </section>
+      </main>
+    </div>
   );
 }
