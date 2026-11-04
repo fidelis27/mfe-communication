@@ -80,11 +80,15 @@
   padding: 22px 20px;
 }
 
-.appRoot :global(.metric span),
+.appRoot :global(.metric h2),
 .appRoot :global(.metric small) {
   color: var(--color-text-secondary);
   display: block;
   font: var(--font-size-2xs) var(--font-body);
+}
+
+.appRoot :global(.metric h2) {
+  margin: 0;
 }
 
 .appRoot :global(.metric strong) {
