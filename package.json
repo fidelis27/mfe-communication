@@ -13,6 +13,8 @@
     "dev:local": "powershell -ExecutionPolicy Bypass -File ./scripts/start-local.ps1",
     "stop:local": "powershell -ExecutionPolicy Bypass -File ./scripts/stop-local.ps1",
     "validate:local": "powershell -ExecutionPolicy Bypass -File ./scripts/validate-local.ps1",
+    "e2e:serve": "node ./scripts/e2e-serve.mjs",
+    "test:e2e": "playwright test",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit -p .",
@@ -22,6 +24,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "@playwright/test": "^1.64.1",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
