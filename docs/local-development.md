@@ -315,7 +315,55 @@ curl.exe -I http://localhost:4174/
 
 Todos devem retornar `HTTP/1.1 200 OK`.
 
+## 9. Testes E2E com Playwright
+
+Os testes E2E constroem o Host e os cinco remotes e os servem como previews
+locais. O Playwright navega pela federation real; não são usados mocks de
+componentes remotos. API e WebSocket são interceptados no navegador para manter
+os cenários determinísticos, portanto não é necessário iniciar o backend,
+MariaDB ou Supabase.
+
+Instale as dependências e o Chromium uma vez:
+
+```powershell
+npm ci --legacy-peer-deps
+npx playwright install chromium
+```
+
+Execute os testes:
+
+```powershell
+npm run test:e2e
+```
+
+O comando gera os builds, inicia previews nas portas `4273`, `4274`, `4275`,
+`4276`, `4278` e `4279`, executa os cenários e encerra os servidores ao final.
+Não inicie outros previews nessas portas ao mesmo tempo. O ambiente de
+autenticação usa valores fictícios exclusivos para os testes. Para abrir o
+relatório HTML após a execução:
+
+```powershell
+npx playwright show-report
+```
+
+Em caso de falha, screenshots, vídeos e traces ficam em `test-results/`; o CI
+também publica o relatório e esses arquivos como artefato. Os testes cobrem
+navegação pelos cinco remotes, cadastro de estudante, atualização por evento
+entre Activity e Dashboard, erro ao carregar um remote e respostas HTTP 401.
+
 ## Problemas comuns
+
+### Playwright não consegue iniciar um preview
+
+Confirme que as portas `4273`, `4274`, `4275`, `4276`, `4278` e `4279` estão
+livres. O servidor de teste usa `--strictPort` e falha explicitamente se uma
+porta já estiver ocupada.
+
+### Chromium não está instalado
+
+Execute `npx playwright install chromium`. No CI Linux, as dependências do
+sistema são instaladas junto com o navegador por `npx playwright install
+--with-deps chromium`.
 
 ### Porta ocupada
 
