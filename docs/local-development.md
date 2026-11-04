@@ -322,6 +322,8 @@ locais. O Playwright navega pela federation real; não são usados mocks de
 componentes remotos. API e WebSocket são interceptados no navegador para manter
 os cenários determinísticos, portanto não é necessário iniciar o backend,
 MariaDB ou Supabase.
+Essa separação entre integração de browser e validação dos serviços está
+registrada no [ADR-0002](./adr/0002-federation-e2e-testing.md).
 
 Instale as dependências e o Chromium uma vez:
 
