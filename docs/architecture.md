@@ -243,3 +243,6 @@ Each package builds and deploys on its own. The host only knows remote origins t
 - Event delivery is best effort; reconnecting does not replay missed events.
 - The frontend does not send `x-correlation-id` with HTTP requests.
 - Backend authorization and emitted event behavior are authoritative; the event contract comparison in section 5 shows the frontend declarations and current backend emissions.
+- Playwright E2E tests load the built Host and five real remotes, while API and
+  WebSocket traffic is intercepted for deterministic browser checks. The scope
+  and limitations are recorded in [ADR-0002](./adr/0002-federation-e2e-testing.md).
