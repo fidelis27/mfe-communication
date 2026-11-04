@@ -1,6 +1,5 @@
 import {
   Pagination,
-  PageHeader,
   type DomainEvent,
   useDomainEventSync,
   useDomainEvents,
@@ -72,12 +71,13 @@ export default function App() {
           />
         </section>
         <section
+          aria-labelledby="activity-feed-title"
           className="activity-feed"
           aria-live="polite"
           aria-busy={historyState === "loading"}
         >
           <header>
-            <span>Eventos recentes</span>
+            <h2 id="activity-feed-title">Eventos recentes</h2>
             <strong>{events.length.toString().padStart(2, "0")}</strong>
           </header>
           {historyState === "loading" ? (

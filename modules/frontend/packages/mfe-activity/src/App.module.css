@@ -81,6 +81,11 @@
   text-transform: uppercase;
 }
 
+.appRoot :global(.activity-feed > header h2) {
+  font: inherit;
+  margin: 0;
+}
+
 .appRoot :global(.activity-feed > header strong) {
   color: var(--color-success);
 }

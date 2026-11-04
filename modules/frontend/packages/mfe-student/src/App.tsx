@@ -1,8 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import {
   Pagination,
-  Field,
-  PageHeader,
   type Student,
   useDomainEventSync,
   useDomainEvents,
@@ -102,7 +100,7 @@ export default function App() {
             title="Vínculos que acompanham cada trajetória."
             actions={
               <span className="connection">
-                <i />{" "}
+                <i aria-hidden="true" />{" "}
                 {connection === "connected"
                   ? "Eventos conectados"
                   : connection === "connecting"
@@ -114,11 +112,15 @@ export default function App() {
           />
         </section>
 
-        <section className="student-grid">
-          <form className="student-form" onSubmit={createStudent}>
+        <div className="student-grid">
+          <form
+            aria-labelledby="student-form-title"
+            className="student-form"
+            onSubmit={createStudent}
+          >
             <div className="section-heading">
               <span className="section-number">01</span>
-              <h2>Novo estudante</h2>
+              <h2 id="student-form-title">Novo estudante</h2>
             </div>
             <Field
               id="student-name"
@@ -176,10 +178,15 @@ export default function App() {
             )}
           </form>
 
-          <section className="student-list" aria-live="polite" aria-busy={studentsQuery.isFetching}>
+          <section
+            aria-labelledby="student-list-title"
+            aria-live="polite"
+            aria-busy={studentsQuery.isFetching}
+            className="student-list"
+          >
             <div className="section-heading">
               <span className="section-number">02</span>
-              <h2>Estudantes recentes</h2>
+              <h2 id="student-list-title">Estudantes recentes</h2>
               <strong>{students.length.toString().padStart(2, "0")}</strong>
             </div>
             {state === "loading" && <p className="empty-state">Carregando estudantes...</p>}
@@ -198,7 +205,9 @@ export default function App() {
             {state === "empty" && <p className="empty-state">Nenhum estudante cadastrado ainda.</p>}
             {studentPagination.pageItems.map((student) => (
               <article className="student-row" key={student.id}>
-                <div className="avatar">{student.name.slice(0, 1).toUpperCase()}</div>
+                <div aria-hidden="true" className="avatar">
+                  {student.name.slice(0, 1).toUpperCase()}
+                </div>
                 <div>
                   <h3>{student.name}</h3>
                   <p>{student.institutionId}</p>
@@ -214,7 +223,7 @@ export default function App() {
               onPageChange={studentPagination.setPage}
             />
           </section>
-        </section>
+        </div>
       </main>
     </div>
   );
