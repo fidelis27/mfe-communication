@@ -31,6 +31,12 @@ Module Federation. React, React DOM, `@mfe/shared`, and
 `@tanstack/react-query` are shared singletons. Every remote creates a separate
 `QueryClient`, keeping its cache isolated from the other MFEs.
 
+The host groups authentication, navigation, remote rendering, and domain-event
+publishing under `packages/host/src/features/`. The Admin remote keeps its
+workspace, API, query hooks, presentation helpers, and UI components together
+under `packages/mfe-admin/src/features/admin/`; `src/App.tsx` remains the
+application entry point and renders that workspace.
+
 ## Communication
 
 HTTP requests follow this path:

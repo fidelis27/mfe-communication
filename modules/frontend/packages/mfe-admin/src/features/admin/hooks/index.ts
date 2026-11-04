@@ -11,7 +11,7 @@ import {
   removeGroupMember,
   updateGroupMemberRole,
   updateUserStatus,
-} from "./api";
+} from "../api";
 import type { MembershipRole } from "@mfe/shared";
 
 export const adminQueryKeys = {

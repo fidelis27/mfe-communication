@@ -45,9 +45,10 @@ Browser
 ```text
 modules/frontend/packages/
   host/              shell, routing, federation host
+    src/features/    auth, navigation, remotes, domain events
   mfe-institution/   remote
   mfe-student/       remote
-  mfe-admin/         remote
+  mfe-admin/         remote (admin workspace, API, hooks and components in features/admin/)
   mfe-activity/      remote
   mfe-dashboard/     remote
   shared/            @mfe/shared: events, bus, auth, tokens
