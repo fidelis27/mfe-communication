@@ -1,8 +1,6 @@
 import { FormEvent, useState } from "react";
 import {
   Pagination,
-  Field,
-  PageHeader,
   useDomainEventSync,
   useDomainEvents,
   useHostReady,
@@ -77,11 +75,15 @@ export default function App() {
             title="Uma rede de instituições, um só lugar."
           />
         </section>
-        <section className="institution-grid">
-          <form className="institution-form" onSubmit={createInstitution}>
+        <div className="institution-grid">
+          <form
+            aria-labelledby="institution-form-title"
+            className="institution-form"
+            onSubmit={createInstitution}
+          >
             <div className="section-heading">
               <span>01</span>
-              <h2>Nova instituição</h2>
+              <h2 id="institution-form-title">Nova instituição</h2>
             </div>
             <Field
               id="institution-name"
@@ -110,13 +112,14 @@ export default function App() {
             )}
           </form>
           <section
+            aria-labelledby="institution-list-title"
             className="institution-list"
             aria-live="polite"
             aria-busy={institutionsQuery.isFetching}
           >
             <div className="section-heading">
               <span>02</span>
-              <h2>Instituições ativas</h2>
+              <h2 id="institution-list-title">Instituições ativas</h2>
               <strong>{institutions.length.toString().padStart(2, "0")}</strong>
             </div>
             {state === "loading" && <p className="empty">Carregando instituições...</p>}
@@ -151,7 +154,7 @@ export default function App() {
               onPageChange={institutionPagination.setPage}
             />
           </section>
-        </section>
+        </div>
       </main>
     </div>
   );

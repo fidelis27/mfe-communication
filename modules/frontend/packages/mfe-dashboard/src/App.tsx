@@ -75,7 +75,7 @@ export default function App() {
             title="O pulso da operação."
             actions={
               <span className={`sync ${state}`}>
-                <i />{" "}
+                <i aria-hidden="true" />{" "}
                 {state === "success"
                   ? `${fallback.connection === "connected" ? "Tempo real" : "Reconectando"} · atualizado ${new Date(dashboardQuery.dataUpdatedAt).toLocaleTimeString("pt-BR")}`
                   : state === "loading"
@@ -85,32 +85,39 @@ export default function App() {
             }
           />
         </section>
-        <section className="metrics" aria-live="polite" aria-busy={dashboardQuery.isFetching}>
+        <section
+          aria-label="Indicadores do painel"
+          aria-live="polite"
+          aria-busy={dashboardQuery.isFetching}
+          className="metrics"
+        >
           <article className="metric metric-large">
-            <span>Instituições ativas</span>
+            <h2>Instituições ativas</h2>
             <strong>
               {data.institutions.filter((institution) => institution.status === "active").length}
             </strong>
             <small>escopo atual</small>
           </article>
           <article className="metric">
-            <span>Estudantes</span>
+            <h2>Estudantes</h2>
             <strong>{data.students.length}</strong>
             <small>cadastros visíveis</small>
           </article>
           <article className="metric">
-            <span>Vínculos ativos</span>
+            <h2>Vínculos ativos</h2>
             <strong>{activeEnrollments}</strong>
             <small>em andamento</small>
           </article>
           <article className="metric metric-accent">
-            <span>Trancados</span>
+            <h2>Trancados</h2>
             <strong>{suspendedEnrollments}</strong>
             <small>pedem atenção</small>
           </article>
         </section>
-        <section className="dashboard-note">
-          <div className="note-mark">↗</div>
+        <section aria-label="Atualização do painel" className="dashboard-note">
+          <div aria-hidden="true" className="note-mark">
+            ↗
+          </div>
           <div>
             {state === "loading" && <p>Carregando indicadores autorizados...</p>}
             {dashboardQuery.isError && (
