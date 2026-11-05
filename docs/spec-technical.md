@@ -255,6 +255,22 @@ Rotas protegidas usam a identidade demonstrativa e carregam o usuario antes
 da politica de autorizacao. Respostas de erro devem usar pelo menos `401`,
 `403`, `404` e `422` conforme a causa.
 
+### Exibicao de erros 403/404 no frontend
+
+O cliente HTTP compartilhado transforma respostas `403` em "Você não tem
+permissão para realizar esta ação." e respostas `404` em "O recurso solicitado
+não foi encontrado." No MFE Student, a falha ao cadastrar deve ser anunciada
+como alerta, sem feedback de sucesso ou insercao otimista do estudante. Se uma
+atualizacao da listagem falhar com `403` ou `404`, a tela anuncia o erro e nao
+mantem visiveis os dados em cache da resposta anterior.
+
+Esses testes garantem somente que o frontend nao mascara a negacao; nao provam
+autorizacao nem isolamento. O backend e a fonte autoritativa para permissao e
+escopo por instituicao. O cliente ainda nao conhece o escopo do usuario; um
+seletor/filtro global depende de uma fonte confiavel, como um endpoint de
+escopo do usuario atual. O `institutionIds` opcional dos eventos nao substitui
+essa fonte.
+
 ## 9. Modelo de dados minimo
 
 ```ts
