@@ -30,7 +30,7 @@ export default function App() {
   const studentsQuery = useStudents(apiUrl);
   const institutionsQuery = useInstitutions(apiUrl);
   const createStudentMutation = useCreateStudent(apiUrl);
-  const students = studentsQuery.data ?? [];
+  const students = studentsQuery.isError ? EMPTY_LIST : (studentsQuery.data ?? []);
   const studentPagination = usePaginatedItems(students);
   const institutions = institutionsQuery.data ?? EMPTY_LIST;
   const state = studentsQuery.isFetching
@@ -169,6 +169,7 @@ export default function App() {
             )}
             {message && (
               <p
+                role={createStudentMutation.isError || !institutionId ? "alert" : "status"}
                 className={`form-message ${
                   createStudentMutation.isError || !institutionId ? "error" : "success"
                 }`}
@@ -191,7 +192,7 @@ export default function App() {
             </div>
             {state === "loading" && <p className="empty-state">Carregando estudantes...</p>}
             {studentsQuery.isError && (
-              <div className="empty-state error-state">
+              <div className="empty-state error-state" role="alert">
                 <p>
                   {studentsQuery.error instanceof Error
                     ? studentsQuery.error.message
