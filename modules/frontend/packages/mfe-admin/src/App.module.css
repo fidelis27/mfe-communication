@@ -6,22 +6,22 @@
 }
 
 .appRoot :global(.admin-shell) {
-  padding: 32px clamp(20px, 5vw, 72px);
+  padding: var(--space-8) var(--space-page-inline);
   background: var(--color-surface-page);
 }
 
 .appRoot :global(.admin-heading) {
   align-items: flex-end;
   display: flex;
-  gap: 24px;
+  gap: var(--space-6);
   justify-content: space-between;
   max-width: 1080px;
 }
 
 .appRoot :global(.eyebrow),
 .appRoot :global(.section-kicker) {
-  color: var(--color-accent);
-  font: 700 var(--font-size-2xs) var(--font-body);
+  color: var(--color-brand);
+  font: var(--font-weight-semibold) var(--font-size-xs) var(--font-body);
   letter-spacing: 1.6px;
   margin: 0;
   text-transform: uppercase;
@@ -29,9 +29,9 @@
 
 .appRoot :global(.admin-heading h1) {
   font-size: clamp(1.6rem, 2.6vw, 2.1rem);
-  font-weight: var(--font-weight-bold);
+  font-weight: var(--font-weight-semibold);
   line-height: 1.02;
-  margin: 18px 0 12px;
+  margin: var(--space-4-5) 0 var(--space-3);
 }
 
 .appRoot :global(.lede) {
@@ -44,52 +44,52 @@
 .appRoot :global(.scope-chip) {
   align-self: flex-start;
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-pill);
   color: var(--color-success);
-  font: 700 var(--font-size-2xs) var(--font-body);
-  padding: 10px 14px;
+  font: var(--font-weight-semibold) var(--font-size-xs) var(--font-body);
+  padding: var(--space-2-5) var(--space-3-5);
   white-space: nowrap;
 }
 
 .appRoot :global(.tabs-shell) {
-  margin-top: 40px;
+  margin-top: var(--space-10);
   max-width: 1080px;
 }
 
 .appRoot :global(.tabs) {
   display: inline-flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
 }
 
 .appRoot :global(.tab-button) {
   background: transparent;
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-pill);
   color: var(--color-text-secondary);
   cursor: pointer;
-  font: 700 var(--font-size-2xs) var(--font-body);
-  padding: 10px 16px;
+  font: var(--font-weight-semibold) var(--font-size-xs) var(--font-body);
+  padding: var(--space-2-5) var(--space-4);
 }
 
 .appRoot :global(.tab-button.active) {
-  background: var(--color-text-primary);
-  border-color: var(--color-text-primary);
-  color: var(--color-text-on-dark);
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+  color: var(--color-text-on-brand);
 }
 
 .appRoot :global(.panel-surface) {
-  background: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(170, 185, 180, 0.52);
-  border-radius: 24px;
-  padding: 28px;
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-card);
+  padding: var(--space-7);
 }
 
 .appRoot :global(.admin-grid),
 .appRoot :global(.groups-grid) {
   display: grid;
-  gap: 32px;
+  gap: var(--space-8);
   grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
 }
 
@@ -108,71 +108,86 @@
 .appRoot :global(.subsection-heading) {
   align-items: flex-start;
   display: flex;
-  gap: 16px;
+  gap: var(--space-4);
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: var(--space-6);
 }
 
 .appRoot :global(.section-heading h2),
 .appRoot :global(.subsection-heading h3) {
-  font-size: 1.2rem;
-  font-weight: 400;
-  margin: 8px 0 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-regular);
+  margin: var(--space-2) 0 0;
 }
 
 .appRoot :global(.section-heading strong) {
-  color: var(--color-accent);
-  font: 700 var(--font-size-sm) var(--font-body);
-  margin-top: 8px;
+  color: var(--color-brand);
+  font: var(--font-weight-semibold) var(--font-size-sm) var(--font-body);
+  margin-top: var(--space-2);
 }
 
 .appRoot :global(.groups-header) {
-  margin-bottom: 32px;
+  margin-bottom: var(--space-8);
 }
 
 .appRoot :global(label) {
   color: var(--color-text-secondary);
   display: grid;
-  font: var(--font-size-2xs) var(--font-body);
-  gap: 8px;
-  margin-top: 18px;
+  font: var(--font-size-xs) var(--font-body);
+  gap: var(--space-2);
+  margin-top: var(--space-4-5);
 }
 
 .appRoot :global(input:not([type="checkbox"])),
 .appRoot :global(select) {
-  background: var(--color-surface-control);
+  background: var(--color-surface-card);
   border: 1px solid var(--color-control-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-control);
   color: var(--color-text-primary);
   font: var(--font-size-md) var(--font-body);
   min-width: 0;
-  padding: 12px 14px;
+  padding: var(--space-3) var(--space-3-5);
   width: 100%;
 }
 
 .appRoot :global(input:not([type="checkbox"]):focus-visible),
 .appRoot :global(select:focus-visible) {
-  border-color: var(--color-control-border-focus);
+  border-color: var(--color-focus-ring);
 }
 
 .appRoot :global(.check) {
   align-items: center;
   display: flex;
-  gap: 10px;
+  gap: var(--space-2-5);
 }
 
 .appRoot :global(.check input) {
   accent-color: var(--color-success);
 }
 
-.appRoot :global(button:not([data-ui="shared-button"])) {
-  background: var(--color-text-primary);
+.appRoot
+  :global(
+    button:not([data-ui="shared-button"]):not(.tab-button):not(.secondary-button):not(
+        .ghost-button
+      ):not(.danger-button)
+  ) {
+  background: var(--color-brand);
   border: 0;
-  border-radius: var(--radius-sm);
-  color: var(--color-text-on-dark);
+  border-radius: var(--radius-control);
+  color: var(--color-text-on-brand);
   cursor: pointer;
-  font: 700 var(--font-size-xs) var(--font-body);
-  padding: 13px 18px;
+  font: var(--font-weight-semibold) var(--font-size-xs) var(--font-body);
+  min-height: 44px;
+  padding: var(--space-3-25) var(--space-4-5);
+}
+
+.appRoot
+  :global(
+    button:not([data-ui="shared-button"]):not(.tab-button):not(.secondary-button):not(
+        .ghost-button
+      ):not(.danger-button):hover:not(:disabled)
+  ) {
+  background: var(--color-brand-hover);
 }
 
 .appRoot :global(button:disabled) {
@@ -187,12 +202,21 @@
   color: var(--color-text-primary);
 }
 
+.appRoot :global(.secondary-button:hover:not(:disabled)),
+.appRoot :global(.ghost-button:hover:not(:disabled)) {
+  background: var(--color-surface-muted);
+}
+
 .appRoot :global(.ghost-button) {
-  padding-inline: 14px;
+  padding-inline: var(--space-3-5);
 }
 
 .appRoot :global(.danger-button) {
   background: var(--color-danger);
+}
+
+.appRoot :global(.danger-button:hover:not(:disabled)) {
+  background: var(--color-danger-hover);
 }
 
 .appRoot :global(.danger-text) {
@@ -201,12 +225,12 @@
 
 .appRoot :global(.field-error) {
   color: var(--color-danger);
-  font: var(--font-size-2xs) / 1.5 var(--font-body);
-  margin: 8px 0 0;
+  font: var(--font-size-xs) / 1.5 var(--font-body);
+  margin: var(--space-2) 0 0;
 }
 
 .appRoot :global(.field-stack) {
-  margin-top: 12px;
+  margin-top: var(--space-3);
 }
 
 .appRoot :global(.search-field) {
@@ -217,7 +241,7 @@
 .appRoot :global(.empty) {
   color: var(--color-text-secondary);
   font: var(--font-size-sm) var(--font-body);
-  margin: 16px 0 0;
+  margin: var(--space-4) 0 0;
 }
 
 .appRoot :global(.empty.error) {
@@ -227,18 +251,18 @@
 .appRoot :global(.user-row),
 .appRoot :global(.member-row) {
   align-items: center;
-  border-top: 1px solid rgba(170, 185, 180, 0.5);
+  border-top: 1px solid var(--color-border-default);
   display: grid;
-  gap: 16px;
+  gap: var(--space-4);
   grid-template-columns: auto minmax(0, 1fr) auto auto;
-  padding: 16px 0;
+  padding: var(--space-4) 0;
 }
 
 .appRoot :global(.avatar) {
   align-items: center;
-  background: var(--color-avatar-bg);
-  border-radius: 50%;
-  color: var(--color-avatar-text);
+  background: var(--color-brand);
+  border-radius: var(--radius-pill);
+  color: var(--color-text-on-brand);
   display: flex;
   flex: 0 0 40px;
   font: var(--font-size-lg) var(--font-body);
@@ -255,121 +279,121 @@
 .appRoot :global(.user-copy h3),
 .appRoot :global(.member-copy strong) {
   display: block;
-  font-size: 1rem;
-  font-weight: 400;
-  margin: 0 0 4px;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-regular);
+  margin: 0 0 var(--space-1);
 }
 
 .appRoot :global(.user-copy p),
 .appRoot :global(.member-copy p),
 .appRoot :global(.group-summary small) {
   color: var(--color-text-secondary);
-  font: var(--font-size-2xs) var(--font-body);
+  font: var(--font-size-xs) var(--font-body);
   margin: 0;
 }
 
 .appRoot :global(.user-meta) {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
   justify-self: end;
 }
 
 .appRoot :global(.status-badge),
 .appRoot :global(.role-badge) {
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-pill);
   display: inline-flex;
-  font: 700 var(--font-size-2xs) var(--font-body);
-  padding: 7px 10px;
+  font: var(--font-weight-semibold) var(--font-size-xs) var(--font-body);
+  padding: var(--space-1-75) var(--space-2-5);
   width: fit-content;
 }
 
 .appRoot :global(.status-badge) {
-  background: rgba(47, 110, 84, 0.14);
+  background: var(--color-success-soft);
   color: var(--color-success);
 }
 
 .appRoot :global(.status-badge.muted) {
-  background: rgba(24, 51, 47, 0.08);
+  background: var(--color-neutral-soft);
   color: var(--color-text-secondary);
 }
 
 .appRoot :global(.role-badge) {
-  background: rgba(155, 79, 45, 0.12);
-  color: var(--color-accent);
+  background: var(--color-brand-soft);
+  color: var(--color-brand-soft-text);
 }
 
 .appRoot :global(.role-badge.elevated) {
-  background: rgba(47, 110, 84, 0.14);
+  background: var(--color-success-soft);
   color: var(--color-success);
 }
 
 .appRoot :global(.group-picker) {
-  margin-top: 18px;
+  margin-top: var(--space-4-5);
 }
 
 .appRoot :global(.group-picker-label) {
   color: var(--color-text-secondary);
-  font: var(--font-size-2xs) var(--font-body);
-  margin: 0 0 8px;
+  font: var(--font-size-xs) var(--font-body);
+  margin: 0 0 var(--space-2);
 }
 
 .appRoot :global(.group-options) {
   display: grid;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .appRoot :global(.group-option) {
   align-items: flex-start;
-  background: var(--color-surface-control);
+  background: var(--color-surface-card);
   border: 1px solid var(--color-border-default);
   color: var(--color-text-primary);
   display: grid;
-  gap: 4px;
+  gap: var(--space-1);
   text-align: left;
   width: 100%;
 }
 
 .appRoot :global(.group-option[aria-pressed="true"]) {
-  background: var(--color-sidebar-active);
-  border-color: var(--color-sidebar-active);
-  color: var(--color-text-on-dark);
+  background: var(--color-sidebar-active-bg);
+  border-color: var(--color-sidebar-active-bg);
+  color: var(--color-text-on-brand);
 }
 
 .appRoot :global(.group-option small) {
   color: inherit;
-  font: var(--font-size-2xs) var(--font-body);
+  font: var(--font-size-xs) var(--font-body);
   opacity: 0.8;
 }
 
 .appRoot :global(.group-form) {
-  border-right: 1px solid rgba(170, 185, 180, 0.45);
-  padding-right: 32px;
+  border-right: 1px solid var(--color-border-default);
+  padding-right: var(--space-8);
 }
 
 .appRoot :global(.group-summary) {
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(170, 185, 180, 0.45);
-  border-radius: var(--radius-md);
-  margin-top: 16px;
-  padding: 14px 16px;
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-card);
+  margin-top: var(--space-4);
+  padding: var(--space-3-5) var(--space-4);
 }
 
 .appRoot :global(.group-summary p) {
   font-size: var(--font-size-md);
-  margin: 0 0 4px;
+  margin: 0 0 var(--space-1);
 }
 
 .appRoot :global(.member-form) {
   align-items: end;
   display: grid;
-  gap: 16px;
+  gap: var(--space-4);
   grid-template-columns: minmax(0, 1fr) 180px 150px;
-  margin-top: 24px;
+  margin-top: var(--space-6);
 }
 
 .appRoot :global(.member-form button) {
-  margin-top: 18px;
+  margin-top: var(--space-4-5);
 }
 
 .appRoot :global(.member-row) {
@@ -379,7 +403,7 @@
 .appRoot :global(.member-actions) {
   align-items: end;
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .appRoot :global(.inline-field) {
@@ -389,7 +413,7 @@
 
 @media (max-width: 1040px) {
   .appRoot :global(.admin-shell) {
-    padding: 40px 22px;
+    padding: var(--space-10) var(--space-5-5);
   }
 
   .appRoot :global(.admin-heading) {
@@ -402,7 +426,7 @@
   }
 
   .appRoot :global(.panel-surface) {
-    padding: 22px;
+    padding: var(--space-5-5);
   }
 
   .appRoot :global(.admin-grid),
@@ -411,9 +435,9 @@
   }
 
   .appRoot :global(.group-form) {
-    border-bottom: 1px solid rgba(170, 185, 180, 0.45);
+    border-bottom: 1px solid var(--color-border-default);
     border-right: 0;
-    padding-bottom: 28px;
+    padding-bottom: var(--space-7);
     padding-right: 0;
   }
 
@@ -445,6 +469,6 @@
   }
 
   .appRoot :global(.ghost-button) {
-    margin-top: -4px;
+    margin-top: calc(-1 * var(--space-1));
   }
 }
