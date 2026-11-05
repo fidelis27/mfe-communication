@@ -113,11 +113,20 @@
   margin-bottom: var(--space-6);
 }
 
+.appRoot :global(.subsection-heading) {
+  flex-direction: column;
+  gap: var(--space-1-5);
+}
+
 .appRoot :global(.section-heading h2),
 .appRoot :global(.subsection-heading h3) {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-regular);
   margin: var(--space-2) 0 0;
+}
+
+.appRoot :global(.subsection-heading h3) {
+  margin-top: 0;
 }
 
 .appRoot :global(.section-heading strong) {
@@ -230,6 +239,11 @@
 }
 
 .appRoot :global(.field-stack) {
+  margin-top: var(--space-3);
+}
+
+.appRoot :global(.admin-form > button),
+.appRoot :global(.group-form > button) {
   margin-top: var(--space-3);
 }
 
