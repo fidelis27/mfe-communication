@@ -45,6 +45,7 @@ function HostApplication() {
   const accountToggleRef = useRef<HTMLButtonElement>(null);
   const accountWasOpen = useRef(false);
   const navigationWasOpen = useRef(false);
+  const shouldFocusHeading = useRef(false);
 
   useEffect(() => {
     (globalThis as typeof globalThis & { __mfeHostReady?: boolean }).__mfeHostReady = true;
@@ -83,7 +84,9 @@ function HostApplication() {
 
   useEffect(() => {
     const handlePopState = () => {
-      setActiveModule(moduleFromPath(window.location.pathname));
+      const nextModule = moduleFromPath(window.location.pathname);
+      if (nextModule !== activeModule) shouldFocusHeading.current = true;
+      setActiveModule(nextModule);
       navigationWasOpen.current = false;
       accountWasOpen.current = false;
       setNavigationOpen(false);
@@ -91,9 +94,12 @@ function HostApplication() {
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
+  }, [activeModule]);
 
   useEffect(() => {
+    if (!shouldFocusHeading.current) return;
+    shouldFocusHeading.current = false;
+
     const main = mainRef.current;
     if (!main) return;
 
@@ -115,7 +121,7 @@ function HostApplication() {
     });
     observer.observe(main, { childList: true, subtree: true });
     return () => observer.disconnect();
-  }, [activeModule, authenticated]);
+  }, [activeModule]);
 
   useEffect(() => {
     const target = navigationOpen
@@ -151,8 +157,10 @@ function HostApplication() {
   }, [accountMenuOpen, navigationOpen]);
 
   function navigateToPath(path: string) {
+    const nextModule = moduleFromPath(path);
+    if (nextModule !== activeModule) shouldFocusHeading.current = true;
     window.history.pushState({}, "", path);
-    setActiveModule(moduleFromPath(path));
+    setActiveModule(nextModule);
     navigationWasOpen.current = false;
     accountWasOpen.current = false;
     setNavigationOpen(false);

@@ -42,6 +42,7 @@ describe("Host navigation", () => {
     await renderHost({ authenticated: true, path: "/admin" });
 
     await waitFor(() => expect(screen.getByTestId("remote-mock")).toBeInTheDocument());
+    expect(document.activeElement).not.toBe(screen.getByRole("heading", { name: "Remote module" }));
 
     expect(screen.getByRole("link", { name: /estudantes/i })).toHaveAttribute(
       "href",
