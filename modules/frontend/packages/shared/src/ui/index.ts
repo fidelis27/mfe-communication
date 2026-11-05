@@ -14,3 +14,4 @@ export * from "./Tabs";
 export * from "./ToastRegion";
 export * from "./breakpoints";
 export * from "./classNames";
+export * from "./icons";

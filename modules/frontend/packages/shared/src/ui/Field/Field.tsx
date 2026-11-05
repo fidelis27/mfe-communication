@@ -3,6 +3,7 @@ import React, {
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
 } from "react";
+import { AlertIcon } from "../icons";
 import { cx } from "../classNames";
 import styles from "./Field.module.css";
 
@@ -83,7 +84,8 @@ function FieldContent({
         </span>
       )}
       {error && (
-        <span className={styles.error} id={errorId}>
+        <span className={styles.error} id={errorId} role="alert">
+          <AlertIcon size={16} />
           {error}
         </span>
       )}

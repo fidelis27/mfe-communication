@@ -3,7 +3,7 @@
 }
 
 .text .shape {
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-control);
   display: block;
   height: 1rem;
   max-width: 34rem;
@@ -11,15 +11,21 @@
 }
 
 .card .shape {
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-card);
   display: block;
   height: 9rem;
   width: 100%;
 }
 
 .shape {
-  animation: pulse 1.2s ease-in-out infinite alternate;
-  background: var(--color-surface-muted);
+  animation: shimmer 1.4s ease-in-out infinite;
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-muted) 0%,
+    var(--color-surface-card) 50%,
+    var(--color-surface-muted) 100%
+  );
+  background-size: 200% 100%;
 }
 
 .srOnly {
@@ -32,14 +38,15 @@
   width: 1px;
 }
 
-@keyframes pulse {
+@keyframes shimmer {
   to {
-    opacity: 0.55;
+    background-position-x: -200%;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .shape {
-    animation-duration: 2.4s;
+    animation: none;
+    background: var(--color-surface-muted);
   }
 }

@@ -1,17 +1,38 @@
 .card {
   background: var(--color-surface-card);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-card);
   min-width: 0;
-  padding: var(--space-6);
+  padding: var(--space-5);
 }
 
 .outlined {
-  background: transparent;
+  background: var(--color-surface-card);
   box-shadow: none;
 }
 
 .raised {
-  background: var(--color-surface-raised);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-xs);
+}
+
+.header {
+  align-items: center;
+  display: flex;
+  gap: var(--space-4);
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.title {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.action {
+  flex: 0 0 auto;
 }

@@ -9,16 +9,17 @@ can be reused without coupling one remote to another.
 `modules/frontend/packages/shared/src/tokens.css` is the source of truth for
 page and raised surfaces, text, action and status colors, borders, focus,
 typography, spacing, radii, and elevation. The page uses one neutral background;
-module identity belongs in small accents, not page-level gradients. Roboto is
-already bundled through `@fontsource/roboto`; headings use the bold weight and
-body copy uses the regular or medium weight.
+module identity belongs in small accents, not page-level gradients. Inter is
+bundled through `@fontsource/inter`; use the regular, medium, and semibold
+weights and the shared type scale.
 
 Use semantic variables such as `--color-surface-page`,
-`--color-text-secondary`, `--color-status-danger-text`, and `--space-4`.
-Do not introduce fixed colors or MFE-specific token variants. Add each new
-foreground/background or control/border pairing to `scripts/check-contrast.mjs`.
-`npm run check:contrast` checks the semantic pairs and rejects fixed hexadecimal
-colors in CSS Modules across the frontend packages.
+`--color-text-secondary`, `--color-danger-text`, `--radius-card`,
+`--shadow-sm`, and `--space-4`. Do not introduce fixed colors or MFE-specific
+token variants. Add each new foreground/background or control/border pairing to
+`scripts/check-contrast.mjs`. `npm run check:contrast` checks the semantic pairs
+and rejects fixed colors, shadows, or radii in CSS Modules across the frontend
+packages.
 
 ## Shared UI
 
@@ -40,11 +41,14 @@ const accepted = await confirm({
 });
 ```
 
-`Button` supports primary, secondary, and danger variants with a disabled
-loading state. `Field` links labels, help, and errors to input, select, or
-textarea controls. `PageHeader`, `Card`, `StatusBadge`, `DataList`/`DataRow`,
-`SearchInput`, `Tabs`, `EmptyState`, `ErrorState`, `Skeleton`, and `ToastRegion`
-provide reusable presentation and accessible states.
+`Button` supports primary, secondary, ghost, danger, danger-secondary, and link
+variants; small, medium, and large sizes; icon slots; and a typed icon-only
+form that requires an accessible label. Loading disables the action while
+keeping its content in place. `Field` links labels, help, and errors to input,
+select, or textarea controls. `PageHeader`, `Card`, `StatusBadge`,
+`DataList`/`DataRow`, `SearchInput`, `Tabs`, `EmptyState`, `ErrorState`,
+`Skeleton`, and `ToastRegion` provide reusable presentation and accessible
+states.
 
 `Modal` renders a labelled dialog in a portal, traps keyboard focus, supports
 Escape/backdrop dismissal, locks body scrolling, restores focus, and honors

@@ -5,33 +5,40 @@
 .list {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: var(--space-5);
   margin-bottom: var(--space-5);
+  border-bottom: 1px solid var(--color-border-default);
 }
 
 .tab {
-  background: var(--color-surface-control);
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-full);
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
   color: var(--color-text-secondary);
   cursor: pointer;
-  font: var(--font-weight-bold) var(--font-size-sm) / var(--line-height-normal) var(--font-body);
-  min-height: 44px;
-  padding: var(--space-2) var(--space-4);
+  font: var(--font-weight-medium) var(--font-size-sm) / var(--line-height-normal) var(--font-body);
+  min-height: 40px;
+  padding: 0 var(--space-1) var(--space-2);
 }
 
 .tab:hover {
-  background: var(--color-surface-muted);
+  color: var(--color-text-primary);
 }
 
 .active {
-  background: var(--color-text-primary);
-  border-color: var(--color-text-primary);
-  color: var(--color-text-on-dark);
+  border-bottom-color: var(--color-brand);
+  color: var(--color-brand);
 }
 
 .active:hover {
-  background: var(--color-sidebar-active);
+  color: var(--color-brand-hover);
+}
+
+@media (pointer: coarse) {
+  .tab {
+    min-height: 44px;
+  }
 }
 
 .panel {

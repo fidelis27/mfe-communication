@@ -1,14 +1,32 @@
 .empty {
-  background: var(--color-surface-muted);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-md);
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-card);
   color: var(--color-text-secondary);
   padding: var(--space-6);
 }
 
+.icon {
+  align-items: center;
+  background: var(--color-brand-soft);
+  border-radius: var(--radius-pill);
+  color: var(--color-brand-soft-text);
+  display: inline-flex;
+  height: 40px;
+  justify-content: center;
+  margin-bottom: var(--space-3);
+  width: 40px;
+}
+
+.iconDanger {
+  background: var(--color-danger-soft);
+  color: var(--color-danger-text);
+}
+
 .title {
   color: var(--color-text-primary);
-  font: var(--font-weight-bold) var(--font-size-lg) / var(--line-height-tight) var(--font-heading);
+  font: var(--font-weight-semibold) var(--font-size-lg) / var(--line-height-tight)
+    var(--font-heading);
   margin: 0;
   overflow-wrap: anywhere;
 }
