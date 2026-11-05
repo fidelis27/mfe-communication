@@ -11,27 +11,39 @@ const tokens = new Map(
 );
 const textPairs = [
   ["color-text-primary", "color-surface-page"],
+  ["color-text-primary", "color-surface-card"],
+  ["color-text-primary", "color-surface-muted"],
   ["color-text-secondary", "color-surface-page"],
-  ["color-text-muted", "color-surface-control"],
-  ["color-text-on-dark", "color-surface-dark"],
-  ["color-text-on-dark-muted", "color-surface-dark"],
-  ["color-text-on-dark-subtle", "color-surface-dark"],
-  ["color-accent", "color-surface-page"],
-  ["color-danger", "color-danger-soft"],
-  ["color-sidebar-text", "color-sidebar-active"],
-  ["color-sidebar-text-muted", "color-sidebar-active"],
-  ["color-sidebar-text-subtle", "color-sidebar-active"],
-  ["color-avatar-text", "color-avatar-bg"],
-  ["color-status-warning-text", "color-status-warning-soft"],
-  ["color-status-success-text", "color-status-success-soft"],
-  ["color-status-danger-text", "color-status-danger-soft"],
-  ["color-text-secondary", "color-status-neutral-soft"],
+  ["color-text-secondary", "color-surface-card"],
+  ["color-text-muted", "color-surface-page"],
+  ["color-text-muted", "color-surface-card"],
+  ["color-text-muted", "color-surface-muted"],
+  ["color-text-on-brand", "color-brand"],
+  ["color-text-on-brand", "color-brand-hover"],
+  ["color-text-on-brand", "color-brand-active"],
+  ["color-text-on-brand", "color-danger"],
+  ["color-text-on-brand", "color-danger-hover"],
+  ["color-brand-soft-text", "color-brand-soft"],
+  ["color-success-text", "color-success-soft"],
+  ["color-warning-text", "color-warning-soft"],
+  ["color-danger-text", "color-danger-soft"],
+  ["color-info-text", "color-info-soft"],
+  ["color-neutral-text", "color-neutral-soft"],
+  ["color-sidebar-text", "color-surface-sidebar"],
+  ["color-sidebar-text", "color-sidebar-active-bg"],
+  ["color-sidebar-text-muted", "color-surface-sidebar"],
+  ["color-sidebar-text-muted", "color-sidebar-active-bg"],
 ];
 const controlPairs = [
-  ["color-control-border", "color-surface-control"],
-  ["color-control-border-focus", "color-surface-control"],
-  ["color-status-warning-border", "color-status-warning-soft"],
-  ["color-event-pin-border", "color-status-success"],
+  ["color-control-border", "color-surface-page"],
+  ["color-control-border", "color-surface-card"],
+  ["color-control-border", "color-surface-muted"],
+  ["color-focus-ring", "color-surface-page"],
+  ["color-focus-ring", "color-surface-card"],
+  ["color-focus-ring", "color-surface-muted"],
+  ["color-brand", "color-surface-card"],
+  ["color-danger", "color-surface-card"],
+  ["color-success", "color-surface-card"],
 ];
 let hasErrors = false;
 
@@ -74,6 +86,7 @@ async function cssModuleFiles(directory) {
   for (const entry of entries) {
     const path = join(directory, entry.name);
     if (entry.isDirectory()) {
+      if (entry.name === "dist" || entry.name === "node_modules") continue;
       files.push(...(await cssModuleFiles(path)));
     } else if (entry.name.endsWith(".module.css")) {
       files.push(path);
@@ -88,11 +101,34 @@ checkPairs(controlPairs, 3, "Control/border");
 const cssRoot = join(root, "modules", "frontend", "packages");
 for (const file of await cssModuleFiles(cssRoot)) {
   const source = await readFile(file, "utf8");
-  if (/#(?:[0-9a-f]{3,8})\b/i.test(source)) {
-    process.stderr.write(
-      `FAIL: fixed hexadecimal color found in ${file}. Move it to shared tokens.\n`,
-    );
+  if (/#(?:[0-9a-f]{3,8})\b|rgba?\(/i.test(source)) {
+    process.stderr.write(`FAIL: fixed color found in ${file}. Move it to shared tokens.\n`);
     hasErrors = true;
+  }
+
+  for (const [, value] of source.matchAll(/box-shadow\s*:\s*([^;]+);/gi)) {
+    if (!value.trim().startsWith("var(") && value.trim() !== "none") {
+      process.stderr.write(`FAIL: fixed box-shadow found in ${file}. Move it to shared tokens.\n`);
+      hasErrors = true;
+    }
+  }
+
+  for (const [, value] of source.matchAll(/border-radius\s*:\s*([^;]+);/gi)) {
+    if (/\d(?:px|rem|em|%)/i.test(value)) {
+      process.stderr.write(
+        `FAIL: fixed border-radius found in ${file}. Move it to shared tokens.\n`,
+      );
+      hasErrors = true;
+    }
+  }
+
+  const spacingProperties =
+    /(?:margin(?:-[\w]+)?|padding(?:-[\w]+)?|gap|row-gap|column-gap)\s*:\s*([^;]+);/gi;
+  for (const [, value] of source.matchAll(spacingProperties)) {
+    if (/\d(?:\.\d+)?(?:px|rem|em|vw|vh|%)/i.test(value)) {
+      process.stderr.write(`FAIL: fixed spacing found in ${file}. Move it to shared tokens.\n`);
+      hasErrors = true;
+    }
   }
 }
 
