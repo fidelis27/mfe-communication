@@ -46,8 +46,12 @@ export async function seedAuthenticatedSession(page) {
   );
 }
 
-export async function mockApi(page, { sessionExpired = false } = {}) {
-  const students = [];
+export async function mockApi(
+  page,
+  { sessionExpired = false, initialStudents = [], forcedErrors = [] } = {},
+) {
+  const students = initialStudents.map((student) => ({ ...student }));
+  const pendingErrors = forcedErrors.map((error) => ({ after: 0, ...error }));
   const institutions = [
     { id: "institution-e2e", name: "Instituto E2E", cnpj: null, status: "active" },
   ];
@@ -72,6 +76,22 @@ export async function mockApi(page, { sessionExpired = false } = {}) {
     }
 
     requests.push({ method, pathname: requestUrl.pathname, postData: request.postData() });
+    const forcedError = pendingErrors.find(
+      (error) => error.method === method && error.pathname === requestUrl.pathname,
+    );
+    if (forcedError?.after) {
+      forcedError.after -= 1;
+    } else if (forcedError) {
+      pendingErrors.splice(pendingErrors.indexOf(forcedError), 1);
+      await route.fulfill({
+        status: forcedError.status,
+        headers: corsHeaders,
+        contentType: "application/json",
+        body: JSON.stringify({ error: forcedError.status === 403 ? "forbidden" : "not found" }),
+      });
+      return;
+    }
+
     if (requestUrl.pathname === "/students" && method === "GET" && sessionExpired) {
       await route.fulfill({
         status: 401,
@@ -150,5 +170,13 @@ export function studentCreatedEvent(student) {
     correlationId: "e2e-correlation",
     occurredAt: new Date().toISOString(),
     payload: student,
+  };
+}
+
+export function studentUpdatedEvent(student) {
+  return {
+    ...studentCreatedEvent(student),
+    eventId: "e2e-student-updated-event",
+    type: "STUDENT_UPDATED",
   };
 }

@@ -40,6 +40,7 @@ Browser
 - **Accessibility as a gate.** Skip link, labelled fields, `aria-live` / `aria-busy` on async regions, `jest-axe` tests per MFE, and a color-contrast check that runs in CI.
 - **Shared visual language.** Semantic tokens and typed UI primitives live in `@mfe/shared`; each application's Vite CSS Module is scoped beneath its own root to prevent remote styles from leaking across the federated page. See [`docs/design-system.md`](docs/design-system.md).
 - **Performance by evidence.** The plan in [`docs/performance-improvement-plan.md`](docs/performance-improvement-plan.md) follows one rule: measure, change the smallest thing, measure again. It also lists what _not_ to optimize (no blanket memoization, no preloading every MFE).
+- **Access-denied feedback.** The Student MFE shows friendly 403/404 errors and does not keep previously loaded rows visible after a denied refetch. E2E checks this UI behavior only; backend authorization remains the security boundary. The client does not yet know the user's institution scope, so a global scope selector/filter needs a trusted current-user scope source first.
 
 ## Repository layout
 
@@ -87,6 +88,7 @@ CI runs on every PR and a final **CI gate** job fails if any required job fails:
 - ESLint, TypeScript typecheck, Prettier check
 - Vitest unit, integration and accessibility tests
 - Playwright E2E tests against the built Host and five real federation remotes, with deterministic API and WebSocket mocks
+- Playwright checks that student-write 403 and student-list 403/404 responses are visible and do not leave a success state or stale rows
 - Color-contrast check
 - `npm audit --audit-level=high`
 - Build matrix over all seven workspaces
