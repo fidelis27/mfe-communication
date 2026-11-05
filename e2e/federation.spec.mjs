@@ -4,6 +4,7 @@ import {
   mockApi,
   seedAuthenticatedSession,
   studentCreatedEvent,
+  studentUpdatedEvent,
 } from "./helpers.mjs";
 
 async function setup(page, options = {}) {
@@ -14,7 +15,7 @@ async function setup(page, options = {}) {
     console.error("[browser page error]", error.stack ?? error.message),
   );
   if (options.authenticated !== false) await seedAuthenticatedSession(page);
-  const api = await mockApi(page, { sessionExpired: options.sessionExpired });
+  const api = await mockApi(page, options);
   const socket = await installFakeWebSocket(page);
   return { api, socket };
 }
@@ -58,6 +59,55 @@ test("student form creates a record through the real remote", async ({ page }) =
     ),
   ).toBe(true);
 });
+
+test("403 while creating a student is accessible and does not add the student", async ({
+  page,
+}) => {
+  const { api } = await setup(page, {
+    forcedErrors: [{ method: "POST", pathname: "/students", status: 403 }],
+  });
+  await page.goto("/estudantes");
+
+  await page.getByLabel("Nome completo").fill("Cadastro negado E2E");
+  await page.getByLabel("Instituição").selectOption("institution-e2e");
+  await page.getByRole("button", { name: /Cadastrar estudante/ }).click();
+
+  await expect(page.getByRole("alert")).toHaveText(
+    "Você não tem permissão para realizar esta ação.",
+  );
+  await expect(page.getByRole("heading", { name: "Cadastro negado E2E" })).toHaveCount(0);
+  expect(api.students).toHaveLength(0);
+});
+
+for (const status of [403, 404]) {
+  test(`${status} while refreshing students hides previously loaded data`, async ({ page }) => {
+    const student = {
+      id: `student-existing-${status}`,
+      name: `Estudante existente ${status}`,
+      institutionId: "institution-e2e",
+      status: "active",
+    };
+    const { socket } = await setup(page, {
+      initialStudents: [student],
+      forcedErrors: [{ method: "GET", pathname: "/students", status, after: 1 }],
+    });
+    await page.goto("/estudantes");
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Vínculos que acompanham cada trajetória." }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: student.name })).toBeVisible();
+
+    await socket.send(studentUpdatedEvent(student));
+
+    await expect(page.getByRole("alert")).toContainText(
+      status === 403
+        ? "Você não tem permissão para realizar esta ação."
+        : "O recurso solicitado não foi encontrado.",
+    );
+    await expect(page.getByRole("heading", { name: student.name })).toHaveCount(0);
+    await expect(page.getByText("00", { exact: true })).toBeVisible();
+  });
+}
 
 test("WebSocket event appears in Activity and refreshes Dashboard", async ({ page }) => {
   const { api, socket } = await setup(page);
