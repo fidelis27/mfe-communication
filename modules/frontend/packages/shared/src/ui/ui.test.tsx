@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { axe, toHaveNoViolations } from "jest-axe";
 import { describe, expect, it, vi } from "vitest";
 import { Button } from "./Button";
+import buttonStyles from "./Button/Button.module.css";
 import { Card } from "./Card";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { DataList, DataRow } from "./DataList";
@@ -29,6 +30,22 @@ describe("shared UI primitives", () => {
     );
     expect(screen.getByRole("button", { name: "Saving" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Saving" })).toHaveAttribute("aria-busy", "true");
+  });
+
+  it("supports button sizes and accessible icon-only actions", () => {
+    render(
+      <Button
+        aria-label="Add person"
+        iconOnly
+        leadingIcon={<span aria-hidden="true">+</span>}
+        size="sm"
+        variant="secondary"
+      />,
+    );
+
+    const button = screen.getByRole("button", { name: "Add person" });
+    expect(button).toHaveClass(buttonStyles.secondary, buttonStyles.sizeSm, buttonStyles.iconOnly);
+    expect(button).toHaveTextContent("+");
   });
 
   it("connects field help and validation errors to input, select, and textarea controls", () => {

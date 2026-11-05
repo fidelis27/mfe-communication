@@ -11,13 +11,23 @@
 }
 
 .input {
-  background: var(--color-surface-control);
+  background: var(--color-surface-card);
   border: 1px solid var(--color-control-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-control);
   color: var(--color-text-primary);
-  font: var(--font-size-md) / var(--line-height-normal) var(--font-body);
-  min-height: 44px;
+  font: var(--font-size-sm) / var(--line-height-normal) var(--font-body);
+  min-height: 40px;
   min-width: 0;
-  padding: var(--space-2) var(--space-3);
+  padding: 0 var(--space-3);
   width: 100%;
+}
+
+.input:focus-visible {
+  border-color: var(--color-focus-ring);
+}
+
+@media (pointer: coarse) {
+  .input {
+    min-height: 44px;
+  }
 }

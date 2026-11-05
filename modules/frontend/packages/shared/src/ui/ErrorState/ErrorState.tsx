@@ -2,6 +2,7 @@ import React, { type ReactNode } from "react";
 import { Button } from "../Button";
 import { cx } from "../classNames";
 import { EmptyState, type EmptyStateProps } from "../EmptyState";
+import { AlertIcon } from "../icons";
 import styles from "./ErrorState.module.css";
 
 export interface ErrorStateProps extends Omit<EmptyStateProps, "action"> {
@@ -26,6 +27,8 @@ export function ErrorState({
           </Button>
         )
       }
+      icon={<AlertIcon size={20} />}
+      iconTone="danger"
       className={cx(styles, "errorState")}
     />
   );

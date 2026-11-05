@@ -1,5 +1,6 @@
 import React, { useId, useRef, useState } from "react";
 import { Button } from "../Button";
+import { AlertIcon } from "../icons";
 import { Modal } from "../Modal";
 import styles from "./ConfirmDialog.module.css";
 
@@ -57,15 +58,25 @@ export function ConfirmDialog({
       open={open}
       role="alertdialog"
     >
-      <p className={styles.eyebrow}>Confirmação necessária</p>
-      <h2 className={styles.title} id={`${id}-title`}>
-        {title}
-      </h2>
+      <header className={styles.header}>
+        {tone === "danger" && (
+          <span aria-hidden="true" className={styles.dangerIcon}>
+            <AlertIcon size={20} />
+          </span>
+        )}
+        <div>
+          <p className={styles.eyebrow}>Confirmação necessária</p>
+          <h2 className={styles.title} id={`${id}-title`}>
+            {title}
+          </h2>
+        </div>
+      </header>
       <p className={styles.description} id={`${id}-description`}>
         {description}
       </p>
       {actionError && (
         <p className={styles.error} role="alert">
+          <AlertIcon size={16} />
           {actionError}
         </p>
       )}

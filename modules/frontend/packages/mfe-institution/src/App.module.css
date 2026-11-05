@@ -6,7 +6,7 @@
 }
 
 .appRoot :global(.institution-shell) {
-  padding: 32px clamp(20px, 5vw, 72px);
+  padding: var(--space-8) var(--space-page-inline);
   background: var(--color-surface-page);
 }
 
@@ -15,17 +15,17 @@
 }
 
 .appRoot :global(.eyebrow) {
-  color: var(--color-accent);
-  font: 700 var(--font-size-2xs) var(--font-body);
+  color: var(--color-brand);
+  font: var(--font-weight-semibold) var(--font-size-xs) var(--font-body);
   letter-spacing: 1.8px;
   text-transform: uppercase;
 }
 
 .appRoot :global(.institution-hero h1) {
   font-size: clamp(1.6rem, 2.6vw, 2.1rem);
-  font-weight: var(--font-weight-bold);
+  font-weight: var(--font-weight-semibold);
   line-height: 1.04;
-  margin: 18px 0;
+  margin: var(--space-4-5) 0;
 }
 
 .appRoot :global(.lede) {
@@ -36,66 +36,72 @@
 
 .appRoot :global(.institution-grid) {
   display: grid;
-  gap: 56px;
+  gap: var(--space-14);
   grid-template-columns: minmax(260px, 340px) minmax(320px, 1fr);
-  margin-top: 72px;
+  margin-top: var(--space-18);
   max-width: 1080px;
 }
 
 .appRoot :global(.institution-form),
 .appRoot :global(.institution-list) {
   border-top: 1px solid var(--color-border-default);
-  padding-top: 20px;
+  padding-top: var(--space-5);
 }
 
 .appRoot :global(.section-heading) {
   align-items: center;
   display: flex;
-  gap: 12px;
-  margin-bottom: 28px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-7);
 }
 
 .appRoot :global(.section-heading > span) {
-  color: var(--color-accent);
-  font: 700 var(--font-size-2xs) var(--font-body);
+  color: var(--color-brand);
+  font: var(--font-weight-semibold) var(--font-size-xs) var(--font-body);
 }
 
 .appRoot :global(.section-heading h2) {
-  font-size: 1.2rem;
-  font-weight: 400;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-regular);
   margin: 0;
 }
 
 .appRoot :global(.section-heading strong) {
-  color: var(--color-accent);
-  font: 700 var(--font-size-xs) var(--font-body);
+  color: var(--color-brand);
+  font: var(--font-weight-semibold) var(--font-size-xs) var(--font-body);
   margin-left: auto;
 }
 
 .appRoot :global(.institution-form > .field) {
-  margin-top: 22px;
+  margin-top: var(--space-5-5);
 }
 
 .appRoot :global(button) {
-  background: var(--color-text-primary);
+  background: var(--color-brand);
   border: 0;
-  color: var(--color-text-on-dark);
+  border-radius: var(--radius-control);
+  color: var(--color-text-on-brand);
   cursor: pointer;
-  font: 700 var(--font-size-xs) var(--font-body);
-  margin-top: 32px;
-  padding: 15px 18px;
+  font: var(--font-weight-semibold) var(--font-size-xs) var(--font-body);
+  min-height: 44px;
+  margin-top: var(--space-8);
+  padding: var(--space-3-75) var(--space-4-5);
   width: 100%;
+}
+
+.appRoot :global(button:hover:not(:disabled)) {
+  background: var(--color-brand-hover);
 }
 
 .appRoot :global(button b) {
   float: right;
-  font-size: 20px;
+  font-size: var(--font-size-lg);
   line-height: 11px;
 }
 
 .appRoot :global(.message) {
   color: var(--color-success);
-  font: var(--font-size-2xs) var(--font-body);
+  font: var(--font-size-xs) var(--font-body);
 }
 
 .appRoot :global(.error) {
@@ -105,7 +111,7 @@
 .appRoot :global(.empty.error-state) {
   align-items: flex-start;
   display: grid;
-  gap: 14px;
+  gap: var(--space-3-5);
 }
 
 .appRoot :global(.empty.error-state p) {
@@ -113,24 +119,24 @@
 }
 
 .appRoot :global(.empty.error-state button) {
-  background: var(--color-control-border-focus);
+  background: var(--color-focus-ring);
   margin-top: 0;
   max-width: 190px;
-  padding: 12px 16px;
+  padding: var(--space-3) var(--space-4);
 }
 
 .appRoot :global(.empty) {
   color: var(--color-text-secondary);
   font: var(--font-size-sm) var(--font-body);
-  padding: 28px 0;
+  padding: var(--space-7) 0;
 }
 
 .appRoot :global(.institution-row) {
   align-items: center;
-  border-bottom: 1px solid var(--color-border-subtle);
+  border-bottom: 1px solid var(--color-border-default);
   display: flex;
-  gap: 14px;
-  padding: 15px 0;
+  gap: var(--space-3-5);
+  padding: var(--space-3-75) 0;
 }
 
 .appRoot :global(.institution-row > div) {
@@ -140,9 +146,9 @@
 
 .appRoot :global(.crest) {
   align-items: center;
-  background: var(--color-avatar-bg);
-  border-radius: var(--radius-sm);
-  color: var(--color-avatar-text);
+  background: var(--color-brand);
+  border-radius: var(--radius-control);
+  color: var(--color-text-on-brand);
   display: flex;
   flex: 0 0 38px;
   font: var(--font-size-lg) var(--font-body);
@@ -151,20 +157,20 @@
 }
 
 .appRoot :global(.institution-row h3) {
-  font-size: 1rem;
-  font-weight: 400;
-  margin: 0 0 4px;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-regular);
+  margin: 0 0 var(--space-1);
 }
 
 .appRoot :global(.institution-row p) {
   color: var(--color-text-secondary);
-  font: var(--font-size-2xs) var(--font-body);
+  font: var(--font-size-xs) var(--font-body);
   margin: 0;
 }
 
 .appRoot :global(.institution-row em) {
   color: var(--color-success);
-  font: var(--font-size-2xs) var(--font-body);
+  font: var(--font-size-xs) var(--font-body);
   font-style: normal;
   margin-left: auto;
   text-transform: uppercase;
@@ -172,15 +178,15 @@
 
 @media (max-width: 720px) {
   .appRoot :global(.institution-shell) {
-    padding: 40px 22px;
+    padding: var(--space-10) var(--space-5-5);
   }
 
   .appRoot :global(.institution-grid) {
     display: block;
-    margin-top: 48px;
+    margin-top: var(--space-12);
   }
 
   .appRoot :global(.institution-list) {
-    margin-top: 56px;
+    margin-top: var(--space-14);
   }
 }

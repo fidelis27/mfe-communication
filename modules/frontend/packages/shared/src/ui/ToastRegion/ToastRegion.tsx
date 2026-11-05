@@ -1,6 +1,7 @@
 import React from "react";
 import { Button } from "../Button";
 import { cx } from "../classNames";
+import { AlertIcon, CheckIcon, CloseIcon, InfoIcon } from "../icons";
 import styles from "./ToastRegion.module.css";
 
 export interface ToastNotice {
@@ -26,15 +27,25 @@ export function ToastRegion({ notices, onDismiss, label = "Notificações" }: To
           key={notice.id}
           role={notice.kind === "error" ? "alert" : "status"}
         >
+          <span aria-hidden="true" className={styles.icon}>
+            {notice.kind === "success" ? (
+              <CheckIcon size={18} />
+            ) : notice.kind === "error" ? (
+              <AlertIcon size={18} />
+            ) : (
+              <InfoIcon size={18} />
+            )}
+          </span>
           <p>{notice.message}</p>
           <Button
             aria-label={`Dispensar notificação: ${notice.message}`}
             className={styles.dismiss}
+            iconOnly
+            leadingIcon={<CloseIcon />}
             onClick={() => onDismiss(notice.id)}
-            variant="secondary"
-          >
-            Dispensar
-          </Button>
+            size="sm"
+            variant="ghost"
+          />
         </div>
       ))}
     </div>
