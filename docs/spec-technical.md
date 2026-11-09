@@ -359,7 +359,8 @@ Ordem de validacao de cada fatia:
 2. Teste de integracao da rota com banco MariaDB/MySQL de teste.
 3. Teste do evento publicado e do consumidor correspondente.
 4. Verificacao manual dos estados `loading`, `empty`, `success` e `error`.
-5. Revisao do diff contra `context.md` e `spec-functional.md`.
+5. Revisao do diff contra `archive/context.md` e
+   `product/functional-specification.md`.
 
 Comandos planejados:
 
@@ -428,8 +429,8 @@ requisito novo deve ser registrado nas specs antes de ampliar a implementacao.
 
 Esta definicao descreve o alvo futuro do prototipo e nao autoriza seu inicio.
 Nenhuma implementacao, instalacao de dependencia ou alteracao de configuracao
-deve ocorrer antes da aprovacao explicita de `context.md`,
-`spec-functional.md`, `spec-technical.md` e `deployment.md`.
+deve ocorrer antes da aprovacao explicita de `archive/context.md`,
+`product/functional-specification.md`, `spec-technical.md` e `deployment.md`.
 
 O prototipo sera considerado completo quando:
 
