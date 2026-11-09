@@ -19,6 +19,7 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit -p .",
     "check:contrast": "node ./scripts/check-contrast.mjs",
+    "check:docs": "node ./scripts/check-docs.mjs",
     "format": "prettier --write --ignore-unknown .",
     "format:check": "prettier --check --ignore-unknown ."
   },
