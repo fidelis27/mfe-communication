@@ -1,3 +1,5 @@
+> Archived (2026-11-09): superseded deployment plan with outdated identity and rollout assumptions. Not maintained; retained for historical reference.
+
 # Plano de deploy e produção
 
 ## Objetivo

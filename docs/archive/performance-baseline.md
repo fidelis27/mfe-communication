@@ -1,3 +1,5 @@
+> Archived (2026-11-09): one-session navigation snapshot, not a reproducible current baseline. Not maintained; retained for historical reference.
+
 # Frontend navigation baseline
 
 ## Scope and method

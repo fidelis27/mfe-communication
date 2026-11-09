@@ -1,3 +1,5 @@
+> Archived (2026-11-09): completed implementation plan with its approval gate closed. Not maintained; retained for historical reference.
+
 # Plano de execucao - prototipo completo
 
 ## Gate

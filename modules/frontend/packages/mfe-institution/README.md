@@ -1,3 +1,4 @@
 # MFE - Institution
 
-Responsibilities: institution CRUD, CNPJ validation, quick-create modal for student flow.
+For project overview, package setup, architecture, and quality guidance, see
+the [documentation index](../../../../docs/README.md).

@@ -1,3 +1,5 @@
+> Archived (2026-11-09): historical visual audit of an earlier interface state. Not maintained; retained for historical reference.
+
 # Visual baseline audit
 
 The pre-change screenshots were captured from the published Host preview at

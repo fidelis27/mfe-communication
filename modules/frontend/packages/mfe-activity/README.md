@@ -1,3 +1,4 @@
 # MFE - Activity
 
-Responsibilities: activity feed, read-only projections, realtime updates.
+For project overview, package setup, architecture, and quality guidance, see
+the [documentation index](../../../../docs/README.md).

@@ -21,7 +21,7 @@ depois e sem agrupar melhorias de naturezas diferentes.
 ### PERF-BASELINE - Criar baseline de navegacao
 
 - Status: concluido; evidencias em
-  [`performance-baseline.md`](./performance-baseline.md).
+  [the archived performance baseline](./README.md#archive).
 - Branch: `perf/frontend-baseline`
 - Objetivo: medir Host, Estudantes, Instituicoes, Admin, Activity e Dashboard.
 - Medir: requests, bytes transferidos, maior chunk, tempo de remote, LCP, FCP,

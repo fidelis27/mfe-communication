@@ -96,18 +96,19 @@ CI runs on every PR and a final **CI gate** job fails if any required job fails:
 
 ## Documentation
 
-| Doc                                                                                            | What it covers                                  |
-| ---------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| [`mfe-architecture.md`](docs/mfe-architecture.md)                                              | MFE boundaries, federation, deploy model        |
-| [`design-system.md`](docs/design-system.md)                                                    | Shared tokens, UI primitives, and CSS isolation |
-| [`event-bus.md`](docs/event-bus.md)                                                            | Channels, queue, TTL, host WebSocket flow       |
-| [`spec-functional.md`](docs/spec-functional.md), [`spec-technical.md`](docs/spec-technical.md) | Product and technical specs                     |
-| [`performance-improvement-plan.md`](docs/performance-improvement-plan.md)                      | Evidence-first performance tasks                |
-| [`project-zero-learnings.md`](docs/project-zero-learnings.md)                                  | Checklist distilled from building this project  |
+| Doc                                                                                                                      | What it covers                                  |
+| ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------- |
+| [`mfe-architecture.md`](docs/mfe-architecture.md)                                                                        | MFE boundaries, federation, deploy model        |
+| [`design-system.md`](docs/design-system.md)                                                                              | Shared tokens, UI primitives, and CSS isolation |
+| [`event-bus.md`](docs/event-bus.md)                                                                                      | Channels, queue, TTL, host WebSocket flow       |
+| [`functional-specification.md`](docs/product/functional-specification.md), [`spec-technical.md`](docs/spec-technical.md) | Product and technical specs                     |
+| [`performance-improvement-plan.md`](docs/performance-improvement-plan.md)                                                | Evidence-first performance tasks                |
+| [Documentation archive](docs/README.md#archive)                                                                          | Historical material retained for reference      |
+| [`docs/README.md`](docs/README.md)                                                                                       | Documentation index and evidence map            |
 
 ## How it was built
 
-Spec first, in small verified steps. Product decisions and acceptance criteria were written down before code (`docs/context.md`, specs), work was split into **one PR per block** with conventional commits and a "Validations" section listing the commands run, and AI assistants were used under those same rules. See `docs/context.md` for the working agreement.
+Spec first, in small verified steps. Product decisions and acceptance criteria were written down before code (`docs/archive/context.md`, specs), work was split into **one PR per block** with conventional commits and a "Validations" section listing the commands run, and AI assistants were used under those same rules. See `docs/archive/context.md` for the working agreement.
 
 ## Limitations
 
