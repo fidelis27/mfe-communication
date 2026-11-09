@@ -1,8 +1,13 @@
 # Database and architecture diagrams
 
 The diagrams below preserve the original conceptual data model. They are not a
-verified description of the current database schema. The authoritative schema
-and migrations are maintained in the separate `secretaria-backend` repository.
+description of the current database schema. Migrations `001`–`010` in the
+separate [`secretaria-backend` architecture guide](https://github.com/fidelis27/secretaria-backend/blob/main/docs/architecture.md)
+and [SQL migrations](https://github.com/fidelis27/secretaria-backend/tree/main/migrations)
+define institutions, students, enrollments, users, groups, memberships, and
+audit events. This conceptual model includes proposed `CAMPUS` and `COURSE`
+entities; `GROUP_MEMBER` is a conceptual label for the implemented
+`member_groups` table. Use the backend migrations as the schema source of truth.
 
 ## Initial conceptual relational model
 
