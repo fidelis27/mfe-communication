@@ -1,3 +1,5 @@
+> Archived (2026-11-09): superseded planning and agent-prompt material. Not maintained; retained for historical reference.
+
 # Contexto do produto
 
 ## 0. Instrucoes para a IA

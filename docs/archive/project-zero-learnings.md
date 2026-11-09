@@ -1,3 +1,5 @@
+> Archived (2026-11-09): generic project-kickoff guide, not current product guidance. Not maintained; retained for historical reference.
+
 # Aprendizados para criar um projeto do zero
 
 Este documento resume o que precisa ser decidido, configurado e validado ao
