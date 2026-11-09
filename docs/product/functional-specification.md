@@ -1,194 +1,164 @@
-# Especificacao funcional - Secretaria escolar multi-MFE
+# Functional specification: school secretariat
 
-## 1. Objetivo e resultado
+This document records expected product behavior. It is not a claim that every
+listed workflow is implemented, deployed, or covered by automated tests; see
+the evidence links in the [documentation index](../README.md#demonstrated-competencies).
 
-Permitir que um operador de secretaria consulte instituicoes e cadastre
-estudantes vinculados a elas. Cada alteracao deve gerar um evento de dominio
-que possa ser consumido por Activity e Dashboard sem acoplamento direto entre
-as telas.
+## 1. Purpose and outcome
 
-O resultado do MVP e um fluxo demonstravel e testavel, nao cinco MFEs
-completos.
+Allow a school-secretariat operator to consult institutions and register
+students linked to them. Changes should produce domain events that Activity
+and Dashboard can consume without direct coupling between their screens.
 
-## 2. Atores e permissoes
+## 2. Actors and permissions
 
-- **Superadministrador:** le e altera qualquer instituicao; administra grupos
-  e usuarios.
-- **Administrador da instituicao:** le e altera dados da instituicao a que
-  pertence, seus estudantes e seus vinculos; administra permissoes dentro do
-  escopo autorizado.
-- **Membro autorizado:** cadastra e consulta estudantes dentro do escopo
-  delegado, mas nao administra usuarios, grupos ou politicas.
-- **Usuario inativo ou nao autenticado:** nao acessa operacoes protegidas.
+- **Super administrator:** can read and change any institution and administer
+  groups and users.
+- **Institution administrator:** can read and change data for assigned
+  institutions, students, and enrollments, and manage permissions within the
+  authorized scope.
+- **Authorized member:** can register and consult students within the delegated
+  scope but cannot administer users, groups, or policies.
+- **Inactive or unauthenticated user:** cannot access protected operations.
 
-O login usa Supabase Auth. Somente contas provisionadas e vinculadas a usuarios
-ativos no banco local podem acessar as operacoes protegidas.
+Authentication uses Supabase Auth. Only provisioned accounts linked to active
+local database users should access protected operations.
 
-## 3. MVP
+## 3. Product scope
 
-### Incluido
+### Included behavior
 
-1. Shell com navegacao para Instituicoes, Estudantes, Atividades e Dashboard,
-   com Module Federation real.
-2. Lista e cadastro de instituicoes.
-3. Edicao e inativacao de instituicoes.
-4. Lista e cadastro de estudantes por instituicao.
-5. Trancamento, reabertura e transferencia de vinculo, com historico.
-6. Autorizacao para leitura e edicao de administradores e membros delegados.
-7. Publicacao de eventos de instituicao, estudante e vinculo.
-8. Feed de atividades derivado dos eventos.
-9. Contador de instituicoes ou estudantes atualizado pelo consumo de eventos.
-10. Atualizacao realtime entre MFE, host e modal consumidor.
+1. A navigable shell with entry points for Institutions, Students, Activity,
+   Dashboard, and Administration, composed through Module Federation.
+2. Institution listing and registration, with editing and deactivation.
+3. Student listing and registration by institution.
+4. Enrollment suspension, reopening, and transfer, while preserving history.
+5. Read and write authorization for administrators and delegated members.
+6. Publication of institution, student, and enrollment domain events.
+7. An activity feed derived from events.
+8. Dashboard indicators updated from relevant changes.
+9. Realtime updates between the host and remotes, including correlated modal
+   interactions where required.
 
-### Limites operacionais
+### Operational limits
 
-Todos os modulos e fluxos funcionais documentados fazem parte do prototipo.
-MariaDB/MySQL sera usado desde o primeiro incremento. Alta disponibilidade, garantia
-exactly-once, identidade de producao, importacao em massa e integracoes
-externas exigem endurecimento posterior antes de uso real.
+These are functional requirements for the prototype, not proof of operational
+readiness. High availability, exactly-once delivery, production identity, bulk
+imports, and external integrations require separate validation before use with
+real data.
 
-## 4. Regras de negocio
+## 4. Business rules
 
-- O ambiente possui varias instituicoes e unidades, identificadas por nome,
-  sigla, tipo, municipio, UF, campus e status.
-- Uma instituicao ativa pode receber novos estudantes.
-- Uma instituicao inativa permanece consultavel para historico, mas nao recebe
-  novos estudantes.
-- Um estudante possui cadastro civil unico e um ou mais vinculos historicos;
-  nao pode haver dois vinculos ativos simultaneos sem uma regra aprovada.
-- O vinculo referencia instituicao, campus, curso, situacao e datas.
-- Transferencia encerra o vinculo de origem e cria o vinculo de destino dentro
-  de uma operacao rastreavel.
-- Trancamento preserva o vinculo e permite reabertura por usuario autorizado.
-- Uma operacao de escrita autorizada publica um unico evento correspondente.
-- Eventos consumidos devem alimentar Activity e Dashboard sem importar
-  implementacoes internas de outro MFE.
+- The environment supports multiple institutions and campuses, identified by
+  name, acronym, type, city, state, campus, and status.
+- An active institution may receive new students.
+- An inactive institution remains available for historical consultation but
+  cannot receive new students.
+- A student has one canonical record and may have multiple historical
+  enrollments; simultaneous active enrollments require an explicit rule.
+- An enrollment refers to an institution, campus, course, status, and dates.
+- A transfer ends the source enrollment and creates a destination enrollment
+  as one traceable operation.
+- Suspension preserves the enrollment and allows an authorized user to reopen
+  it.
+- Each successful authorized write should publish one corresponding event.
+- Event consumers update Activity and Dashboard without importing another
+  remote's internal implementation.
 
-## 5. Estados de interface
+## 5. Interface states
 
-Toda tela de leitura ou escrita deve representar:
+Every read or write screen should represent:
 
-- `idle`: tela pronta para iniciar uma acao.
-- `loading`: consulta ou envio em andamento; controles relevantes ficam
-  protegidos contra duplicidade.
-- `success`: operacao concluida e feedback visivel.
-- `empty`: consulta valida sem registros.
-- `error`: falha com mensagem acionavel e possibilidade de tentar novamente.
+- `idle`: ready for an action.
+- `loading`: a request is in progress; relevant controls prevent duplicate
+  submission.
+- `success`: the operation completed and feedback is visible.
+- `empty`: the query succeeded and returned no records.
+- `error`: the operation failed with an actionable message and a retry path
+  where appropriate.
 
-## 6. Fluxos principais
+## 6. Main workflows
 
-### Cadastro de instituicao
+### Register an institution
 
-1. Usuario autorizado abre Instituicoes.
-2. Sistema exibe lista ou estado vazio.
-3. Usuario informa os campos obrigatorios e confirma.
-4. Sistema valida, persiste, publica `INSTITUTION_CREATED` e atualiza a lista.
+1. An authorized user opens Institutions.
+2. The system shows the list or an empty state.
+3. The user enters required fields and confirms.
+4. The system validates and persists the change, publishes
+   `INSTITUTION_CREATED`, and updates the list.
 
-### Cadastro de estudante
+### Register a student
 
-1. Usuario seleciona uma instituicao ativa.
-2. Sistema exibe estudantes e opcao de cadastro conforme permissao.
-3. Usuario informa os campos obrigatorios e confirma.
-4. Sistema valida o vinculo, persiste, publica `STUDENT_CREATED` e atualiza a
-   lista.
+1. The user selects an active institution.
+2. The system shows students and the registration action allowed by the user's
+   permissions.
+3. The user enters required fields and confirms.
+4. The system validates and persists the enrollment, publishes
+   `STUDENT_CREATED`, and updates the list.
 
-### Transferencia, trancamento e reabertura
+### Transfer, suspend, or reopen an enrollment
 
-1. Usuario autorizado seleciona o vinculo do estudante.
-2. Para trancamento, informa motivo e data; o vinculo passa a `suspended`.
-3. Para reabertura, confirma a operacao; o vinculo retorna a `active`.
-4. Para transferencia, seleciona instituicao e curso de destino; o sistema
-   encerra o vinculo de origem e cria o vinculo de destino, preservando o
-   historico.
-5. O sistema publica o evento correspondente com o mesmo `correlationId` da
-   operacao.
+1. An authorized user selects the student's enrollment.
+2. For suspension, the user supplies a reason and date; the enrollment becomes
+   `suspended`.
+3. For reopening, the user confirms the operation; the enrollment returns to
+   `active`.
+4. For transfer, the user selects a destination institution and course; the
+   system ends the source enrollment and creates the destination enrollment,
+   preserving history.
+5. The system publishes the corresponding event with the operation's
+   `correlationId`.
 
-### Consumo de evento
+### Consume an event
 
-1. Activity registra uma entrada legivel para cada evento consumido.
-2. Dashboard atualiza pelo menos uma agregacao relacionada ao evento.
-3. Falha de consumo nao pode apagar o dado autoritativo nem bloquear novas
-   escritas; deve ser observavel no estado de erro.
+1. Activity records a readable entry for each supported event.
+2. Dashboard refreshes a related aggregation after consuming the event.
+3. A consumption failure does not erase authoritative data or block future
+   writes and is observable as an error.
 
-## 7. Contratos funcionais de eventos
+## 7. Functional event contracts
 
-Eventos iniciais:
+The product requirements include these event types:
 
-- `INSTITUTION_CREATED`, `INSTITUTION_UPDATED`,
+- `INSTITUTION_CREATED`, `INSTITUTION_UPDATED`, and
   `INSTITUTION_INACTIVATED`.
-- `STUDENT_CREATED`, `STUDENT_UPDATED`.
-- `ENROLLMENT_SUSPENDED`, `ENROLLMENT_REOPENED`, `STUDENT_TRANSFERRED`.
-- `STUDENT_CREATED_SUCCESS`, `STUDENT_CREATED_ERROR` para interacao entre MFE
-  e consumidor de modal.
+- `STUDENT_CREATED` and `STUDENT_UPDATED`.
+- `ENROLLMENT_SUSPENDED`, `ENROLLMENT_REOPENED`, and `STUDENT_TRANSFERRED`.
+- `STUDENT_CREATED_SUCCESS` and `STUDENT_CREATED_ERROR` for communication
+  between a remote and a modal consumer.
 
-Todos possuem `eventId`, `type`, `version`, `source`, `correlationId`,
-`occurredAt` e `payload`. Eventos de sucesso/erro devem ser consumidos em
-tempo real e permitir que o consumidor reaja sem importar codigo do MFE.
+Domain events carry `eventId`, `type`, `version`, `source`, `correlationId`,
+`occurredAt`, and `payload`. Success and error interaction events should be
+consumed in realtime so the consumer can react without importing another
+remote's code. The implemented event set and payloads must be verified against
+the shared schemas and backend contract before use.
 
-## 8. Criterios de aceite
+## 8. Acceptance criteria
 
-- Instituicoes podem ser listadas, criadas, editadas e inativadas por usuario
-  autorizado.
-- Estudantes podem ser listados e criados dentro de uma instituicao ativa por
-  usuario autorizado.
-- Usuario sem permissao recebe `401` ou `403` e nenhum dado e alterado.
-- Instituicao inexistente ou inativa impede o cadastro do estudante.
-- Um estudante transferido possui historico de origem e novo vinculo de destino.
-- Trancamento e reabertura alteram a situacao sem apagar o historico.
-- Cada escrita bem-sucedida publica exatamente um evento valido.
-- Um modal consumidor fecha somente ao receber o evento de sucesso correlato;
-  em erro, permanece aberto e exibe a falha.
-- Activity exibe os eventos consumidos em ordem decrescente de ocorrencia.
-- Dashboard altera seu indicador depois do consumo do evento.
-- Listas vazias, carregamento, sucesso e erro sao distinguiveis na interface.
-- O fluxo principal possui testes automatizados de regra e autorizacao.
+- Authorized users can list, create, edit, and deactivate institutions.
+- Authorized users can list and register students within an active
+  institution.
+- A user without permission receives `401` or `403`, and no data changes.
+- A missing or inactive institution prevents student registration.
+- A transferred student retains the source history and destination enrollment.
+- Suspension and reopening change the enrollment status without deleting
+  history.
+- Each successful write publishes one valid corresponding event.
+- A consuming modal closes only after receiving its correlated success event;
+  on error, it remains open and shows the failure.
+- Activity displays consumed events in descending occurrence order.
+- Dashboard refreshes a related indicator after event consumption.
+- Empty, loading, success, and error states are distinguishable.
+- Automated tests cover the principal workflow and authorization behavior.
 
-## 9. Decisoes do PO
+## 9. Product decisions
 
-- O produto e multi-institucional dentro de uma instalacao compartilhada.
-- O fluxo instituicao -> estudante -> vinculo -> evento e prioritario.
-- O estudante possui cadastro unico e no maximo um vinculo ativo no MVP.
-- Administrador gerencia configuracao e permissoes; membro executa operacoes
-  delegadas de estudante e vinculo dentro do seu escopo.
-- Instituicao, Estudante e Host sao P0; Activity e Dashboard sao P1; Admin
-  tem apenas o necessario para demonstrar papeis.
-- Module Federation real e obrigatorio para validar a arquitetura MFE.
-- WebSocket e o transporte realtime obrigatório do MVP para eventos do backend
-  e sincronizacao entre clientes.
-- `window.bus`/`EventTarget` fica restrito a eventos locais entre MFEs na mesma
-  pagina, como fechamento de modal e feedback de sucesso.
-- Eventos de dominio serao produzidos pelo backend e eventos de interacao
-  serao transmitidos em tempo real ao host e aos MFEs interessados.
-- Os dados de demonstracao serao institucionais publicos e estudantes
-  ficticios/anonimizados; nao havera integracao com USP, UNESP ou Fatec.
-- `spec-functional.md` e `spec-technical.md` sao os nomes canonicos atuais;
-  os nomes abreviados `func.spec.md` e `tec.spec.md` representam a mesma
-  intencao documental.
-
-## 10. Validacao antes de expandir escopo
-
-Depois de cada fatia, executar testes, verificar estados de erro e revisar o
-diff contra os criterios acima. A primeira fatia deve provar o carregamento de
-um remote por Module Federation e a conexao WebSocket; o fluxo de negocio sera
-expandido em seguida sem substituir a composicao real por rotas como
-demonstracao principal.
-
-## 11. Gate de aprovacao
-
-Esta especificacao e apenas documental nesta etapa. A implementacao fica
-bloqueada ate a aprovacao explicita do contexto, desta especificacao funcional
-e da especificacao tecnica.
-
-## 12. Decisao final vigente
-
-Este bloco prevalece sobre qualquer referencia anterior conflitante:
-
-- O prototipo cobre todos os MFEs previstos: Host, Institution, Student, Admin,
-  Activity e Dashboard.
-- O backend Go persiste todos os dados funcionais em MariaDB/MySQL.
-- Nenhum repositorio de negocio em memoria e permitido.
-- Transferencia, trancamento e reabertura preservam historico.
-- WebSocket distribui eventos do backend; `window.bus`/`EventTarget` cuida
-  apenas da comunicacao local entre MFEs na mesma pagina.
-- O prazo de execucao e de tres dias.
-- A implementacao permanece bloqueada ate aprovacao explicita das specs.
+- The product serves multiple institutions in one shared installation.
+- The priority workflow is institution → student → enrollment → event.
+- A student has one canonical record and, under the MVP rule, at most one
+  active enrollment at a time.
+- Administrators manage configuration and permissions; members perform
+  delegated student and enrollment operations within their scope.
+- Institution, Student, and Host are priority capabilities; Activity and
+  Dashboard consume the principal workflow events; Administration supports
+  the role-management use case.
