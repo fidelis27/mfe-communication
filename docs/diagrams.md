@@ -1,163 +1,168 @@
-# Diagramas do banco e da arquitetura
+# Database and architecture diagrams
 
-## Modelo relacional inicial
+The diagrams below preserve the original conceptual data model. They are not a
+verified description of the current database schema. The authoritative schema
+and migrations are maintained in the separate `secretaria-backend` repository.
 
-O banco usa MariaDB/MySQL. O estudante possui um cadastro único; o vínculo
-com uma instituição fica em `enrollments`, permitindo transferência,
-trancamento, reabertura e histórico sem duplicar o estudante.
+## Initial conceptual relational model
+
+The model treats a student as a single record and stores each institutional
+relationship in `ENROLLMENT`, preserving transfer, suspension, reopening, and
+history without duplicating the student.
 
 ```mermaid
 erDiagram
-		INSTITUTION ||--o{ CAMPUS : possui
-		INSTITUTION ||--o{ COURSE : oferece
-		CAMPUS ||--o{ COURSE : disponibiliza
-		STUDENT ||--o{ ENROLLMENT : possui
-		INSTITUTION ||--o{ ENROLLMENT : recebe
-		CAMPUS ||--o{ ENROLLMENT : ocorre_em
-		COURSE ||--o{ ENROLLMENT : vincula
+    INSTITUTION ||--o{ CAMPUS : has
+    INSTITUTION ||--o{ COURSE : offers
+    CAMPUS ||--o{ COURSE : provides
+    STUDENT ||--o{ ENROLLMENT : has
+    INSTITUTION ||--o{ ENROLLMENT : receives
+    CAMPUS ||--o{ ENROLLMENT : occurs_at
+    COURSE ||--o{ ENROLLMENT : links
 
-		USER ||--o{ GROUP_MEMBER : participa
-		GROUP ||--o{ GROUP_MEMBER : possui
-		INSTITUTION ||--o{ GROUP : organiza
+    USER ||--o{ GROUP_MEMBER : participates
+    GROUP ||--o{ GROUP_MEMBER : contains
+    INSTITUTION ||--o{ GROUP : organizes
 
-		USER ||--o{ AUDIT_EVENT : provoca
-		INSTITUTION ||--o{ AUDIT_EVENT : pertence_a
-		STUDENT ||--o{ AUDIT_EVENT : referencia
-		ENROLLMENT ||--o{ AUDIT_EVENT : referencia
+    USER ||--o{ AUDIT_EVENT : triggers
+    INSTITUTION ||--o{ AUDIT_EVENT : belongs_to
+    STUDENT ||--o{ AUDIT_EVENT : references
+    ENROLLMENT ||--o{ AUDIT_EVENT : references
 
-		INSTITUTION {
-				string id PK
-				string legal_name
-				string trade_name
-				string acronym
-				string type
-				string city
-				string state_code
-				string status
-				datetime created_at
-				datetime updated_at
-		}
+    INSTITUTION {
+        string id PK
+        string legal_name
+        string trade_name
+        string acronym
+        string type
+        string city
+        string state_code
+        string status
+        datetime created_at
+        datetime updated_at
+    }
 
-		CAMPUS {
-				string id PK
-				string institution_id FK
-				string name
-				string code
-				string city
-				string state_code
-				string status
-		}
+    CAMPUS {
+        string id PK
+        string institution_id FK
+        string name
+        string code
+        string city
+        string state_code
+        string status
+    }
 
-		COURSE {
-				string id PK
-				string institution_id FK
-				string campus_id FK
-				string name
-				string code
-				string modality
-				string status
-		}
+    COURSE {
+        string id PK
+        string institution_id FK
+        string campus_id FK
+        string name
+        string code
+        string modality
+        string status
+    }
 
-		STUDENT {
-				string id PK
-				string internal_code UK
-				string full_name
-				string social_name
-				string masked_document
-				string status
-				datetime created_at
-				datetime updated_at
-		}
+    STUDENT {
+        string id PK
+        string internal_code UK
+        string full_name
+        string social_name
+        string masked_document
+        string status
+        datetime created_at
+        datetime updated_at
+    }
 
-		ENROLLMENT {
-				string id PK
-				string student_id FK
-				string institution_id FK
-				string campus_id FK
-				string course_id FK
-				string status
-				date started_at
-				date suspended_at
-				date ended_at
-				string end_reason
-		}
+    ENROLLMENT {
+        string id PK
+        string student_id FK
+        string institution_id FK
+        string campus_id FK
+        string course_id FK
+        string status
+        date started_at
+        date suspended_at
+        date ended_at
+        string end_reason
+    }
 
-		USER {
-				string id PK
-				string name
-				string email UK
-				string status
-				boolean super_admin
-		}
+    USER {
+        string id PK
+        string name
+        string email UK
+        string status
+        boolean super_admin
+    }
 
-		GROUP {
-				string id PK
-				string institution_id FK
-				string name
-				string status
-		}
+    GROUP {
+        string id PK
+        string institution_id FK
+        string name
+        string status
+    }
 
-		GROUP_MEMBER {
-				string user_id PK_FK
-				string group_id PK_FK
-				string role
-				datetime created_at
-		}
+    GROUP_MEMBER {
+        string user_id PK_FK
+        string group_id PK_FK
+        string role
+        datetime created_at
+    }
 
-		AUDIT_EVENT {
-				string event_id PK
-				string type
-				int version
-				string source
-				string correlation_id
-				string actor_user_id FK
-				string institution_id FK
-				string student_id FK
-				string enrollment_id FK
-				json payload
-				datetime occurred_at
-		}
+    AUDIT_EVENT {
+        string event_id PK
+        string type
+        int version
+        string source
+        string correlation_id
+        string actor_user_id FK
+        string institution_id FK
+        string student_id FK
+        string enrollment_id FK
+        json payload
+        datetime occurred_at
+    }
 ```
 
-## Regras de relacionamento
+## Relationship rules in the conceptual model
 
-- Uma `INSTITUTION` pode possuir vários `CAMPUS`.
-- Uma `INSTITUTION` pode oferecer vários `COURSE`.
-- Um `COURSE` pertence a uma instituição e pode estar associado a um campus.
-- Um `STUDENT` não aponta diretamente para uma instituição.
-- Um `STUDENT` possui um ou mais `ENROLLMENT` ao longo do tempo.
-- O MVP permite no máximo um `ENROLLMENT` com status `active` por estudante.
-- Uma transferência encerra o vínculo de origem e cria o vínculo de destino
-  na mesma transação MariaDB/MySQL.
-- Um trancamento altera o status do vínculo para `suspended` sem excluir
-  histórico; a reabertura retorna para `active`.
-- `GROUP_MEMBER` resolve a relação muitos-para-muitos entre usuários e grupos.
-- O papel do usuário é aplicado dentro do escopo do grupo/instituição.
-- `AUDIT_EVENT` é persistido antes de ser distribuído pelo WebSocket.
-- Activity pode projetar eventos a partir de `AUDIT_EVENT`; Dashboard pode
-  manter projeções derivadas, mas não substitui os dados autoritativos.
+- An `INSTITUTION` can have multiple `CAMPUS` records.
+- An `INSTITUTION` can offer multiple `COURSE` records.
+- A `COURSE` belongs to an institution and may be associated with a campus.
+- A `STUDENT` does not point directly to an institution.
+- A `STUDENT` can have one or more historical `ENROLLMENT` records.
+- The original MVP model allowed at most one `active` enrollment per student.
+- A transfer ends the source enrollment and creates the destination enrollment
+  in the same MariaDB/MySQL transaction.
+- Suspending an enrollment preserves its history; reopening returns it to
+  `active`.
+- `GROUP_MEMBER` models the many-to-many relationship between users and groups.
+- A user's role is applied within the group or institution scope.
+- An `AUDIT_EVENT` is persisted before distribution over WebSocket.
+- Activity may project events from `AUDIT_EVENT`; Dashboard may maintain
+  derived projections but does not replace authoritative data.
 
-## Constraints obrigatórias
+Verify these rules against the backend schema and migrations before relying on
+them as current implementation behavior.
 
-- `institution.id`, `campus.id`, `course.id`, `student.id`,
-  `enrollment.id` e `user.id` são chaves primárias.
-- `student.internal_code` é único conforme a regra de identificação adotada.
-- `user.email` é único.
-- `enrollment.student_id`, `institution_id`, `course_id` e status são
-  obrigatórios.
-- Foreign keys devem estar ativas.
-- Transferência e mudança de matrícula devem usar transação.
-- Datas de encerramento não podem ser anteriores à data de início.
-- Documentos pessoais não devem ser usados como chave pública nem aparecer em
-  logs.
-- O payload completo do evento deve respeitar a política de minimização de
-  dados e, se necessário, ser criptografado ou protegido por acesso.
+## Constraints in the conceptual model
 
-## Decisões ainda necessárias antes das migrations
+- `institution.id`, `campus.id`, `course.id`, `student.id`, `enrollment.id`,
+  and `user.id` are primary keys.
+- `student.internal_code` is unique under the chosen identification rule.
+- `user.email` is unique.
+- `enrollment.student_id`, `institution_id`, `course_id`, and status are
+  required.
+- Foreign keys must be enabled.
+- Transfers and enrollment changes use a transaction.
+- End dates cannot precede start dates.
+- Personal identifiers must not be used as public keys or appear in logs.
+- Event payloads follow data-minimization policy and, where needed, are
+  encrypted or access-protected.
 
-- Definir se `internal_code` é único globalmente ou apenas dentro da
-  instituição.
-- Definir se um curso pode existir em mais de um campus sem duplicação.
-- Escolher o formato de ID: UUID ou string gerada pela aplicação.
-- Definir o mecanismo de migrations Go.
-- Definir política de retenção de `AUDIT_EVENT`.
+## Open questions in the original model
+
+- Is `internal_code` globally unique or unique only within an institution?
+- Can a course belong to multiple campuses without duplication?
+- Should IDs use UUIDs or application-generated strings?
+- Which Go migration mechanism should be used?
+- What is the retention policy for `AUDIT_EVENT`?
