@@ -96,15 +96,15 @@ CI runs on every PR and a final **CI gate** job fails if any required job fails:
 
 ## Documentation
 
-| Doc                                                                                            | What it covers                                  |
-| ---------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| [`mfe-architecture.md`](docs/mfe-architecture.md)                                              | MFE boundaries, federation, deploy model        |
-| [`design-system.md`](docs/design-system.md)                                                    | Shared tokens, UI primitives, and CSS isolation |
-| [`event-bus.md`](docs/event-bus.md)                                                            | Channels, queue, TTL, host WebSocket flow       |
+| Doc                                                                                                                      | What it covers                                  |
+| ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------- |
+| [`mfe-architecture.md`](docs/mfe-architecture.md)                                                                        | MFE boundaries, federation, deploy model        |
+| [`design-system.md`](docs/design-system.md)                                                                              | Shared tokens, UI primitives, and CSS isolation |
+| [`event-bus.md`](docs/event-bus.md)                                                                                      | Channels, queue, TTL, host WebSocket flow       |
 | [`functional-specification.md`](docs/product/functional-specification.md), [`spec-technical.md`](docs/spec-technical.md) | Product and technical specs                     |
-| [`performance-improvement-plan.md`](docs/performance-improvement-plan.md)                      | Evidence-first performance tasks                |
-| [Documentation archive](docs/README.md#archive)                                               | Historical material retained for reference     |
-| [`docs/README.md`](docs/README.md)                                                             | Documentation index and evidence map            |
+| [`performance-improvement-plan.md`](docs/performance-improvement-plan.md)                                                | Evidence-first performance tasks                |
+| [Documentation archive](docs/README.md#archive)                                                                          | Historical material retained for reference      |
+| [`docs/README.md`](docs/README.md)                                                                                       | Documentation index and evidence map            |
 
 ## How it was built
 

@@ -1,3 +1,4 @@
 # MFE - Dashboard
 
-Responsibilities: aggregated views, KPIs and metrics.
+For project overview, package setup, architecture, and quality guidance, see
+the [documentation index](../../../../docs/README.md).
