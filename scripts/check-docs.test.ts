@@ -36,6 +36,12 @@ describe("checkDocs", () => {
     expect(check().errors).toEqual([]);
   });
 
+  it("ignores generated Playwright report Markdown", () => {
+    write("playwright-report/data/report.md", "# Generated report\n");
+    write("test-results/case/error-context.md", "# Generated report\n");
+    expect(check().errors).toEqual([]);
+  });
+
   it("accepts GitHub's required pull-request template filename", () => {
     write(".github/PULL_REQUEST_TEMPLATE.md", "# Pull request\n");
     expect(check().errors).toEqual([]);

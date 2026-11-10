@@ -1,6 +1,8 @@
 import { requestJson } from "@mfe/shared";
 import { z } from "zod";
 
+z.config({ jitless: true });
+
 const institutionSchema = z.object({ id: z.string(), status: z.string() });
 const studentSchema = z.object({ id: z.string(), status: z.string() });
 const enrollmentSchema = z.object({ id: z.string(), status: z.string() });

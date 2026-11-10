@@ -83,3 +83,38 @@ Siga `docs/local-development.md`. O frontend precisa das variaveis
 `VITE_SUPABASE_*`; o backend recebe `OIDC_ISSUER` e
 `OIDC_AUDIENCE=authenticated`. Para testar a API, use um access token real do
 projeto Supabase e um usuario ativo com o mesmo e-mail no banco local.
+
+## Security headers
+
+The Host's Vercel configuration sends `X-Content-Type-Options: nosniff`,
+`X-Frame-Options: DENY`, `Referrer-Policy:
+strict-origin-when-cross-origin`, and a `Permissions-Policy` that disables
+camera, microphone, and geolocation. The frame header prevents embedding; a
+`frame-ancestors` directive cannot be enforced from a CSP meta element.
+
+Production builds add a CSP meta element generated from the same `VITE_*`
+origins used by federation and API configuration. `default-src 'self'` is the
+fallback; `script-src` permits the Host and the five configured remote
+origins; `connect-src` permits the API and its WebSocket scheme, Supabase and
+its WebSocket scheme, and the Sentry DSN origin when configured. Styles and
+fonts may load from the Host and five remote origins: federation emits remote
+CSS links, and each MFE serves its local `@fontsource` assets from its own
+origin. Images may also use `data:`, forms and
+the base URL are restricted to the Host, and plugins are disabled with
+`object-src 'none'`. The policy does not use `unsafe-inline` or `unsafe-eval`.
+The build fails with the missing variable's name if an origin needed for the
+policy is not configured.
+
+The Host's tracked production environment file supplies the public Supabase
+project URL used by the live Host. The Supabase anon key remains a deployment
+environment variable; never put a `service_role` key in frontend configuration.
+
+Zod runs in `jitless` mode in the Host and remotes so schema parsing does not
+probe dynamic code generation and trigger CSP violations. Vite development
+mode does not apply the CSP, preserving HMR. The CSP plugin
+allows HTTP origins only for localhost E2E builds; production origins must use
+HTTPS. Each remote sends `X-Content-Type-Options: nosniff` and
+`Cross-Origin-Resource-Policy: cross-origin` so the Host can load its
+federated assets. No `Access-Control-Allow-Origin` header is added by these
+Vercel configurations. Verify the deployed headers after release; local
+builds do not prove provider-side deployment behavior.

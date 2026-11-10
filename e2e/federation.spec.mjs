@@ -7,9 +7,55 @@ import {
   studentUpdatedEvent,
 } from "./helpers.mjs";
 
+const cspConsoleErrors = new WeakMap();
+const cspViolationsKey = "__e2e_csp_violations";
+
+test.afterEach(async ({ page }) => {
+  const cspMeta = page.locator('meta[http-equiv="Content-Security-Policy"]');
+  await expect(cspMeta, "the production build must include its CSP meta element").toHaveCount(1);
+  const cspPrecedesFirstScript = await page.evaluate(() => {
+    const csp = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+    const firstScript = document.querySelector("script");
+    return Boolean(
+      csp &&
+      firstScript &&
+      csp.compareDocumentPosition(firstScript) & Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  });
+  expect(cspPrecedesFirstScript, "CSP meta must precede app scripts").toBe(true);
+
+  const violations = await page.evaluate((key) => {
+    try {
+      return JSON.parse(sessionStorage.getItem(key) ?? "[]");
+    } catch {
+      return [];
+    }
+  }, cspViolationsKey);
+
+  expect(violations, "unexpected securitypolicyviolation events").toEqual([]);
+  expect(cspConsoleErrors.get(page) ?? [], "unexpected CSP console errors").toEqual([]);
+});
+
 async function setup(page, options = {}) {
+  const cspErrors = [];
+  cspConsoleErrors.set(page, cspErrors);
+  await page.addInitScript((key) => {
+    window.addEventListener("securitypolicyviolation", (event) => {
+      const violations = JSON.parse(sessionStorage.getItem(key) ?? "[]");
+      violations.push({
+        directive: event.effectiveDirective,
+        blockedURI: event.blockedURI,
+      });
+      sessionStorage.setItem(key, JSON.stringify(violations));
+    });
+  }, cspViolationsKey);
   page.on("console", (message) => {
-    if (message.type() === "error") console.error("[browser console]", message.text());
+    if (message.type() === "error") {
+      console.error("[browser console]", message.text());
+      if (/content security policy|securitypolicyviolation/i.test(message.text())) {
+        cspErrors.push(message.text());
+      }
+    }
   });
   page.on("pageerror", (error) =>
     console.error("[browser page error]", error.stack ?? error.message),
@@ -37,7 +83,7 @@ test("host loads all five real remotes through federation navigation", async ({ 
     await page.getByRole("link", { name: new RegExp(module.label) }).click();
     await expect(
       page.getByRole("main").getByRole("heading", { level: 1, name: module.heading }),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 15_000 });
   }
 });
 

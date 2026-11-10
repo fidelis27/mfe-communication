@@ -15,6 +15,8 @@ import {
 } from "@mfe/shared";
 import { z } from "zod";
 
+z.config({ jitless: true });
+
 const usersSchema = z.array(adminUserSchema);
 const institutionsSchema = z.array(institutionSummarySchema);
 const groupsSchema = z.array(groupSchema);

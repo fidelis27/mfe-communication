@@ -50,6 +50,14 @@ jobs:
           cache: npm
       - run: npm ci --legacy-peer-deps
       - run: npm run build --workspace=${{ matrix.workspace }}
+        env:
+          VITE_API_URL: https://api.example.test
+          VITE_SUPABASE_URL: https://project.example.test
+          VITE_MFE_STUDENT_URL: https://student.example.test
+          VITE_MFE_INSTITUTION_URL: https://institution.example.test
+          VITE_MFE_ACTIVITY_URL: https://activity.example.test
+          VITE_MFE_DASHBOARD_URL: https://dashboard.example.test
+          VITE_MFE_ADMIN_URL: https://admin.example.test
 
   e2e:
     name: E2E federation
