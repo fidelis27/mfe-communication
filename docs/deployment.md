@@ -105,6 +105,10 @@ the base URL are restricted to the Host, and plugins are disabled with
 The build fails with the missing variable's name if an origin needed for the
 policy is not configured.
 
+The Host's tracked production environment file supplies the public Supabase
+project URL used by the live Host. The Supabase anon key remains a deployment
+environment variable; never put a `service_role` key in frontend configuration.
+
 Zod runs in `jitless` mode in the Host and remotes so schema parsing does not
 probe dynamic code generation and trigger CSP violations. Vite development
 mode does not apply the CSP, preserving HMR. The CSP plugin

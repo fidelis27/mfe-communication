@@ -42,9 +42,11 @@ those values. CSP delivered through a meta element also cannot enforce
 
 Host builds require the federation, API, and Supabase URL variables. CI and
 local federation E2E builds use reserved example URLs or localhost fixtures.
-Production deployment must supply real HTTPS origins. The policy does not
-prove that provider-side Vercel headers are active; deployed headers still
-need verification.
+The tracked Host production environment file supplies the public Supabase
+project URL used by the live Host; deployment still must provide the public
+anon key needed by authentication. Production origins must use HTTPS. The
+policy does not prove that provider-side Vercel headers are active; deployed
+headers still need verification.
 
 ## Alternatives
 
