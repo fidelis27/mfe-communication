@@ -1,6 +1,8 @@
 import { institutionSchema, requestJson, type Institution } from "@mfe/shared";
 import { z } from "zod";
 
+z.config({ jitless: true });
+
 const institutionsSchema = z.array(institutionSchema);
 
 export function getInstitutions(apiUrl: string, signal?: AbortSignal): Promise<Institution[]> {

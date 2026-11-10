@@ -1,6 +1,8 @@
 import { domainEventSchema, requestJson, type DomainEvent } from "@mfe/shared";
 import { z } from "zod";
 
+z.config({ jitless: true });
+
 const eventHistorySchema = z.array(domainEventSchema);
 
 export function getEventHistory(

@@ -2,6 +2,7 @@ import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import federation from "@originjs/vite-plugin-federation";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
+import { contentSecurityPolicyPlugin } from "./securityHeaders";
 
 // Source maps are only generated and uploaded when SENTRY_AUTH_TOKEN is set (CI / production builds).
 const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN;
@@ -25,6 +26,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       react(),
+      contentSecurityPolicyPlugin(env),
       federation({
         name: "host",
         remotes: {

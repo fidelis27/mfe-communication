@@ -7,7 +7,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 1 : 0,
-  workers: isCI ? 2 : undefined,
+  workers: isCI ? 2 : 1,
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
     baseURL: "http://127.0.0.1:4273",
@@ -18,7 +18,7 @@ export default defineConfig({
   webServer: {
     command: "npm run e2e:serve",
     url: "http://127.0.0.1:4279/assets/remoteEntry.js",
-    timeout: 240_000,
+    timeout: 900_000,
     reuseExistingServer: false,
   },
 });

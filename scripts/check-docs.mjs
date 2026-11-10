@@ -23,7 +23,10 @@ function listMarkdownFiles(rootDir) {
 
   function visit(directory) {
     for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
-      if (entry.isDirectory() && [".git", "node_modules"].includes(entry.name)) {
+      if (
+        entry.isDirectory() &&
+        [".git", "node_modules", "playwright-report", "test-results"].includes(entry.name)
+      ) {
         continue;
       }
 

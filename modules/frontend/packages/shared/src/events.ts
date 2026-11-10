@@ -4,6 +4,8 @@ import { authenticatedWebSocket } from "./auth";
 import { listen } from "./bus";
 import { captureHostError } from "./sentry";
 
+z.config({ jitless: true });
+
 export const institutionEventTypes = [
   "INSTITUTION_CREATED",
   "INSTITUTION_UPDATED",
